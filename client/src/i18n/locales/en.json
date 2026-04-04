@@ -1,0 +1,12 @@
+{
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "cart": "Cart",
+    "login": "Login"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong"
+  }
+}
