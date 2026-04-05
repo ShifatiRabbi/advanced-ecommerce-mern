@@ -4,6 +4,7 @@ import MainLayout from './layouts/MainLayout';
 
 const Home = lazy(() => import('./pages/Home'));
 const Shop = lazy(() => import('./pages/Shop'));
+const Product = lazy(() => import('./pages/Product'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 export default function App() {
@@ -12,7 +13,8 @@ export default function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<Shop />} />
+          <Route path="/shop"          element={<Shop />} />
+          <Route path="/product/:slug" element={<Product />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

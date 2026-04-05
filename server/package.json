@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "seed": "node src/seeders/seed.js"
   },
   "keywords": [],
   "author": "",
@@ -23,10 +24,11 @@
     "helmet": "^8.1.0",
     "joi": "^18.1.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.3.3",
+    "mongoose": "^9.4.1",
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
-    "multer-storage-cloudinary": "^2.2.1"
+    "multer-storage-cloudinary": "^4.0.0",
+    "slugify": "^1.6.9"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
