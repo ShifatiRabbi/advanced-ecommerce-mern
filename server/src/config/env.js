@@ -13,5 +13,21 @@ export const env = {
   ADMIN_URL: process.env.ADMIN_URL,
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
-  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET
+  CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+
+  SSL_STORE_ID:      process.env.SSL_STORE_ID,
+  SSL_STORE_PASS:    process.env.SSL_STORE_PASS,
+  SSL_IS_LIVE:       process.env.SSL_IS_LIVE || 'false',
+  SSL_SUCCESS_URL:   process.env.SSL_SUCCESS_URL,
+  SSL_FAIL_URL:      process.env.SSL_FAIL_URL,
+  SSL_CANCEL_URL:    process.env.SSL_CANCEL_URL,
+  SSL_IPN_URL:       process.env.SSL_IPN_URL,
+
+  BKASH_BASE_URL:    process.env.BKASH_BASE_URL,
+  BKASH_APP_KEY:     process.env.BKASH_APP_KEY,
+  BKASH_APP_SECRET:  process.env.BKASH_APP_SECRET,
+  BKASH_USERNAME:    process.env.BKASH_USERNAME,
+  BKASH_PASSWORD:    process.env.BKASH_PASSWORD,
+  BKASH_CALLBACK_URL:process.env.BKASH_CALLBACK_URL,
+
 };

@@ -5,6 +5,8 @@ import categoryRoutes from '../modules/category/category.routes.js';
 import brandRoutes    from '../modules/brand/brand.routes.js';
 import productRoutes  from '../modules/product/product.routes.js';
 import orderRoutes    from '../modules/order/order.routes.js';
+import paymentRoutes  from '../modules/payment/payment.routes.js';
+
 
 const router = Router();
 
@@ -14,6 +16,7 @@ router.use('/categories', categoryRoutes);
 router.use('/brands',     brandRoutes);
 router.use('/products',   productRoutes);
 router.use('/orders',     orderRoutes);
+router.use('/payment',    paymentRoutes);
 
 
 router.get('/health', (req, res) => {

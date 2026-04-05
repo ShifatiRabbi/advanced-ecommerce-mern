@@ -10,6 +10,9 @@ const Cart          = lazy(() => import('./pages/Cart'));
 const Checkout      = lazy(() => import('./pages/Checkout'));
 const OrderSuccess  = lazy(() => import('./pages/OrderSuccess'));
 const MyOrders      = lazy(() => import('./pages/MyOrders'));
+const PaymentSuccess = lazy(() => import('./pages/payment/PaymentSuccess'));
+const PaymentFail    = lazy(() => import('./pages/payment/PaymentFail'));
+const PaymentCancel  = lazy(() => import('./pages/payment/PaymentFail'));
 
 export default function App() {
   return (
@@ -23,6 +26,9 @@ export default function App() {
           <Route path="/checkout"                  element={<Checkout />} />
           <Route path="/order-success/:orderNumber" element={<OrderSuccess />} />
           <Route path="/my-orders"                 element={<MyOrders />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/fail"    element={<PaymentFail />} />
+          <Route path="/payment/cancel"  element={<PaymentFail />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
