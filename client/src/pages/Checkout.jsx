@@ -34,11 +34,16 @@ export default function Checkout() {
   });
 
   const [errors, setErrors] = useState({});
+  const [couponCode, setCouponCode] = useState('');
+  const [couponResult, setCouponResult] = useState(null);
+  const [couponError, setCouponError] = useState('');
+
   const incompleteTimerRef = useRef(null);
   const hasSentIncomplete  = useRef(false);
 
   const shipping = total >= 1000 ? 0 : 60;
-  const grandTotal = total + shipping;
+  const discount = couponResult?.discount || 0;
+  const grandTotal = total + shipping - discount;
 
   useEffect(() => {
     if (items.length === 0) navigate('/cart');
@@ -83,6 +88,17 @@ export default function Checkout() {
     },
   });
 
+  const applyCoupon = async () => {
+    setCouponError('');
+    try {
+      const { data } = await api.post('/offers/validate', { code: couponCode, orderTotal: total });
+      setCouponResult(data.data);
+    } catch (err) {
+      setCouponResult(null);
+      setCouponError(err.response?.data?.message || 'Invalid coupon');
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const errs = validate();
@@ -93,6 +109,7 @@ export default function Checkout() {
       items:           items.map((i) => ({ product: i._id, qty: i.qty })),
       shippingAddress: address,
       paymentMethod,
+      ...(couponResult && { couponCode: couponResult.code }),
     });
   };
 
@@ -192,6 +209,26 @@ export default function Checkout() {
                 {shipping === 0 ? 'Free' : `৳${shipping}`}
               </span>
             </div>
+
+            {/* Coupon Input */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+              <input
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="Coupon code"
+                style={{ flex: 1, padding: '8px 10px', border: '1px solid #e2e2e2', borderRadius: 6, fontSize: 14 }}
+              />
+              <button
+                type="button"
+                onClick={applyCoupon}
+                style={{ padding: '8px 14px', background: '#f5f5f5', border: '1px solid #e2e2e2', borderRadius: 6, cursor: 'pointer', fontSize: 14 }}
+              >
+                Apply
+              </button>
+            </div>
+            {couponError && <p style={{ color: '#e53e3e', fontSize: 12, marginBottom: 8 }}>{couponError}</p>}
+            {couponResult && <p style={{ color: '#38a169', fontSize: 13, marginBottom: 8 }}>Coupon applied! Saving ৳{couponResult.discount}</p>}
+
             <div style={{ ...s.summaryRow, ...s.grandTotal }}>
               <span>Total</span><span>৳{grandTotal.toLocaleString()}</span>
             </div>
