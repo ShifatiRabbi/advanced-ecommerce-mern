@@ -18,6 +18,7 @@ import reviewRoutes    from '../modules/review/review.routes.js';
 import wishlistRoutes  from '../modules/wishlist/wishlist.routes.js';
 import bannerRoutes    from '../modules/banner/banner.routes.js';
 import flashsaleRoutes from '../modules/flashsale/flashsale.routes.js';
+import pageRoutes      from '../modules/page/page.routes.js';
 import os              from 'os';
 
 const router = Router();
@@ -40,7 +41,8 @@ router.use('/marketing',  marketingRoutes);
 router.use('/reviews',    reviewRoutes);
 router.use('/wishlist',   wishlistRoutes);
 router.use('/banners',    bannerRoutes);
-router.use('/flash-sales', flashsaleRoutes);
+router.use('/flash-sales',flashsaleRoutes);
+router.use('/pages',      pageRoutes);
 
 router.get('/health', (req, res) => res.json({
   success: true, status: 'ok',

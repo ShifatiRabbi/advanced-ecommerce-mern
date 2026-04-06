@@ -18,6 +18,17 @@ export default function ProductPage() {
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
 
+  const [selectedVariants, setSelectedVariants] = useState({});
+
+  const selectVariantOption = (variantName, option) => {
+    setSelectedVariants(prev => ({ ...prev, [variantName]: option }));
+  };
+
+  const variantPriceAdj = Object.values(selectedVariants).reduce(
+    (sum, opt) => sum + (opt.priceModifier || 0),
+    0
+  );
+
   useEffect(() => { if (user) fetchWishlist(); }, [user]);
 
   if (isLoading) return <div style={{ padding: 80, textAlign: 'center' }}>Loading...</div>;
@@ -100,6 +111,61 @@ export default function ProductPage() {
               </span>
             </div>
 
+            {/* Variant Picker */}
+            {product.variants?.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                {product.variants.map((variant) => (
+                  <div key={variant.name} style={{ marginBottom: 14 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
+                      {variant.name}
+                      {selectedVariants[variant.name] && (
+                        <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8 }}>
+                          — {selectedVariants[variant.name].label}
+                        </span>
+                      )}
+                    </p>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {variant.options?.map((opt) => {
+                        const isSelected = selectedVariants[variant.name]?.label === opt.label;
+                        const outOfStock = opt.stock === 0;
+                        return (
+                          <button
+                            key={opt.label}
+                            onClick={() => !outOfStock && selectVariantOption(variant.name, opt)}
+                            disabled={outOfStock}
+                            style={{
+                              padding: '7px 16px',
+                              border: `2px solid ${isSelected ? '#111827' : '#d1d5db'}`,
+                              borderRadius: 8,
+                              background: isSelected ? '#111827' : '#fff',
+                              color: isSelected ? '#fff' : outOfStock ? '#d1d5db' : '#374151',
+                              cursor: outOfStock ? 'not-allowed' : 'pointer',
+                              fontSize: 14,
+                              fontWeight: isSelected ? 600 : 400,
+                              textDecoration: outOfStock ? 'line-through' : 'none',
+                              position: 'relative',
+                            }}>
+                            {opt.label}
+                            {opt.priceModifier !== 0 && (
+                              <span style={{ fontSize: 11, marginLeft: 4, opacity: 0.8 }}>
+                                {opt.priceModifier > 0 ? '+' : ''}৳{opt.priceModifier}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+                {variantPriceAdj !== 0 && (
+                  <p style={{ fontSize: 13, color: '#059669', fontWeight: 600 }}>
+                    Variant adjustment: {variantPriceAdj > 0 ? '+' : ''}৳{variantPriceAdj}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Add to Cart and WishList */}
             {product.stock > 0 && (
               <div style={styles.addToCart}>
                 <div style={styles.qtyRow}>
@@ -127,46 +193,8 @@ export default function ProductPage() {
                 </button>
               </div>
             )}
-
-            {product.tags?.length > 0 && (
-              <div style={styles.tags}>
-                {product.tags.map((tag) => (
-                  <Link key={tag} to={`/shop?search=${tag}`} style={styles.tag}>
-                    {tag}
-                  </Link>
-                ))}
-              </div>
-            )}
           </div>
         </div>
-
-        {/* Description */}
-        {product.description && (
-          <section style={styles.descSection}>
-            <h2 style={styles.sectionTitle}>Product Description</h2>
-            <p style={styles.descText}>{product.description}</p>
-          </section>
-        )}
-
-        {/* Related */}
-        {related.length > 0 && (
-          <section style={styles.relatedSection}>
-            <h2 style={styles.sectionTitle}>Related Products</h2>
-            <div style={styles.relatedGrid}>
-              {related.map((p) => (
-                <Link key={p._id} to={`/product/${p.slug}`} style={styles.relatedCard}>
-                  {p.images?.[0] && (
-                    <img src={p.images[0].url} alt={p.name} style={styles.relatedImg} />
-                  )}
-                  <p style={styles.relatedName}>{p.name}</p>
-                  <p style={styles.relatedPrice}>
-                    ৳{(p.discountPrice || p.price).toLocaleString()}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
       </div>
     </>
   );

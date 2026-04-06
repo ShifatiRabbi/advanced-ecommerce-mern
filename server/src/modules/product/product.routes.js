@@ -16,5 +16,8 @@ router.post('/',  protect, adminOnly, productUpload.array('images', 8), validate
 router.put('/:id', protect, adminOnly, productUpload.array('images', 8), ctrl.update);
 router.delete('/:id/images/:publicId', protect, adminOnly, ctrl.removeImage);
 router.delete('/:id', protect, adminOnly, ctrl.remove);
+router.post('/:id/variants',          protect, adminOnly, asyncHandler(async(req,res)=>{ sendSuccess(res,{data:await svc.addVariant(req.params.id,req.body)}); }));
+router.put('/:id/variants/:idx',      protect, adminOnly, asyncHandler(async(req,res)=>{ sendSuccess(res,{data:await svc.updateVariant(req.params.id,Number(req.params.idx),req.body)}); }));
+router.delete('/:id/variants/:idx',   protect, adminOnly, asyncHandler(async(req,res)=>{ sendSuccess(res,{data:await svc.deleteVariant(req.params.id,Number(req.params.idx))}); }));
 
 export default router;

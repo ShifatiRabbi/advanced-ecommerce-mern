@@ -19,6 +19,9 @@ const NAV = [
   { label: 'Blog',       path: '/blog' },
   { label: 'SEO',        path: '/seo' },
   { label: 'Marketing',  path: '/marketing' },
+  { label: 'Custom Code',path: '/custom-code' },
+  { label: 'Pages',      path: '/pages' },
+  { label: 'Theme',      path: '/theme' },
   { label: 'Settings',   path: '/settings' },
 ];
 

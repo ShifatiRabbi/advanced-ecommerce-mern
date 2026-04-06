@@ -17,6 +17,11 @@ router.post('/refresh', ctrl.refresh);
 router.post('/logout', protect, ctrl.logout);
 router.get('/me', protect, ctrl.getMe);
 
+router.put('/me', protect, asyncHandler(async (req,res) => {
+  const { name, phone } = req.body;
+  const user = await User.findByIdAndUpdate(req.user.id, { name, phone }, { new: true }).select('-password -refreshToken');
+  sendSuccess(res, { data: user });
+}));
 router.post('/forgot-password', authLimiter, ctrl.forgotPassword);
 router.post('/reset-password', ctrl.resetPassword);
 

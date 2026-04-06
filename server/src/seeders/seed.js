@@ -4,6 +4,8 @@ import { User } from '../modules/user/user.model.js';
 import { Category } from '../modules/category/category.model.js';
 import { Brand } from '../modules/brand/brand.model.js';
 import { Product } from '../modules/product/product.model.js';
+import { Page } from '../modules/page/page.model.js';
+
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -15,6 +17,8 @@ const seed = async () => {
   await Category.deleteMany({});
   await Brand.deleteMany({});
   await Product.deleteMany({});
+  await Page.deleteMany({});
+  
   console.log('Cleared existing data.');
 
   // ── Users ───────────────────────────────────────────────────────────────
@@ -117,6 +121,13 @@ const seed = async () => {
     },
   ]);
   console.log('Products seeded: 4');
+
+  await Page.insertMany([
+    { key:'about',   title:'About Us', content:'<h2>About Our Store</h2><p>We are a leading eCommerce platform in Bangladesh.</p>', isActive:true },
+    { key:'privacy', title:'Privacy Policy', content:'<h2>Privacy Policy</h2><p>Your privacy is important to us...</p>', isActive:true },
+    { key:'terms',   title:'Terms & Conditions', content:'<h2>Terms & Conditions</h2><p>By using our site...</p>', isActive:true },
+    { key:'contact', title:'Contact Us', extra:{ phone:'01700-000000', email:'support@shopbd.com', address:'Dhaka, Bangladesh', mapEmbed:'', socials:{ facebook:'', instagram:'', youtube:'' } }, content:'Get in touch with us anytime.', isActive:true },
+  ]);
 
   console.log('\n✅ Seed complete!');
   console.log('   Admin  → admin@gmail.com  / admin');

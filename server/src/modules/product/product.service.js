@@ -129,3 +129,25 @@ export const getRelatedProducts = async (productId, categoryId, limit = 6) =>
     .limit(limit)
     .populate('brand', 'name slug')
     .lean();
+
+export const addVariant = async (productId, variant) => {
+  const product = await Product.findById(productId);
+  if (!product) { const e = new Error('Product not found'); e.status = 404; throw e; }
+  product.variants.push(variant);
+  return product.save();
+};
+
+export const updateVariant = async (productId, variantIndex, data) => {
+  const product = await Product.findById(productId);
+  if (!product) { const e = new Error('Product not found'); e.status = 404; throw e; }
+  if (!product.variants[variantIndex]) { const e = new Error('Variant not found'); e.status = 404; throw e; }
+  Object.assign(product.variants[variantIndex], data);
+  return product.save();
+};
+
+export const deleteVariant = async (productId, variantIndex) => {
+  const product = await Product.findById(productId);
+  if (!product) { const e = new Error('Product not found'); e.status = 404; throw e; }
+  product.variants.splice(variantIndex, 1);
+  return product.save();
+};

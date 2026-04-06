@@ -149,6 +149,11 @@ export default function AddProduct() {
           </div>
 
           <div style={s.card}>
+            <h3 style={s.cardTitle}>Variations</h3>
+            <p style={{fontSize:13,color:'#9ca3af',margin:0}}>Save the product first, then add variations from the Edit page.</p>
+          </div>
+
+          <div style={s.card}>
             <h3 style={s.cardTitle}>Status</h3>
             <label style={s.checkRow}>
               <input type="checkbox" checked={form.isActive} onChange={e => set('isActive', e.target.checked)} />

@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import api from '../../services/api';
+import VariantManager from '../../components/VariantManager';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function EditProduct() {
   const { id }   = useParams();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product-edit', id],
@@ -157,6 +160,15 @@ export default function EditProduct() {
             <input id="edit-imgs" type="file" multiple accept="image/*" style={{ display: 'none' }}
               onChange={e => setNewImages(Array.from(e.target.files))} />
           </div>
+          {product && (
+            <div style={s.card}>
+              <h3 style={s.cardTitle}>Variations</h3>
+              <VariantManager
+                productId={id}
+                variants={product.variants || []}
+                onUpdate={() => qc.invalidateQueries({ queryKey: ['product-edit', id] })} />
+            </div>
+          )}
 
           <div style={s.card}>
             <h3 style={s.cardTitle}>Status</h3>
