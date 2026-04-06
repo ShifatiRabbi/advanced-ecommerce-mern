@@ -12,7 +12,6 @@ import xss           from 'xss-clean';
 
 const app = express();
 
-app.use(helmet());
 app.use(cors({
   origin: [env.CLIENT_URL, env.ADMIN_URL],
   credentials: true,
@@ -21,8 +20,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 // Add after JSON parser:
-app.use(mongoSanitize());
-app.use(xss());
+// app.use(mongoSanitize());
+// app.use(xss());
 
 if (env.NODE_ENV !== 'production') app.use(morgan('dev'));
 
@@ -35,13 +34,13 @@ app.get('/robots.txt',  (req, res) => res.redirect('/api/seo/robots.txt'));
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc:  ["'self'"],
-      scriptSrc:   ["'self'", "'unsafe-inline'", 'https://www.googletagmanager.com', 'https://connect.facebook.net', 'https://js.stripe.com'],
-      styleSrc:    ["'self'", "'unsafe-inline'"],
-      imgSrc:      ["'self'", 'data:', 'https://res.cloudinary.com', 'https://www.google-analytics.com'],
-      connectSrc:  ["'self'", 'https://www.google-analytics.com'],
-      frameSrc:    ["'none'"],
-      objectSrc:   ["'none'"],
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://www.googletagmanager.com', 'https://connect.facebook.net', 'https://js.stripe.com'],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com', 'https://www.google-analytics.com'],
+      connectSrc: ["'self'", 'http://localhost:5174', 'http://localhost:5000'],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
     },
   },
   crossOriginEmbedderPolicy: false,

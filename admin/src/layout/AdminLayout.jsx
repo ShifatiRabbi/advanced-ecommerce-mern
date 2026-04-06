@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
+import { setAccessToken } from '../services/api';
 
 const NAV = [
   { label: 'Dashboard',  path: '/dashboard' },
@@ -16,6 +17,8 @@ const NAV = [
   { label: 'Delivery',   path: '/delivery' },
   { label: 'Payments',   path: '/payments' },
   { label: 'Blog',       path: '/blog' },
+  { label: 'SEO',        path: '/seo' },
+  { label: 'Marketing',  path: '/marketing' },
   { label: 'Settings',   path: '/settings' },
 ];
 
@@ -26,13 +29,14 @@ export default function AdminLayout() {
 
   const handleLogout = async () => {
     try { await api.post('/auth/logout'); } catch {}
+    setAccessToken(null);
     clearUser();
     navigate('/login');
   };
 
   return (
     <div style={s.shell}>
-      <aside style={{ ...s.sidebar, width: collapsed ? 60 : 220 }}>
+      <aside style={{ ...s.sidebar, width: collapsed ? 60 : 230 }}>
         <div style={s.sidebarHead}>
           {!collapsed && <span style={s.logo}>ShopAdmin</span>}
           <button onClick={() => setCollapsed(c => !c)} style={s.collapseBtn}>
@@ -42,27 +46,35 @@ export default function AdminLayout() {
 
         <nav style={s.nav}>
           {NAV.map((item) => (
-            <NavLink key={item.path} to={item.path}
+            <NavLink
+              key={item.path}
+              to={item.path}
               style={({ isActive }) => ({ ...s.navLink, ...(isActive && s.navLinkActive) })}>
-              {!collapsed && item.label}
-              {collapsed && item.label.charAt(0)}
+              {collapsed ? item.label.charAt(0) : item.label}
             </NavLink>
           ))}
         </nav>
 
         <div style={s.sidebarFooter}>
-          {!collapsed && <p style={s.userName}>{user?.name}</p>}
+          {!collapsed && (
+            <>
+              <p style={s.userName}>{user?.name}</p>
+              <p style={s.userEmail}>{user?.email}</p>
+            </>
+          )}
           <button onClick={handleLogout} style={s.logoutBtn}>
-            {collapsed ? '⏻' : 'Logout'}
+            {collapsed ? '×' : 'Logout'}
           </button>
         </div>
       </aside>
 
       <div style={s.main}>
         <header style={s.topbar}>
-          <div style={s.breadcrumb} id="admin-breadcrumb" />
+          <div style={{ fontSize: 13, color: '#888' }}>
+            Welcome back, <strong>{user?.name}</strong>
+          </div>
           <div style={s.topbarRight}>
-            <span style={s.roleTag}>{user?.role}</span>
+            <span style={s.roleTag}>{user?.role?.toUpperCase()}</span>
             <Link to="/settings" style={s.settingsLink}>Settings</Link>
           </div>
         </header>
@@ -75,22 +87,22 @@ export default function AdminLayout() {
 }
 
 const s = {
-  shell:          { display: 'flex', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' },
-  sidebar:        { background: '#111', color: '#fff', display: 'flex', flexDirection: 'column', transition: 'width .2s', flexShrink: 0, overflow: 'hidden' },
-  sidebarHead:    { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 14px', borderBottom: '1px solid #222' },
-  logo:           { fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em' },
-  collapseBtn:    { background: 'none', border: 'none', color: '#888', fontSize: 18, cursor: 'pointer', padding: '0 4px' },
-  nav:            { flex: 1, overflowY: 'auto', padding: '8px 0' },
-  navLink:        { display: 'block', padding: '9px 16px', color: '#aaa', textDecoration: 'none', fontSize: 14, transition: 'color .15s, background .15s', borderRadius: 0, whiteSpace: 'nowrap' },
-  navLinkActive:  { color: '#fff', background: '#222' },
-  sidebarFooter:  { borderTop: '1px solid #222', padding: 14 },
-  userName:       { fontSize: 12, color: '#666', marginBottom: 8 },
-  logoutBtn:      { background: 'none', border: '1px solid #333', color: '#888', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 13, width: '100%' },
-  main:           { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  topbar:         { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', height: 52, borderBottom: '1px solid #eee', background: '#fff', flexShrink: 0 },
-  breadcrumb:     { fontSize: 13, color: '#888' },
-  topbarRight:    { display: 'flex', alignItems: 'center', gap: 12 },
-  roleTag:        { fontSize: 11, fontWeight: 700, padding: '3px 8px', background: '#f1f5f9', borderRadius: 4, textTransform: 'uppercase', color: '#475569' },
-  settingsLink:   { fontSize: 13, color: '#666', textDecoration: 'none' },
-  content:        { flex: 1, overflowY: 'auto', padding: 24, background: '#f8f9fa' },
+  shell:        { display: 'flex', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif' },
+  sidebar:      { background: '#111827', color: '#fff', display: 'flex', flexDirection: 'column', transition: 'width .2s', flexShrink: 0, overflow: 'hidden' },
+  sidebarHead:  { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 14px', borderBottom: '1px solid #1f2937' },
+  logo:         { fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em', color: '#fff' },
+  collapseBtn:  { background: 'none', border: 'none', color: '#6b7280', fontSize: 18, cursor: 'pointer', padding: '0 4px', lineHeight: 1 },
+  nav:          { flex: 1, overflowY: 'auto', padding: '8px 0' },
+  navLink:      { display: 'block', padding: '9px 16px', color: '#9ca3af', textDecoration: 'none', fontSize: 14, whiteSpace: 'nowrap', transition: 'background .15s, color .15s' },
+  navLinkActive:{ color: '#fff', background: '#1f2937' },
+  sidebarFooter:{ borderTop: '1px solid #1f2937', padding: 14 },
+  userName:     { fontSize: 13, color: '#e5e7eb', margin: '0 0 2px', fontWeight: 600 },
+  userEmail:    { fontSize: 11, color: '#6b7280', margin: '0 0 10px' },
+  logoutBtn:    { width: '100%', background: 'none', border: '1px solid #374151', color: '#9ca3af', padding: '7px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 13 },
+  main:         { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#f9fafb' },
+  topbar:       { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 24px', height: 56, borderBottom: '1px solid #e5e7eb', background: '#fff', flexShrink: 0 },
+  topbarRight:  { display: 'flex', alignItems: 'center', gap: 12 },
+  roleTag:      { fontSize: 11, fontWeight: 700, padding: '3px 8px', background: '#eff6ff', borderRadius: 4, color: '#1d4ed8', letterSpacing: '0.05em' },
+  settingsLink: { fontSize: 13, color: '#6b7280', textDecoration: 'none' },
+  content:      { flex: 1, overflowY: 'auto', padding: 24 },
 };

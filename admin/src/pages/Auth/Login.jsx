@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import api from '../../services/api';
+import api, { setAccessToken } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
-import { setAccessToken } from '../../services/api';
 
 export default function Login() {
-  const navigate = useNavigate();
+  const navigate    = useNavigate();
   const { setUser } = useAuthStore();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm]   = useState({ email: 'admin@gmail.com', password: 'admin' });
   const [error, setError] = useState('');
 
   const mutation = useMutation({
@@ -16,7 +15,7 @@ export default function Login() {
     onSuccess: (res) => {
       const { user, accessToken } = res.data.data;
       if (user.role !== 'admin' && user.role !== 'employee') {
-        setError('Access denied. Admin accounts only.');
+        setError('Access denied. Admin/employee accounts only.');
         return;
       }
       setAccessToken(accessToken);
@@ -26,39 +25,60 @@ export default function Login() {
     onError: (err) => setError(err.response?.data?.message || 'Login failed'),
   });
 
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
   return (
     <div style={s.page}>
       <div style={s.card}>
-        <h1 style={s.title}>ShopAdmin</h1>
-        <p style={s.sub}>Sign in to your account</p>
-        {error && <div style={s.error}>{error}</div>}
+        <div style={s.brand}>ShopAdmin</div>
+        <p style={s.sub}>Sign in to your admin account</p>
+
+        {error && <div style={s.errorBox}>{error}</div>}
+
         <div style={s.field}>
           <label style={s.label}>Email</label>
-          <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-            style={s.input} placeholder="admin@gmail.com" autoFocus />
+          <input
+            type="email"
+            value={form.email}
+            onChange={e => set('email', e.target.value)}
+            style={s.input}
+            autoFocus />
         </div>
+
         <div style={s.field}>
           <label style={s.label}>Password</label>
-          <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-            style={s.input} placeholder="••••••••"
+          <input
+            type="password"
+            value={form.password}
+            onChange={e => set('password', e.target.value)}
+            style={s.input}
             onKeyDown={e => e.key === 'Enter' && mutation.mutate(form)} />
         </div>
-        <button onClick={() => mutation.mutate(form)} disabled={mutation.isPending} style={s.btn}>
+
+        <button
+          onClick={() => mutation.mutate(form)}
+          disabled={mutation.isPending}
+          style={s.btn}>
           {mutation.isPending ? 'Signing in...' : 'Sign in'}
         </button>
+
+        <p style={s.hint}>
+          Default: admin@gmail.com / admin
+        </p>
       </div>
     </div>
   );
 }
 
 const s = {
-  page:  { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fa' },
-  card:  { background: '#fff', borderRadius: 12, padding: '40px 36px', width: 360, border: '1px solid #eee' },
-  title: { fontSize: 22, fontWeight: 700, margin: '0 0 4px', textAlign: 'center' },
-  sub:   { fontSize: 14, color: '#888', textAlign: 'center', margin: '0 0 28px' },
-  error: { background: '#fee2e2', color: '#991b1b', padding: '10px 14px', borderRadius: 8, fontSize: 14, marginBottom: 16 },
-  field: { marginBottom: 16 },
-  label: { display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 },
-  input: { width: '100%', padding: '10px 12px', border: '1px solid #e2e2e2', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', outline: 'none' },
-  btn:   { width: '100%', padding: 12, background: '#111', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 4 },
+  page:     { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6' },
+  card:     { background: '#fff', borderRadius: 12, padding: '40px 36px', width: 380, border: '1px solid #e5e7eb' },
+  brand:    { fontSize: 24, fontWeight: 800, marginBottom: 4, color: '#111827' },
+  sub:      { fontSize: 14, color: '#6b7280', margin: '0 0 28px' },
+  errorBox: { background: '#fef2f2', color: '#dc2626', padding: '10px 14px', borderRadius: 8, fontSize: 14, marginBottom: 16, border: '1px solid #fecaca' },
+  field:    { marginBottom: 16 },
+  label:    { display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#374151' },
+  input:    { width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
+  btn:      { width: '100%', padding: 12, background: '#111827', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer', marginTop: 4 },
+  hint:     { fontSize: 12, color: '#9ca3af', textAlign: 'center', marginTop: 16 },
 };

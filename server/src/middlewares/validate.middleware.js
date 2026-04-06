@@ -7,5 +7,6 @@ export const validate = (schema) => (req, res, next) => {
       errors: error.details.map((d) => ({ field: d.path[0], message: d.message })),
     });
   }
+  console.log('Validation passed');
   next();
 };
