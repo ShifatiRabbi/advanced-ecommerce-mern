@@ -12,6 +12,12 @@ import inventoryRoutes from '../modules/inventory/inventory.routes.js';
 import offerRoutes     from '../modules/offer/offer.routes.js';
 import deliveryRoutes  from '../modules/delivery/delivery.routes.js';
 import blogRoutes      from '../modules/blog/blog.routes.js';
+import seoRoutes       from '../modules/seo/seo.routes.js';
+import marketingRoutes from '../modules/marketing/marketing.routes.js';
+import reviewRoutes    from '../modules/review/review.routes.js';
+import wishlistRoutes  from '../modules/wishlist/wishlist.routes.js';
+import bannerRoutes    from '../modules/banner/banner.routes.js';
+import flashsaleRoutes from '../modules/flashsale/flashsale.routes.js';
 import os              from 'os';
 
 const router = Router();
@@ -29,6 +35,12 @@ router.use('/inventory',  inventoryRoutes);
 router.use('/offers',     offerRoutes);
 router.use('/delivery',   deliveryRoutes);
 router.use('/blog',       blogRoutes);
+router.use('/seo',        seoRoutes);
+router.use('/marketing',  marketingRoutes);
+router.use('/reviews',    reviewRoutes);
+router.use('/wishlist',   wishlistRoutes);
+router.use('/banners',    bannerRoutes);
+router.use('/flash-sales', flashsaleRoutes);
 
 router.get('/health', (req, res) => res.json({
   success: true, status: 'ok',

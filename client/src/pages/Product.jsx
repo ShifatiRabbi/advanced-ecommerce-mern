@@ -1,14 +1,24 @@
-import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useProduct, useRelatedProducts } from '../hooks/useProducts';
+import { useWishlistStore } from '../store/wishlistStore';
+import { useAuthStore } from '../store/authStore';
 
 export default function ProductPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+
   const { data: product, isLoading, isError } = useProduct(slug);
   const { data: related = [] } = useRelatedProducts(slug);
+
+  const { toggle, isWishlisted, fetchWishlist } = useWishlistStore();
+  const { user } = useAuthStore();
+
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
+
+  useEffect(() => { if (user) fetchWishlist(); }, [user]);
 
   if (isLoading) return <div style={{ padding: 80, textAlign: 'center' }}>Loading...</div>;
   if (isError || !product) return <div style={{ padding: 80, textAlign: 'center' }}>Product not found.</div>;
@@ -24,9 +34,9 @@ export default function ProductPage() {
       <Helmet>
         <title>{product.meta?.title || product.name}</title>
         <meta name="description" content={product.meta?.description || product.shortDesc || product.description?.slice(0, 160)} />
-        <meta name="keywords"    content={product.meta?.keywords?.join(', ') || product.tags?.join(', ')} />
-        <meta property="og:title"       content={product.name} />
-        <meta property="og:image"       content={product.images?.[0]?.url} />
+        <meta name="keywords" content={product.meta?.keywords?.join(', ') || product.tags?.join(', ')} />
+        <meta property="og:title" content={product.name} />
+        <meta property="og:image" content={product.images?.[0]?.url} />
         <meta property="og:description" content={product.shortDesc} />
       </Helmet>
 
@@ -42,11 +52,17 @@ export default function ProductPage() {
               )}
               {discount > 0 && <span style={styles.discBadge}>{discount}% OFF</span>}
             </div>
+
             {product.images?.length > 1 && (
               <div style={styles.thumbRow}>
                 {product.images.map((img, i) => (
-                  <img key={i} src={img.url} alt="" style={{ ...styles.thumb, ...(activeImg === i && styles.thumbActive) }}
-                    onClick={() => setActiveImg(i)} />
+                  <img
+                    key={i}
+                    src={img.url}
+                    alt=""
+                    style={{ ...styles.thumb, ...(activeImg === i && styles.thumbActive) }}
+                    onClick={() => setActiveImg(i)}
+                  />
                 ))}
               </div>
             )}
@@ -57,13 +73,16 @@ export default function ProductPage() {
             <nav style={styles.breadcrumb}>
               <Link to="/">Home</Link> / <Link to="/shop">Shop</Link> / {product.category?.name} / {product.name}
             </nav>
+
             {product.brand && <p style={styles.brandLabel}>{product.brand.name}</p>}
             <h1 style={styles.title}>{product.name}</h1>
 
             <div style={styles.ratingRow}>
               {'★'.repeat(Math.round(product.ratings?.average || 0))}
               {'☆'.repeat(5 - Math.round(product.ratings?.average || 0))}
-              <span style={{ marginLeft: 8, fontSize: 13, color: '#888' }}>({product.ratings?.count || 0} reviews)</span>
+              <span style={{ marginLeft: 8, fontSize: 13, color: '#888' }}>
+                ({product.ratings?.count || 0} reviews)
+              </span>
             </div>
 
             <div style={styles.priceBlock}>
@@ -88,14 +107,33 @@ export default function ProductPage() {
                   <span style={styles.qtyVal}>{qty}</span>
                   <button onClick={() => setQty((q) => Math.min(product.stock, q + 1))} style={styles.qtyBtn}>+</button>
                 </div>
+
                 <button style={styles.cartBtn}>Add to Cart</button>
+
+                {/* ❤️ HEART BUTTON */}
+                <button
+                  onClick={() => user ? toggle(product._id) : navigate('/login')}
+                  style={{
+                    padding: '12px 16px',
+                    border: '1px solid #e2e2e2',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    fontSize: 18,
+                    background: isWishlisted(product._id) ? '#fff0f0' : '#fff',
+                    color: isWishlisted(product._id) ? '#e53e3e' : '#888'
+                  }}
+                >
+                  {isWishlisted(product._id) ? '♥' : '♡'}
+                </button>
               </div>
             )}
 
             {product.tags?.length > 0 && (
               <div style={styles.tags}>
                 {product.tags.map((tag) => (
-                  <Link key={tag} to={`/shop?search=${tag}`} style={styles.tag}>{tag}</Link>
+                  <Link key={tag} to={`/shop?search=${tag}`} style={styles.tag}>
+                    {tag}
+                  </Link>
                 ))}
               </div>
             )}
@@ -117,9 +155,13 @@ export default function ProductPage() {
             <div style={styles.relatedGrid}>
               {related.map((p) => (
                 <Link key={p._id} to={`/product/${p.slug}`} style={styles.relatedCard}>
-                  {p.images?.[0] && <img src={p.images[0].url} alt={p.name} style={styles.relatedImg} />}
+                  {p.images?.[0] && (
+                    <img src={p.images[0].url} alt={p.name} style={styles.relatedImg} />
+                  )}
                   <p style={styles.relatedName}>{p.name}</p>
-                  <p style={styles.relatedPrice}>৳{(p.discountPrice || p.price).toLocaleString()}</p>
+                  <p style={styles.relatedPrice}>
+                    ৳{(p.discountPrice || p.price).toLocaleString()}
+                  </p>
                 </Link>
               ))}
             </div>

@@ -11,3 +11,6 @@ export const updateLayout = asyncHandler(async (req, res) => {
   const settings = await settingsService.updateLayoutSettings(req.body);
   sendSuccess(res, { message: 'Layout updated', data: settings });
 });
+
+export const getCustomCode  = asyncHandler(async (req, res) => sendSuccess(res, { data: await settingsService.getCustomCode() }));
+export const saveCustomCode = asyncHandler(async (req, res) => sendSuccess(res, { data: await settingsService.saveCustomCode(req.body) }));

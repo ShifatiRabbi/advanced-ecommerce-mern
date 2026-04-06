@@ -4,6 +4,9 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from '../../utils/jwt.js';
+import { sendWelcomeEmail }      from '../../utils/email.js';
+import { sendPasswordReset } from '../../utils/email.js';
+
 
 export const registerUser = async ({ name, email, phone, password }) => {
   const existing = await User.findOne({ email });
@@ -14,6 +17,7 @@ export const registerUser = async ({ name, email, phone, password }) => {
   }
 
   const user = await User.create({ name, email, phone, password });
+  sendWelcomeEmail(user).catch(() => {});
   return sanitizeUser(user);
 };
 
@@ -79,3 +83,27 @@ const sanitizeUser = (user) => ({
   phone: user.phone,
   role: user.role,
 });
+
+export const requestPasswordReset = async (email, siteUrl) => {
+  const user = await User.findOne({ email });
+  if (!user) return; // silent — don't leak existence
+  const token   = crypto.randomBytes(32).toString('hex');
+  const hashed  = crypto.createHash('sha256').update(token).digest('hex');
+  user.passwordResetToken   = hashed;
+  user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
+  await user.save({ validateBeforeSave: false });
+  await sendPasswordReset(email, token, siteUrl).catch(() => {});
+};
+
+export const resetPassword = async (token, newPassword) => {
+  const hashed = crypto.createHash('sha256').update(token).digest('hex');
+  const user   = await User.findOne({
+    passwordResetToken:   hashed,
+    passwordResetExpires: { $gt: Date.now() },
+  }).select('+passwordResetToken +passwordResetExpires');
+  if (!user) throw Object.assign(new Error('Invalid or expired reset token'), { status: 400 });
+  user.password             = newPassword;
+  user.passwordResetToken   = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+};

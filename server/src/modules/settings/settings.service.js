@@ -24,3 +24,25 @@ export const updateLayoutSettings = async ({ header, footer }) => {
   await Promise.all(ops);
   return getLayoutSettings();
 };
+
+export const getCustomCode = async () => {
+  const [css, js, headerScripts] = await Promise.all([
+    Settings.findOne({ key: 'customCss' }),
+    Settings.findOne({ key: 'customJs' }),
+    Settings.findOne({ key: 'headerScripts' }),
+  ]);
+  return {
+    customCss:     css?.value     || '',
+    customJs:      js?.value      || '',
+    headerScripts: headerScripts?.value || '',
+  };
+};
+
+export const saveCustomCode = async ({ customCss, customJs, headerScripts }) => {
+  await Promise.all([
+    Settings.findOneAndUpdate({ key: 'customCss' },     { value: customCss     || '' }, { upsert: true }),
+    Settings.findOneAndUpdate({ key: 'customJs' },      { value: customJs      || '' }, { upsert: true }),
+    Settings.findOneAndUpdate({ key: 'headerScripts' }, { value: headerScripts || '' }, { upsert: true }),
+  ]);
+  return getCustomCode();
+};

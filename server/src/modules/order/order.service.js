@@ -1,6 +1,8 @@
 import { Order }   from './order.model.js';
 import { Product } from '../product/product.model.js';
 import { detectFakeOrder } from '../../utils/fakeOrderDetector.js';
+import { sendOrderSms } from '../marketing/marketing.service.js';
+import { sendOrderConfirmation } from '../../utils/email.js';
 
 export const saveIncompleteOrder = async ({ phone, email, sessionId, items, ip, userAgent }) => {
   const existing = await Order.findOne({
@@ -96,6 +98,8 @@ export const createOrder = async ({ userId, items, shippingAddress, paymentMetho
   });
 
   if (!fakeCheck.isFake) {
+    sendOrderSms(order).catch(() => {});
+    sendOrderConfirmation(order).catch(() => {});
     for (const item of orderItems) {
       await Product.findByIdAndUpdate(item.product, { $inc: { stock: -item.qty } });
     }

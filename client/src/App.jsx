@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
+import { useAnalytics } from './hooks/useAnalytics';
 
 const Home = lazy(() => import('./pages/Home'));
 const Shop = lazy(() => import('./pages/Shop'));
@@ -15,6 +16,7 @@ const PaymentFail    = lazy(() => import('./pages/payment/PaymentFail'));
 const PaymentCancel  = lazy(() => import('./pages/payment/PaymentFail'));
 
 export default function App() {
+  useAnalytics();
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Routes>
