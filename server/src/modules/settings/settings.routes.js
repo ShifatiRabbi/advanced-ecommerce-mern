@@ -16,5 +16,7 @@ router.put('/theme',        protect, adminOnly, asyncHandler(async(req,res) => s
 router.post('/theme/reset', protect, adminOnly, asyncHandler(async(req,res) => sendSuccess(res,{data:await settingsService.resetTheme()})));
 router.get('/product-card-style',  asyncHandler(async(req,res) => sendSuccess(res,{data:await settingsService.getProductCardStyle()})));
 router.put('/product-card-style',  protect, adminOnly, asyncHandler(async(req,res) => sendSuccess(res,{data:await settingsService.updateProductCardStyle(req.body.style)})));
+router.get('/all',  asyncHandler(async(req,res) => sendSuccess(res,{data:await settingsService.getAllSettings()})));
+router.put('/bulk', protect, adminOnly, asyncHandler(async(req,res) => sendSuccess(res,{data:await settingsService.bulkUpdateSettings(req.body)})));
 
 export default router;

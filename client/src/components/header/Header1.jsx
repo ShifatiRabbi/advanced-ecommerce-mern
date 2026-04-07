@@ -5,8 +5,12 @@ import { useCartStore }      from '../../store/cartStore';
 import { useAuthStore }      from '../../store/authStore';
 import { useTranslation }    from 'react-i18next';
 import { useMenu } from '../../hooks/useMenu';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 export default function Header1() {
+  const settings = useSiteSettings();
+  const logo     = settings?.logo;
+  const siteName = settings?.siteName || 'ShopBD';
   const { data: menuData } = useMenu('header');
   const { itemCount } = useCartStore();
   const { user }      = useAuthStore();
@@ -23,7 +27,11 @@ export default function Header1() {
 
   return (
     <header style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--header-bg, #111)', color: 'var(--header-text-color, #fff)', padding: '0 40px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <Link to="/" style={{ color: 'var(--header-text-color,#fff)', textDecoration: 'none', fontWeight: 700, fontSize: 20 }}>ShopBD</Link>
+      <Link to="/" style={{ color: 'var(--header-text-color,#fff)', textDecoration: 'none', fontWeight: 700, fontSize: 20 }}>
+        {logo
+          ? <img src={logo} alt={siteName} style={{ height: 44, objectFit: 'contain' }} />
+          : <span style={{ color: '#fff', fontWeight: 700, fontSize: 20 }}>{siteName}</span>}
+      </Link>
       <nav style={{ display: 'flex', gap: 24, fontSize: 14 }}>
         {menuItems.map(item => (
           <Link key={item.id} to={item.url} target={item.target}

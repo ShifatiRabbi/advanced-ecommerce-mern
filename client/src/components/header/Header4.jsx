@@ -2,8 +2,12 @@
 
 import { Link }          from 'react-router-dom';
 import { useCartStore }  from '../../store/cartStore';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 export default function Header4() {
+  const settings = useSiteSettings();
+  const logo     = settings?.logo;
+  const siteName = settings?.siteName || 'ShopBD';
   const { itemCount } = useCartStore();
   return (
     <>
@@ -12,7 +16,11 @@ export default function Header4() {
         <Link to="/shop" style={{ color: '#fbbf24', fontWeight: 700, textDecoration: 'none' }}>Shop now →</Link>
       </div>
       <header style={{ background: '#fff', borderBottom: '1px solid #eee', padding: '0 40px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link to="/" style={{ fontWeight: 800, fontSize: 20, color: '#111', textDecoration: 'none' }}>ShopBD</Link>
+        <Link to="/" style={{ fontWeight: 800, fontSize: 20, color: '#111', textDecoration: 'none' }}>
+          {logo
+          ? <img src={logo} alt={siteName} style={{ height: 44, objectFit: 'contain' }} />
+          : <span style={{ color: '#fff', fontWeight: 700, fontSize: 20 }}>{siteName}</span>}
+        </Link>
         <nav style={{ display: 'flex', gap: 20, fontSize: 14 }}>
           {[['/', 'Home'], ['/shop', 'Shop'], ['/shop?featured=true', 'Deals'], ['/blog', 'Blog'], ['/contact', 'Contact']].map(([to, l]) => (
             <Link key={to} to={to} style={{ color: '#444', textDecoration: 'none' }}>{l}</Link>

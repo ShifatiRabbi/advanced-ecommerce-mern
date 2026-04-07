@@ -100,3 +100,16 @@ export const updateProductCardStyle = async (style) => {
   await Settings.findOneAndUpdate({ key: 'productCardStyle' }, { value: style }, { upsert: true });
   return style;
 };
+
+export const getAllSettings = async () => {
+  const docs = await Settings.find().lean();
+  return Object.fromEntries(docs.map(d => [d.key, d.value]));
+};
+
+export const bulkUpdateSettings = async (data) => {
+  const ops = Object.entries(data).map(([key, value]) =>
+    Settings.findOneAndUpdate({ key }, { value }, { upsert: true, new: true })
+  );
+  await Promise.all(ops);
+  return getAllSettings();
+};

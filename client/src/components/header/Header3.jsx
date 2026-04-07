@@ -3,14 +3,22 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCartStore }      from '../../store/cartStore';
 import { useCategories }     from '../../hooks/useProducts';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 export default function Header3() {
+  const settings = useSiteSettings();
+  const logo     = settings?.logo;
+  const siteName = settings?.siteName || 'ShopBD';
   const { itemCount }  = useCartStore();
   const { data: cats } = useCategories();
   return (
     <header style={{ background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
       <div style={{ textAlign: 'center', padding: '16px 0 8px', borderBottom: '1px solid #f0f0f0' }}>
-        <Link to="/" style={{ fontSize: 28, fontWeight: 900, color: '#111', textDecoration: 'none', letterSpacing: '-0.04em' }}>SHOPBD</Link>
+        <Link to="/" style={{ fontSize: 28, fontWeight: 900, color: '#111', textDecoration: 'none', letterSpacing: '-0.04em' }}>
+          {logo
+          ? <img src={logo} alt={siteName} style={{ height: 44, objectFit: 'contain' }} />
+          : <span style={{ color: '#fff', fontWeight: 700, fontSize: 20 }}>{siteName}</span>}
+        </Link>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', gap: 8, padding: '8px 40px', flexWrap: 'wrap' }}>
         <Link to="/shop" style={navStyle}>All Products</Link>

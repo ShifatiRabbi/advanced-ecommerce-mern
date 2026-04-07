@@ -2,7 +2,15 @@ import { Order }   from './order.model.js';
 import { Product } from '../product/product.model.js';
 import { detectFakeOrder } from '../../utils/fakeOrderDetector.js';
 import { sendOrderSms } from '../marketing/marketing.service.js';
-import { sendOrderConfirmation } from '../../utils/email.js';
+import { sendEmailByType } from '../email/emailTemplate.service.js';
+
+// --- CONFIG ---
+const STATUS_EMAIL_MAP = {
+  confirmed: 'order_confirmed',
+  shipped:   'order_shipped',
+  delivered: 'order_delivered',
+  cancelled: 'order_cancelled',
+};
 
 export const saveIncompleteOrder = async ({ phone, email, sessionId, items, ip, userAgent }) => {
   const existing = await Order.findOne({
@@ -69,7 +77,6 @@ export const createOrder = async ({ userId, items, shippingAddress, paymentMetho
 
   const shippingCharge = subtotal >= 1000 ? 0 : 60;
   let discount = 0;
-
   const total = subtotal + shippingCharge - discount;
 
   const fakeCheck = detectFakeOrder({
@@ -98,8 +105,24 @@ export const createOrder = async ({ userId, items, shippingAddress, paymentMetho
   });
 
   if (!fakeCheck.isFake) {
+    // 1. Send SMS (Existing)
     sendOrderSms(order).catch(() => {});
-    sendOrderConfirmation(order).catch(() => {});
+
+    // 2. Send New Email Template (Replaces sendOrderConfirmation)
+    if (order.shippingAddress?.email) {
+      sendEmailByType('order_placed', {
+        to:            order.shippingAddress.email,
+        customerName:  order.shippingAddress.fullName,
+        orderNumber:   order.orderNumber,
+        itemsHtml:     order.items.map(i => `<tr><td>${i.name} ×${i.qty}</td><td>৳${i.total}</td></tr>`).join(''),
+        total:         order.total.toLocaleString(),
+        paymentMethod: order.paymentMethod.toUpperCase(),
+        city:          order.shippingAddress.city,
+        trackUrl:      `${process.env.CLIENT_URL}/order-success/${order.orderNumber}`,
+      }).catch(() => {});
+    }
+
+    // 3. Update Inventory
     for (const item of orderItems) {
       await Product.findByIdAndUpdate(item.product, { $inc: { stock: -item.qty } });
     }
@@ -166,7 +189,27 @@ export const updateOrderStatus = async (id, status, adminNote) => {
   if (!allowed.includes(status)) {
     const e = new Error('Invalid status'); e.status = 400; throw e;
   }
-  return Order.findByIdAndUpdate(id, { status, ...(adminNote && { adminNote }) }, { new: true });
+
+  const order = await Order.findByIdAndUpdate(
+    id, 
+    { status, ...(adminNote && { adminNote }) }, 
+    { new: true }
+  );
+
+  // New Status Email Logic
+  const emailType = STATUS_EMAIL_MAP[status];
+  if (order && emailType && order.shippingAddress?.email) {
+    sendEmailByType(emailType, {
+      to:           order.shippingAddress.email,
+      customerName: order.shippingAddress.fullName,
+      orderNumber:  order.orderNumber,
+      trackingId:   order.trackingId || '—',
+      courier:      order.courier   || '—',
+      reviewUrl:    `${process.env.CLIENT_URL}/product/${order.items?.[0]?.slug || ''}`,
+    }).catch(() => {});
+  }
+
+  return order;
 };
 
 export const getUserOrders = async (userId, { page = 1, limit = 10 } = {}) => {

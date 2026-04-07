@@ -4,6 +4,7 @@ import MainLayout from './layouts/MainLayout';
 import { useAnalytics } from './hooks/useAnalytics';
 import {  useCustomCode } from './hooks/useCustomCode';
 import {  useTheme } from './hooks/useTheme';
+import { useSiteSettings } from './hooks/useSiteSettings';
 
 const Home = lazy(() => import('./pages/Home'));
 const Shop = lazy(() => import('./pages/Shop'));
@@ -28,6 +29,7 @@ export default function App() {
   useTheme();
   useCustomCode();
   useAnalytics();
+  useSiteSettings();
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Routes>

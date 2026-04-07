@@ -25,6 +25,8 @@ import courierRoutes   from '../modules/courier/courier.routes.js';
 import sliderRoutes    from '../modules/slider/slider.routes.js';
 import marqueeRoutes   from '../modules/marquee/marquee.routes.js';
 import timerRoutes     from '../modules/timer/timer.routes.js';
+import emailTemplateRoutes from '../modules/email/emailTemplate.routes.js';
+import fraudRoutes     from '../modules/fraud/fraud.routes.js';
 import os              from 'os';
 
 const router = Router();
@@ -55,6 +57,8 @@ router.use('/courier',    courierRoutes);
 router.use('/sliders',    sliderRoutes);
 router.use('/marquees',   marqueeRoutes);
 router.use('/timers',     timerRoutes);
+router.use('/email-templates', emailTemplateRoutes);
+router.use('/fraud',      fraudRoutes);
 
 router.get('/health', (req, res) => res.json({
   success: true, status: 'ok',

@@ -4,8 +4,12 @@ import { useState }          from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCartStore }      from '../../store/cartStore';
 import { useAuthStore }      from '../../store/authStore';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 export default function Header2() {
+  const settings = useSiteSettings();
+  const logo     = settings?.logo;
+  const siteName = settings?.siteName || 'ShopBD';
   const { itemCount } = useCartStore();
   const { user }      = useAuthStore();
   const navigate      = useNavigate();
@@ -14,7 +18,11 @@ export default function Header2() {
   return (
     <header style={{ background: '#fff', borderBottom: '1px solid #eee', padding: '0 40px' }}>
       <div style={{ display: 'flex', alignItems: 'center', height: 70, gap: 24 }}>
-        <Link to="/" style={{ fontWeight: 800, fontSize: 22, color: '#111', textDecoration: 'none', flexShrink: 0 }}>ShopBD</Link>
+        <Link to="/" style={{ fontWeight: 800, fontSize: 22, color: '#111', textDecoration: 'none', flexShrink: 0 }}>
+          {logo
+          ? <img src={logo} alt={siteName} style={{ height: 44, objectFit: 'contain' }} />
+          : <span style={{ color: '#fff', fontWeight: 700, fontSize: 20 }}>{siteName}</span>}
+        </Link>
         <form onSubmit={e => { e.preventDefault(); navigate(`/shop?search=${search}`); }} style={{ flex: 1, display: 'flex', gap: 0 }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..."
             style={{ flex: 1, padding: '10px 16px', border: '2px solid #eee', borderRight: 'none', borderRadius: '8px 0 0 8px', fontSize: 14, outline: 'none' }} />

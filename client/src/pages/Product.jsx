@@ -1,247 +1,397 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
-import { useProduct, useRelatedProducts } from '../hooks/useProducts';
-import { useWishlistStore } from '../store/wishlistStore';
-import { useAuthStore } from '../store/authStore';
-import MarqueeBar from '../components/MarqueeBar';
-import ProductTimer from '../components/ProductTimer';
+import { useState, useRef, useCallback, useEffect }  from 'react';
+import { useParams, Link, useNavigate }              from 'react-router-dom';
+import { Helmet }                                    from 'react-helmet-async';
+import { useQuery, useMutation }                     from '@tanstack/react-query';
+import api                                           from '../services/api';
+import { useCartStore }                              from '../store/cartStore';
+import { useAuthStore }                              from '../store/authStore';
+import ProductTimer                                  from '../components/ProductTimer';
+import MarqueeBar                                    from '../components/MarqueeBar';
+import ReviewSection                                 from '../components/ReviewSection';
 
 export default function ProductPage() {
-  const { slug } = useParams();
-  const navigate = useNavigate();
+  const { slug }     = useParams();
+  const navigate     = useNavigate();
+  const { addItem }  = useCartStore();
+  const { user }     = useAuthStore();
 
-  const { data: product, isLoading, isError } = useProduct(slug);
-  const { data: related = [] } = useRelatedProducts(slug);
+  const [activeImg,   setActiveImg]   = useState(0);
+  const [qty,         setQty]         = useState(1);
+  const [selVariants, setSelVariants] = useState({});
+  const [zoomPos,     setZoomPos]     = useState({ x: 50, y: 50 });
+  const [isZooming,   setIsZooming]   = useState(false);
+  const imgRef = useRef(null);
 
-  const { toggle, isWishlisted, fetchWishlist } = useWishlistStore();
-  const { user } = useAuthStore();
+  const { data: product, isLoading, isError } = useQuery({
+    queryKey: ['product', slug],
+    queryFn:  () => api.get(`/products/slug/${slug}`).then(r => r.data.data),
+    enabled:  !!slug,
+  });
 
-  const [activeImg, setActiveImg] = useState(0);
-  const [qty, setQty] = useState(1);
+  const { data: related = [] } = useQuery({
+    queryKey: ['related', slug],
+    queryFn:  () => api.get(`/products/slug/${slug}/related`).then(r => r.data.data),
+    enabled:  !!slug,
+  });
 
-  const [selectedVariants, setSelectedVariants] = useState({});
+  const handleMouseMove = useCallback((e) => {
+    const rect = imgRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = ((e.clientX - rect.left) / rect.width)  * 100;
+    const y = ((e.clientY - rect.top)  / rect.height) * 100;
+    setZoomPos({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
+  }, []);
 
-  const selectVariantOption = (variantName, option) => {
-    setSelectedVariants(prev => ({ ...prev, [variantName]: option }));
-  };
-
-  const variantPriceAdj = Object.values(selectedVariants).reduce(
-    (sum, opt) => sum + (opt.priceModifier || 0),
-    0
+  if (isLoading) return <div style={ps.loadingPage}>Loading...</div>;
+  if (isError || !product) return (
+    <div style={ps.loadingPage}>
+      Product not found. <Link to="/shop">Browse shop</Link>
+    </div>
   );
 
-  useEffect(() => { if (user) fetchWishlist(); }, [user]);
-
-  if (isLoading) return <div style={{ padding: 80, textAlign: 'center' }}>Loading...</div>;
-  if (isError || !product) return <div style={{ padding: 80, textAlign: 'center' }}>Product not found.</div>;
-
   const discount = product.discountPrice
-    ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
-    : 0;
+    ? Math.round(((product.price - product.discountPrice) / product.price) * 100) : 0;
+  const finalPrice  = product.discountPrice || product.price;
+  const variantAdj  = Object.values(selVariants).reduce((s, o) => s + (o?.priceModifier || 0), 0);
+  const displayPrice = finalPrice + variantAdj;
 
-  const finalPrice = product.discountPrice || product.price;
+  const handleAddToCart = () => addItem({ ...product, selectedVariants: selVariants }, qty);
+  const handleBuyNow    = () => { handleAddToCart(); navigate('/checkout'); };
 
   return (
     <>
       <Helmet>
         <title>{product.meta?.title || product.name}</title>
-        <meta name="description" content={product.meta?.description || product.shortDesc || product.description?.slice(0, 160)} />
-        <meta name="keywords" content={product.meta?.keywords?.join(', ') || product.tags?.join(', ')} />
-        <meta property="og:title" content={product.name} />
-        <meta property="og:image" content={product.images?.[0]?.url} />
-        <meta property="og:description" content={product.shortDesc} />
+        <meta name="description" content={product.meta?.description || product.shortDesc} />
+        {product.images?.[0] && <meta property="og:image" content={product.images[0].url} />}
       </Helmet>
-      <MarqueeBar position="product-detail" productId={product._id} categoryId={product.category?._id} />
 
-      <div style={styles.page}>
-        <div style={styles.grid}>
-          {/* Images */}
-          <div style={styles.imageSection}>
-            <div style={styles.mainImgWrap}>
-              {product.images?.[activeImg] ? (
-                <img src={product.images[activeImg].url} alt={product.name} style={styles.mainImg} />
-              ) : (
-                <div style={styles.imgPlaceholder}>No image</div>
+      <MarqueeBar position="below-header" page="/product" productId={product._id} categoryId={product.category?._id} />
+
+      <div style={ps.page}>
+
+        {/* ── Breadcrumb ── */}
+        <nav style={ps.breadcrumb}>
+          <Link to="/" style={ps.breadLink}>Home</Link>
+          <span style={ps.breadSep}> &rsaquo; </span>
+          <Link to="/shop" style={ps.breadLink}>Products</Link>
+          <span style={ps.breadSep}> &rsaquo; </span>
+          <span style={ps.breadCurrent}>{product.name}</span>
+        </nav>
+        <Link to="/shop" style={ps.backLink}>‹ All Products</Link>
+
+        {/* ── Main grid ── */}
+        <div style={ps.mainGrid}>
+
+          {/* ── Image column ── */}
+          <div style={ps.imageCol}>
+            <div
+              ref={imgRef}
+              style={{
+                ...ps.mainImgWrap,
+                cursor: isZooming ? 'zoom-in' : 'crosshair',
+              }}
+              onMouseMove={handleMouseMove}
+              onMouseEnter={() => setIsZooming(true)}
+              onMouseLeave={() => setIsZooming(false)}>
+
+              {/* Discount badge */}
+              {discount > 0 && <span style={ps.discBadge}>{discount}% OFF</span>}
+
+              {/* Main image */}
+              {product.images?.[activeImg] && (
+                <img
+                  src={product.images[activeImg].url}
+                  alt={product.name}
+                  style={{
+                    width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                    transition: 'opacity .2s',
+                  }} />
               )}
-              {discount > 0 && <span style={styles.discBadge}>{discount}% OFF</span>}
+
+              {/* Zoom lens overlay */}
+              {isZooming && product.images?.[activeImg] && (
+                <div style={{
+                  position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden',
+                }}>
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    backgroundImage:    `url(${product.images[activeImg].url})`,
+                    backgroundSize:     '250%',
+                    backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+                    backgroundRepeat:   'no-repeat',
+                    opacity: 0.92,
+                  }} />
+                </div>
+              )}
+
+              {/* Counter */}
+              <div style={ps.imgCounter}>
+                {activeImg + 1} / {product.images?.length || 1}
+              </div>
             </div>
 
+            {/* Thumbnail strip */}
             {product.images?.length > 1 && (
-              <div style={styles.thumbRow}>
+              <div style={ps.thumbStrip}>
                 {product.images.map((img, i) => (
-                  <img
+                  <button
                     key={i}
-                    src={img.url}
-                    alt=""
-                    style={{ ...styles.thumb, ...(activeImg === i && styles.thumbActive) }}
                     onClick={() => setActiveImg(i)}
-                  />
+                    style={{
+                      ...ps.thumb,
+                      ...(activeImg === i && ps.thumbActive),
+                    }}>
+                    <img src={img.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Info */}
-          <div style={styles.infoSection}>
-            <nav style={styles.breadcrumb}>
-              <Link to="/">Home</Link> / <Link to="/shop">Shop</Link> / {product.category?.name} / {product.name}
-            </nav>
+          {/* ── Info column ── */}
+          <div style={ps.infoCol}>
 
-            {product.brand && <p style={styles.brandLabel}>{product.brand.name}</p>}
-            <h1 style={styles.title}>{product.name}</h1>
+            {/* Brand */}
+            {product.brand && (
+              <p style={ps.brandLine}>
+                <Link to={`/shop?brand=${product.brand._id}`} style={{ color: '#2e7d32', fontWeight: 700, textDecoration: 'none' }}>
+                  {product.brand.name}
+                </Link>
+              </p>
+            )}
 
-            <div style={styles.ratingRow}>
+            {/* Title */}
+            <h1 style={ps.title}>{product.name}</h1>
+
+            {/* Rating row */}
+            <div style={ps.ratingRow}>
               {'★'.repeat(Math.round(product.ratings?.average || 0))}
               {'☆'.repeat(5 - Math.round(product.ratings?.average || 0))}
-              <span style={{ marginLeft: 8, fontSize: 13, color: '#888' }}>
+              <span style={{ marginLeft: 6, fontSize: 13, color: '#666' }}>
                 ({product.ratings?.count || 0} reviews)
               </span>
             </div>
-            
+
+            {/* Price */}
+            <div style={ps.priceRow}>
+              <span style={ps.finalPrice}>৳{displayPrice.toLocaleString()}</span>
+              {product.discountPrice && (
+                <span style={ps.origPrice}>৳{product.price.toLocaleString()}</span>
+              )}
+              {discount > 0 && <span style={ps.discPill}>{discount}% OFF</span>}
+            </div>
+
+            {/* Timer */}
             <ProductTimer productId={product._id} categoryId={product.category?._id} position="above-price" />
 
-            <div style={styles.priceBlock}>
-              <span style={styles.finalPrice}>৳{finalPrice.toLocaleString()}</span>
-              {product.discountPrice && (
-                <span style={styles.origPrice}>৳{product.price.toLocaleString()}</span>
-              )}
-            </div>
-
-            <ProductTimer productId={product._id} categoryId={product.category?._id} position="below-price" />
-
-            {product.shortDesc && <p style={styles.shortDesc}>{product.shortDesc}</p>}
-
-            <div style={styles.stockRow}>
-              <span style={{ color: product.stock > 0 ? '#38a169' : '#e53e3e', fontWeight: 600 }}>
-                {product.stock > 0 ? `In Stock (${product.stock})` : 'Out of Stock'}
-              </span>
-            </div>
-
-            {/* Variant Picker */}
-            {product.variants?.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                {product.variants.map((variant) => (
-                  <div key={variant.name} style={{ marginBottom: 14 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: '#374151' }}>
-                      {variant.name}
-                      {selectedVariants[variant.name] && (
-                        <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8 }}>
-                          — {selectedVariants[variant.name].label}
+            {/* ── Variant selector (radio-style rows like screenshot) ── */}
+            {product.variants?.map(variant => (
+              <div key={variant.name} style={ps.variantBlock}>
+                <p style={ps.variantLabel}>Select {variant.name}:</p>
+                {variant.options?.map(opt => {
+                  const isSelected = selVariants[variant.name]?.label === opt.label;
+                  const isOOS      = opt.stock === 0;
+                  return (
+                    <label
+                      key={opt.label}
+                      style={{
+                        ...ps.variantRow,
+                        ...(isSelected && ps.variantRowActive),
+                        ...(isOOS && ps.variantRowOOS),
+                      }}
+                      onClick={() => !isOOS && setSelVariants(prev => ({ ...prev, [variant.name]: opt }))}>
+                      <div style={ps.variantRadio}>
+                        <div style={{
+                          width: 14, height: 14, borderRadius: '50%',
+                          border: `2px solid ${isSelected ? '#2e7d32' : '#ccc'}`,
+                          background: isSelected ? '#2e7d32' : '#fff',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {isSelected && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff' }} />}
+                        </div>
+                      </div>
+                      {/* Variant image if first variant */}
+                      <div style={{ width: 36, height: 36, borderRadius: 4, overflow: 'hidden', background: '#f5f5f5', flexShrink: 0 }}>
+                        {product.images?.[0] && <img src={product.images[0].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <span style={{ fontWeight: 600, fontSize: 14 }}>{opt.label}</span>
+                        {isOOS && <span style={{ marginLeft: 8, fontSize: 12, color: '#dc2626' }}>Out of stock</span>}
+                        {discount > 0 && !isOOS && (
+                          <span style={{ marginLeft: 8, fontSize: 11, background: '#dc2626', color: '#fff', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>
+                            {discount}% OFF
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        {opt.priceModifier !== 0 && (
+                          <span style={{ fontSize: 11, color: '#888', textDecoration: 'line-through', display: 'block' }}>
+                            ৳{(displayPrice).toLocaleString()}
+                          </span>
+                        )}
+                        <span style={{ fontWeight: 700, fontSize: 15, color: '#111' }}>
+                          ৳{(finalPrice + (opt.priceModifier || 0)).toLocaleString()}
                         </span>
-                      )}
-                    </p>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {variant.options?.map((opt) => {
-                        const isSelected = selectedVariants[variant.name]?.label === opt.label;
-                        const outOfStock = opt.stock === 0;
-                        return (
-                          <button
-                            key={opt.label}
-                            onClick={() => !outOfStock && selectVariantOption(variant.name, opt)}
-                            disabled={outOfStock}
-                            style={{
-                              padding: '7px 16px',
-                              border: `2px solid ${isSelected ? '#111827' : '#d1d5db'}`,
-                              borderRadius: 8,
-                              background: isSelected ? '#111827' : '#fff',
-                              color: isSelected ? '#fff' : outOfStock ? '#d1d5db' : '#374151',
-                              cursor: outOfStock ? 'not-allowed' : 'pointer',
-                              fontSize: 14,
-                              fontWeight: isSelected ? 600 : 400,
-                              textDecoration: outOfStock ? 'line-through' : 'none',
-                              position: 'relative',
-                            }}>
-                            {opt.label}
-                            {opt.priceModifier !== 0 && (
-                              <span style={{ fontSize: 11, marginLeft: 4, opacity: 0.8 }}>
-                                {opt.priceModifier > 0 ? '+' : ''}৳{opt.priceModifier}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-                {variantPriceAdj !== 0 && (
-                  <p style={{ fontSize: 13, color: '#059669', fontWeight: 600 }}>
-                    Variant adjustment: {variantPriceAdj > 0 ? '+' : ''}৳{variantPriceAdj}
-                  </p>
-                )}
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
-            )}
+            ))}
 
-            {/* Add to Cart and WishList */}
+            {/* Stock */}
+            <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: product.stock > 0 ? '#2e7d32' : '#dc2626' }}>
+              {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
+            </p>
+
+            {/* Qty + Add to Cart + Buy Now */}
             {product.stock > 0 && (
-              <div style={styles.addToCart}>
-                <div style={styles.qtyRow}>
-                  <button onClick={() => setQty((q) => Math.max(1, q - 1))} style={styles.qtyBtn}>−</button>
-                  <span style={styles.qtyVal}>{qty}</span>
-                  <button onClick={() => setQty((q) => Math.min(product.stock, q + 1))} style={styles.qtyBtn}>+</button>
+              <div style={ps.actionRow}>
+                <div style={ps.qtyControl}>
+                  <button style={ps.qtyBtn} onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
+                  <span style={ps.qtyVal}>{qty}</span>
+                  <button style={ps.qtyBtn} onClick={() => setQty(q => Math.min(product.stock, q + 1))}>+</button>
                 </div>
-
-                <button style={styles.cartBtn}>Add to Cart</button>
-
-                {/* ❤️ HEART BUTTON */}
-                <button
-                  onClick={() => user ? toggle(product._id) : navigate('/login')}
-                  style={{
-                    padding: '12px 16px',
-                    border: '1px solid #e2e2e2',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    fontSize: 18,
-                    background: isWishlisted(product._id) ? '#fff0f0' : '#fff',
-                    color: isWishlisted(product._id) ? '#e53e3e' : '#888'
-                  }}
-                >
-                  {isWishlisted(product._id) ? '♥' : '♡'}
+                <button onClick={handleAddToCart} style={ps.addCartBtn}>
+                  🛒 Add to Cart
+                </button>
+                <button onClick={handleBuyNow} style={ps.buyNowBtn}>
+                  ⚡ Buy Now
                 </button>
               </div>
             )}
+
+            {/* Trust badges */}
+            <div style={ps.trustRow}>
+              {[
+                { icon: '🚚', title: 'Fast Delivery', sub: '2-5 days' },
+                { icon: '✅', title: '100% Original', sub: 'With guarantee' },
+                { icon: '↩️', title: 'Easy Return', sub: 'Within 7 days' },
+              ].map(b => (
+                <div key={b.title} style={ps.trustBadge}>
+                  <span style={{ fontSize: 20 }}>{b.icon}</span>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>{b.title}</p>
+                    <p style={{ fontSize: 11, color: '#888', margin: 0 }}>{b.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+
+        {/* ── Product Details — full width ── */}
+        <section style={ps.detailSection}>
+          <h2 style={ps.sectionTitle}>Product Details</h2>
+          <div style={ps.detailGrid}>
+            {[
+              { label: 'Brand',    value: product.brand?.name },
+              { label: 'Category', value: product.category?.name },
+              { label: 'SKU',      value: product.sku },
+              { label: 'Weight',   value: product.weight ? `${product.weight}g` : null },
+              { label: 'Stock',    value: product.stock },
+              { label: 'Tags',     value: product.tags?.join(', ') },
+            ].filter(r => r.value).map(row => (
+              <div key={row.label} style={ps.detailRow}>
+                <span style={ps.detailKey}>{row.label}:</span>
+                <span style={ps.detailVal}>{row.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {product.description && (
+            <div
+              style={{ marginTop: 20, fontSize: 15, lineHeight: 1.8, color: '#333' }}
+              dangerouslySetInnerHTML={{ __html: product.description }} />
+          )}
+        </section>
+
+        {/* ── Reviews — full width ── */}
+        <ReviewSection product={product} />
+
+        {/* ── Related Products ── */}
+        {related.length > 0 && (
+          <section style={ps.relatedSection}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+              <div style={{ width: 4, height: 24, background: '#2e7d32', borderRadius: 2 }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#2e7d32', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Related</span>
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 20px' }}>Related Products</h2>
+            <div style={ps.relatedGrid}>
+              {related.map(p => (
+                <div key={p._id} style={ps.relatedCard}>
+                  <Link to={`/product/${p.slug}`} style={{ display: 'block', aspectRatio: '1', overflow: 'hidden', background: '#f5f5f5' }}>
+                    {p.images?.[0] && <img src={p.images[0].url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .3s' }} onMouseEnter={e => e.target.style.transform = 'scale(1.05)'} onMouseLeave={e => e.target.style.transform = 'scale(1)'} />}
+                  </Link>
+                  <div style={{ padding: '12px 10px' }}>
+                    <Link to={`/product/${p.slug}`} style={{ textDecoration: 'none', color: '#111', fontSize: 14, fontWeight: 600, display: 'block', marginBottom: 6, lineHeight: 1.3 }}>
+                      {p.name}
+                    </Link>
+                    <p style={{ fontSize: 16, fontWeight: 700, margin: '0 0 10px', color: '#2e7d32' }}>
+                      ৳{(p.discountPrice || p.price).toLocaleString()}
+                    </p>
+                    <button onClick={() => { addItem(p, 1); navigate('/checkout'); }}
+                      style={{ width: '100%', padding: '9px', background: '#2e7d32', color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      ⚡ Buy Now
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </>
   );
 }
 
-const styles = {
-  page:         { maxWidth: 1200, margin: '0 auto', padding: '32px 24px' },
-  grid:         { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, marginBottom: 48 },
-  imageSection: {},
-  mainImgWrap:  { position: 'relative', borderRadius: 12, overflow: 'hidden', aspectRatio: '1', background: '#f5f5f5' },
-  mainImg:      { width: '100%', height: '100%', objectFit: 'cover' },
-  imgPlaceholder:{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#aaa' },
-  discBadge:    { position:'absolute', top:12, left:12, background:'#e53e3e', color:'#fff', padding:'4px 10px', borderRadius:6, fontSize:13, fontWeight:700 },
-  thumbRow:     { display: 'flex', gap: 8, marginTop: 12 },
-  thumb:        { width: 68, height: 68, objectFit: 'cover', borderRadius: 8, border: '2px solid transparent', cursor: 'pointer' },
-  thumbActive:  { borderColor: '#1a1a1a' },
-  infoSection:  {},
-  breadcrumb:   { fontSize: 13, color: '#888', marginBottom: 12 },
-  brandLabel:   { fontSize: 13, color: '#888', marginBottom: 4 },
-  title:        { fontSize: 28, fontWeight: 700, margin: '0 0 12px', lineHeight: 1.2 },
-  ratingRow:    { fontSize: 18, color: '#f6ad55', marginBottom: 16 },
-  priceBlock:   { display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 16 },
-  finalPrice:   { fontSize: 32, fontWeight: 700 },
-  origPrice:    { fontSize: 18, color: '#aaa', textDecoration: 'line-through' },
-  shortDesc:    { fontSize: 15, color: '#555', lineHeight: 1.7, marginBottom: 16 },
-  stockRow:     { marginBottom: 20 },
-  addToCart:    { display: 'flex', gap: 16, alignItems: 'center', marginBottom: 24 },
-  qtyRow:       { display: 'flex', alignItems: 'center', border: '1px solid #e2e2e2', borderRadius: 8, overflow: 'hidden' },
-  qtyBtn:       { width: 36, height: 44, background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' },
-  qtyVal:       { width: 44, textAlign: 'center', fontSize: 16, fontWeight: 600 },
-  cartBtn:      { flex: 1, padding: '12px 24px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: 'pointer' },
-  tags:         { display: 'flex', gap: 8, flexWrap: 'wrap' },
-  tag:          { padding: '4px 12px', background: '#f5f5f5', borderRadius: 20, fontSize: 13, color: '#555', textDecoration: 'none' },
-  descSection:  { borderTop: '1px solid #eee', paddingTop: 32, marginBottom: 40 },
-  sectionTitle: { fontSize: 22, fontWeight: 700, marginBottom: 16 },
-  descText:     { fontSize: 15, lineHeight: 1.8, color: '#444' },
-  relatedSection:{ borderTop: '1px solid #eee', paddingTop: 32 },
-  relatedGrid:  { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16 },
-  relatedCard:  { textDecoration: 'none', color: 'inherit' },
-  relatedImg:   { width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 8, background: '#f5f5f5' },
-  relatedName:  { fontSize: 14, fontWeight: 600, marginTop: 8, marginBottom: 4 },
-  relatedPrice: { fontSize: 14, color: '#e53e3e', fontWeight: 700 },
+// ── Styles ──────────────────────────────────────────────────────────────────
+const ps = {
+  loadingPage:   { padding: '80px 24px', textAlign: 'center' },
+  page:          { maxWidth: 1200, margin: '0 auto', padding: '16px 20px 48px' },
+  breadcrumb:    { fontSize: 13, color: '#666', marginBottom: 6, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 },
+  breadLink:     { color: '#2e7d32', textDecoration: 'none' },
+  breadSep:      { color: '#ccc' },
+  breadCurrent:  { color: '#333' },
+  backLink:      { display: 'inline-block', fontSize: 13, color: '#2e7d32', textDecoration: 'none', marginBottom: 16 },
+  mainGrid:      { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginBottom: 48, alignItems: 'start' },
+  imageCol:      {},
+  mainImgWrap:   { position: 'relative', aspectRatio: '1', overflow: 'hidden', borderRadius: 8, border: '1px solid #eee', background: '#fafafa', marginBottom: 10 },
+  discBadge:     { position: 'absolute', top: 12, right: 12, zIndex: 3, background: '#dc2626', color: '#fff', fontSize: 13, fontWeight: 800, padding: '4px 10px', borderRadius: 4 },
+  imgCounter:    { position: 'absolute', bottom: 10, right: 14, background: 'rgba(0,0,0,0.45)', color: '#fff', fontSize: 12, padding: '3px 8px', borderRadius: 20 },
+  thumbStrip:    { display: 'flex', gap: 8, flexWrap: 'wrap' },
+  thumb:         { width: 64, height: 64, borderRadius: 6, overflow: 'hidden', border: '2px solid #eee', cursor: 'pointer', background: '#fafafa', padding: 0, flexShrink: 0 },
+  thumbActive:   { borderColor: '#2e7d32' },
+  infoCol:       {},
+  brandLine:     { fontSize: 14, margin: '0 0 6px' },
+  title:         { fontSize: 22, fontWeight: 800, lineHeight: 1.3, margin: '0 0 10px', color: '#111' },
+  ratingRow:     { fontSize: 18, color: '#f59e0b', marginBottom: 12, display: 'flex', alignItems: 'center' },
+  priceRow:      { display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 16, flexWrap: 'wrap' },
+  finalPrice:    { fontSize: 28, fontWeight: 800, color: '#2e7d32', fontFamily: 'sans-serif' },
+  origPrice:     { fontSize: 16, color: '#999', textDecoration: 'line-through' },
+  discPill:      { fontSize: 12, fontWeight: 700, background: '#dc2626', color: '#fff', padding: '3px 8px', borderRadius: 4 },
+  variantBlock:  { marginBottom: 16 },
+  variantLabel:  { fontSize: 14, fontWeight: 700, marginBottom: 8, color: '#222' },
+  variantRow:    { display: 'flex', alignItems: 'center', gap: 10, border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 12px', marginBottom: 6, cursor: 'pointer', transition: 'border-color .15s' },
+  variantRowActive: { border: '2px solid #2e7d32', background: '#f0fdf4' },
+  variantRowOOS:    { opacity: 0.5, cursor: 'not-allowed' },
+  variantRadio:  { flexShrink: 0 },
+  actionRow:     { display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' },
+  qtyControl:    { display: 'flex', alignItems: 'center', border: '1px solid #d1d5db', borderRadius: 8, overflow: 'hidden', height: 44 },
+  qtyBtn:        { width: 40, height: '100%', background: '#f9fafb', border: 'none', fontSize: 18, cursor: 'pointer', fontWeight: 700 },
+  qtyVal:        { width: 48, textAlign: 'center', fontSize: 16, fontWeight: 700 },
+  addCartBtn:    { flex: 1, minWidth: 140, height: 44, border: '2px solid #2e7d32', background: '#fff', color: '#2e7d32', fontWeight: 700, fontSize: 15, borderRadius: 8, cursor: 'pointer' },
+  buyNowBtn:     { flex: 1, minWidth: 140, height: 44, background: '#2e7d32', color: '#fff', border: 'none', fontWeight: 700, fontSize: 15, borderRadius: 8, cursor: 'pointer' },
+  trustRow:      { display: 'flex', gap: 10, marginTop: 16 },
+  trustBadge:    { flex: 1, display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 10px', background: '#fafafa' },
+  detailSection: { marginBottom: 48 },
+  sectionTitle:  { fontSize: 18, fontWeight: 800, margin: '0 0 16px', paddingBottom: 10, borderBottom: '2px solid #e5e7eb' },
+  detailGrid:    { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '4px 32px', marginBottom: 16 },
+  detailRow:     { display: 'flex', gap: 8, padding: '6px 0', borderBottom: '1px solid #f3f4f6', fontSize: 14 },
+  detailKey:     { fontWeight: 700, color: '#333', minWidth: 100, flexShrink: 0 },
+  detailVal:     { color: '#555' },
+  relatedSection:{ marginBottom: 48 },
+  relatedGrid:   { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 },
+  relatedCard:   { border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff' },
 };

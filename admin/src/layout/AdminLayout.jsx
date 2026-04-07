@@ -18,6 +18,7 @@ const NAV = [
   { label: 'Payments',   path: '/payments' },
   { label: 'Blog',       path: '/blog' },
   { label: 'SEO',        path: '/seo' },
+  { label: 'Email Templates', path: '/email-templates' },
   { label: 'Marketing',  path: '/marketing' },
   { label: 'Custom Code',path: '/custom-code' },
   { label: 'Menu Builder',path: '/menu' },
@@ -27,7 +28,8 @@ const NAV = [
   { label: 'Timer',      path: '/timer' },
   { label: 'Pages',      path: '/pages' },
   { label: 'Theme',      path: '/theme' },
-  { label: 'Settings',   path: '/settings' },
+  { label: 'General Settings',path: '/general' },
+  { label: 'Other Settings', path: '/settings' },
 ];
 
 export default function AdminLayout() {

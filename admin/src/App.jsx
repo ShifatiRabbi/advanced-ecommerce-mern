@@ -30,6 +30,8 @@ const CheckoutBuilder= lazy(() => import('./pages/CheckoutBuilder/CheckoutBuilde
 const SliderBuilder = lazy(() => import('./pages/SliderBuilder/SliderBuilder'));
 const MarqueeManager= lazy(() => import('./pages/MarqueeManager/MarqueeManager'));
 const TimerManager  = lazy(() => import('./pages/TimerManager/TimerManager'));
+const EmailTemplates = lazy(() => import('./pages/EmailTemplates/EmailTemplates'));
+const GeneralSettings = lazy(() => import('./pages/Settings/GeneralSettings'));
 
 const Loader = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#6b7280' }}>
@@ -72,6 +74,9 @@ export default function App() {
           <Route path="slider-builder"   element={<SliderBuilder />} />
           <Route path="marquee"          element={<MarqueeManager />} />
           <Route path="timer"            element={<TimerManager />} />
+          <Route path="email-templates"  element={<EmailTemplates />} />
+          <Route path="general"          element={<GeneralSettings />} />
+        
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

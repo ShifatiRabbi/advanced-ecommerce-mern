@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 
 const STATUSES = [
-  { key: '',           label: 'All',            color: '#374151', bg: '#f3f4f6' },
+  { key: '',         label: 'All',             color: '#374151', bg: '#f3f4f6' },
   { key: 'pending',    label: 'Pending',         color: '#854d0e', bg: '#fef9c3' },
   { key: 'confirmed',  label: 'Confirmed',       color: '#1e40af', bg: '#dbeafe' },
   { key: 'paid',       label: 'Paid',            color: '#065f46', bg: '#d1fae5' },
@@ -53,18 +53,18 @@ const exportCSV = (orders) => {
 
 const pushToPathao = async (orders) => {
   const payloads = orders.map(o => ({
-    store_id:         parseInt(import.meta.env.VITE_PATHAO_STORE_ID || '0'),
-    merchant_order_id:o.orderNumber,
-    recipient_name:   o.shippingAddress?.fullName,
-    recipient_phone:  o.shippingAddress?.phone,
-    recipient_address:o.shippingAddress?.address,
-    recipient_city:   1,
-    recipient_zone:   1,
-    delivery_type:    48,
-    item_type:        2,
+    store_id: parseInt(import.meta.env.VITE_PATHAO_STORE_ID || '0'),
+    merchant_order_id: o.orderNumber,
+    recipient_name: o.shippingAddress?.fullName,
+    recipient_phone: o.shippingAddress?.phone,
+    recipient_address: o.shippingAddress?.address,
+    recipient_city: 1,
+    recipient_zone: 1,
+    delivery_type: 48,
+    item_type: 2,
     special_instruction: o.shippingAddress?.note || '',
-    item_quantity:    o.items?.length,
-    item_weight:      0.5,
+    item_quantity: o.items?.length,
+    item_weight: 0.5,
     amount_to_collect: o.paymentMethod === 'cod' ? o.total : 0,
     item_description: o.items?.map(i => i.name).join(', '),
   }));
@@ -82,12 +82,12 @@ const pushToPathao = async (orders) => {
 
 const pushToSteadfast = async (orders) => {
   const payloads = orders.map(o => ({
-    invoice:          o.orderNumber,
-    recipient_name:   o.shippingAddress?.fullName,
-    recipient_phone:  o.shippingAddress?.phone,
-    recipient_address:o.shippingAddress?.address,
-    cod_amount:       o.paymentMethod === 'cod' ? o.total : 0,
-    note:             o.shippingAddress?.note || '',
+    invoice: o.orderNumber,
+    recipient_name: o.shippingAddress?.fullName,
+    recipient_phone: o.shippingAddress?.phone,
+    recipient_address: o.shippingAddress?.address,
+    cod_amount: o.paymentMethod === 'cod' ? o.total : 0,
+    note: o.shippingAddress?.note || '',
   }));
   const results = [];
   for (const p of payloads) {
@@ -103,29 +103,44 @@ const pushToSteadfast = async (orders) => {
 
 export default function OrderList() {
   const qc = useQueryClient();
-  const [tab,       setTab]       = useState('');
-  const [search,    setSearch]    = useState('');
-  const [page,      setPage]      = useState(1);
-  const [sort,      setSort]      = useState('-createdAt');
-  const [selected,  setSelected]  = useState(new Set());
-  const [expanded,  setExpanded]  = useState(null);
-  const [courier,   setCourier]   = useState(null);
-  const [pushing,   setPushing]   = useState(false);
+  const [tab, setTab] = useState('');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState('-createdAt');
+  const [selected, setSelected] = useState(new Set());
+  const [expanded, setExpanded] = useState(null);
+  const [pushing, setPushing] = useState(false);
+
+  // Fraud Logic States
+  const [fraudReports, setFraudReports] = useState({});
+  const [fraudLoading, setFraudLoading] = useState({});
+
+  const checkFraud = async (orderId) => {
+    setFraudLoading(prev => ({ ...prev, [orderId]: true }));
+    try {
+      const { data } = await api.get(`/fraud/${orderId}`);
+      setFraudReports(prev => ({ ...prev, [orderId]: data.data }));
+    } catch (err) {
+      alert('Fraud check failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setFraudLoading(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-orders', tab, search, page, sort],
-    queryFn:  () => api.get('/orders', { params: { status: tab||undefined, search: search||undefined, page, limit: 20, sort } }).then(r => r.data.data),
+    queryFn: () => api.get('/orders', { params: { status: tab||undefined, search: search||undefined, page, limit: 20, sort } }).then(r => r.data.data),
     keepPreviousData: true,
   });
 
   const { data: statsData } = useQuery({
     queryKey: ['order-stats'],
-    queryFn:  () => api.get('/orders/stats').then(r => r.data.data),
+    queryFn: () => api.get('/orders/stats').then(r => r.data.data),
   });
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }) => api.patch(`/orders/${id}/status`, { status }),
-    onSuccess:  () => { qc.invalidateQueries({ queryKey: ['admin-orders'] }); qc.invalidateQueries({ queryKey: ['order-stats'] }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-orders'] }); qc.invalidateQueries({ queryKey: ['order-stats'] }); },
   });
 
   const toggleSelect = (id) => {
@@ -133,6 +148,7 @@ export default function OrderList() {
     s.has(id) ? s.delete(id) : s.add(id);
     setSelected(s);
   };
+
   const toggleAll = () => {
     if (selected.size === data?.orders?.length) setSelected(new Set());
     else setSelected(new Set(data?.orders?.map(o => o._id)));
@@ -151,8 +167,8 @@ export default function OrderList() {
     setPushing(true);
     const results = service === 'pathao' ? await pushToPathao(toSend) : await pushToSteadfast(toSend);
     setPushing(false);
-    const ok  = results.filter(r => r.ok).length;
-    const fail= results.filter(r => !r.ok).length;
+    const ok = results.filter(r => r.ok).length;
+    const fail = results.filter(r => !r.ok).length;
     alert(`${service}: ${ok} created, ${fail} failed`);
     qc.invalidateQueries({ queryKey: ['admin-orders'] });
   };
@@ -171,15 +187,13 @@ export default function OrderList() {
     alert('Order details copied!');
   };
 
-  const stats = statsData;
-
   return (
     <div>
+      {/* Header & Main Actions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Orders</h2>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handleExport}
-            style={s.actionBtn}>
+          <button onClick={handleExport} style={s.actionBtn}>
             Export CSV {selected.size > 0 && `(${selected.size})`}
           </button>
           <button onClick={() => handleCourier('pathao')} disabled={pushing}
@@ -193,14 +207,15 @@ export default function OrderList() {
         </div>
       </div>
 
-      {stats && (
+      {/* Statistics Cards */}
+      {statsData && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 10, marginBottom: 20 }}>
           {[
-            { label: 'Total Orders',  value: stats.total },
-            { label: 'Revenue',       value: `৳${(stats.revenue||0).toLocaleString()}` },
-            { label: 'Pending',       value: stats.byStatus?.pending?.count || 0 },
-            { label: 'Incomplete',    value: stats.byStatus?.incomplete?.count || 0 },
-            { label: 'Fake',          value: stats.byStatus?.fake?.count || 0 },
+            { label: 'Total Orders', value: statsData.total },
+            { label: 'Revenue', value: `৳${(statsData.revenue || 0).toLocaleString()}` },
+            { label: 'Pending', value: statsData.byStatus?.pending?.count || 0 },
+            { label: 'Incomplete', value: statsData.byStatus?.incomplete?.count || 0 },
+            { label: 'Fake', value: statsData.byStatus?.fake?.count || 0 },
           ].map(c => (
             <div key={c.label} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '12px 16px', textAlign: 'center' }}>
               <p style={{ fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>{c.value}</p>
@@ -210,6 +225,7 @@ export default function OrderList() {
         </div>
       )}
 
+      {/* Status Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 12, flexWrap: 'wrap' }}>
         {STATUSES.map(st => (
           <button key={st.key} onClick={() => { setTab(st.key); setPage(1); setSelected(new Set()); }}
@@ -219,19 +235,21 @@ export default function OrderList() {
         ))}
       </div>
 
+      {/* Search, Sort, and Bulk Actions */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'center' }}>
         <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
           placeholder="Search by order#, phone, name..." style={s.searchInput} />
+        
         <select value={sort} onChange={e => setSort(e.target.value)} style={s.select}>
           <option value="-createdAt">Newest first</option>
           <option value="createdAt">Oldest first</option>
           <option value="-total">Highest total</option>
           <option value="total">Lowest total</option>
-          <option value="status">Status A-Z</option>
         </select>
+
         {selected.size > 0 && (
           <div style={{ display: 'flex', gap: 6 }}>
-            {['confirmed','shipped','delivered','cancelled'].map(st => (
+            {['confirmed', 'shipped', 'delivered', 'cancelled'].map(st => (
               <button key={st} onClick={async () => {
                 for (const id of selected) { await statusMutation.mutateAsync({ id, status: st }); }
                 setSelected(new Set());
@@ -243,16 +261,16 @@ export default function OrderList() {
         )}
       </div>
 
+      {/* Orders Table */}
       {isLoading ? <p style={{ padding: 20 }}>Loading...</p> : (
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
           <table style={s.table}>
             <thead>
               <tr style={s.thead}>
                 <th style={s.th}>
-                  <input type="checkbox" checked={selected.size === data?.orders?.length && data?.orders?.length > 0}
-                    onChange={toggleAll} />
+                  <input type="checkbox" checked={selected.size === data?.orders?.length && data?.orders?.length > 0} onChange={toggleAll} />
                 </th>
-                {['Order #','Date','Customer','Phone','Items','Total','Payment','Status','Actions'].map(h => (
+                {['Order #', 'Date', 'Customer', 'Phone', 'Items', 'Total', 'Payment', 'Status', 'Fraud', 'Actions'].map(h => (
                   <th key={h} style={s.th}>{h}</th>
                 ))}
               </tr>
@@ -261,144 +279,111 @@ export default function OrderList() {
               {data?.orders?.map(order => {
                 const st = STATUS_MAP[order.status] || STATUS_MAP[''];
                 const isOpen = expanded === order._id;
+                const fraud = fraudReports[order._id];
+                
                 return (
-                  <>
-                    <tr key={order._id} style={{ ...s.tr, background: selected.has(order._id) ? '#eff6ff' : '#fff' }}>
-                      <td style={s.td}>
-                        <input type="checkbox" checked={selected.has(order._id)} onChange={() => toggleSelect(order._id)} />
-                      </td>
-                      <td style={s.td}>
-                        <div style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 700, color: '#111827' }}>
-                          {order.orderNumber}
-                        </div>
-                      </td>
+                  <React.Fragment key={order._id}>
+                    <tr style={{ ...s.tr, background: selected.has(order._id) ? '#eff6ff' : '#fff' }}>
+                      <td style={s.td}><input type="checkbox" checked={selected.has(order._id)} onChange={() => toggleSelect(order._id)} /></td>
+                      <td style={s.td}><div style={{ fontFamily: 'monospace', fontWeight: 700 }}>{order.orderNumber}</div></td>
                       <td style={s.td}>
                         <div style={{ fontSize: 13 }}>{new Date(order.createdAt).toLocaleDateString()}</div>
                         <div style={{ fontSize: 11, color: '#9ca3af' }}>{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                       </td>
                       <td style={s.td}>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{order.shippingAddress?.fullName}</div>
-                        <div style={{ fontSize: 12, color: '#6b7280' }}>{order.shippingAddress?.city}</div>
+                        <div style={{ fontWeight: 600 }}>{order.shippingAddress?.fullName}</div>
+                        <div style={{ fontSize: 11, color: '#6b7280' }}>{order.shippingAddress?.city}</div>
                       </td>
                       <td style={s.td}>
                         <button onClick={() => { copyText(order.shippingAddress?.phone || ''); alert('Phone copied!'); }}
-                          title="Click to copy phone"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#374151', padding: 0, fontFamily: 'monospace' }}>
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'monospace', padding: 0 }}>
                           {order.shippingAddress?.phone}
                         </button>
                       </td>
+                      <td style={s.td}>{order.items?.length} items</td>
                       <td style={s.td}>
-                        <span style={{ fontSize: 13 }}>{order.items?.length} item{order.items?.length !== 1 ? 's' : ''}</span>
-                        {order.items?.slice(0, 1).map((item, i) => (
-                          <div key={i} style={{ fontSize: 11, color: '#9ca3af', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {item.name}
-                            {order.items?.some(i => i.variant) && <span style={{ marginLeft: 4, fontSize: 10, background: '#f3f4f6', padding: '1px 5px', borderRadius: 4 }}>+variants</span>}
-                          </div>
-                        ))}
+                        <div style={{ fontWeight: 700 }}>৳{order.total?.toLocaleString()}</div>
                       </td>
                       <td style={s.td}>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>৳{order.total?.toLocaleString()}</div>
-                        {order.discount > 0 && <div style={{ fontSize: 11, color: '#059669' }}>-৳{order.discount} off</div>}
-                      </td>
-                      <td style={s.td}>
-                        <span style={{ fontSize: 12, fontWeight: 600, padding: '2px 7px', borderRadius: 10, background: order.paymentStatus === 'paid' ? '#d1fae5' : '#fef9c3', color: order.paymentStatus === 'paid' ? '#065f46' : '#854d0e' }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 6px', borderRadius: 6, background: order.paymentStatus === 'paid' ? '#d1fae5' : '#fef9c3' }}>
                           {order.paymentMethod?.toUpperCase()}
                         </span>
                       </td>
                       <td style={s.td}>
-                        <select value={order.status}
-                          onChange={e => statusMutation.mutate({ id: order._id, status: e.target.value })}
-                          style={{ padding: '4px 8px', border: `1px solid ${st.bg}`, borderRadius: 6, background: st.bg, color: st.color, fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
-                          {STATUSES.filter(s => s.key).map(st => (
-                            <option key={st.key} value={st.key}>{st.label}</option>
-                          ))}
+                        <select value={order.status} onChange={e => statusMutation.mutate({ id: order._id, status: e.target.value })}
+                          style={{ padding: '4px 8px', borderRadius: 6, background: st.bg, color: st.color, border: 'none', fontSize: 12, fontWeight: 600 }}>
+                          {STATUSES.filter(s => s.key).map(st => <option key={st.key} value={st.key}>{st.label}</option>)}
                         </select>
                       </td>
+
+                      {/* FRAUD CELL */}
+                      <td style={s.td}>
+                        {fraud ? (
+                          <span style={{ padding: '3px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700, background: fraud.overallRisk === 'HIGH' ? '#fee2e2' : '#d1fae5', color: fraud.overallRisk === 'HIGH' ? '#991b1b' : '#065f46' }}>
+                            {fraud.overallRisk}
+                          </span>
+                        ) : (
+                          <button onClick={() => checkFraud(order._id)} disabled={fraudLoading[order._id]} style={{ padding: '3px 8px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 11 }}>
+                            {fraudLoading[order._id] ? '...' : 'Check'}
+                          </button>
+                        )}
+                      </td>
+
                       <td style={s.td}>
                         <div style={{ display: 'flex', gap: 4 }}>
-                          <button onClick={() => setExpanded(isOpen ? null : order._id)}
-                            title="View details"
-                            style={{ padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: 5, background: isOpen ? '#f3f4f6' : '#fff', cursor: 'pointer', fontSize: 12 }}>
-                            {isOpen ? '▲' : '▼'}
-                          </button>
-                          <button onClick={() => copyOrderDetails(order)}
-                            title="Copy order details"
-                            style={{ padding: '4px 8px', border: '1px solid #e5e7eb', borderRadius: 5, background: '#fff', cursor: 'pointer', fontSize: 12 }}>
-                            📋
-                          </button>
+                          <button onClick={() => setExpanded(isOpen ? null : order._id)} style={s.iconBtn}>{isOpen ? '▲' : '▼'}</button>
+                          <button onClick={() => copyOrderDetails(order)} style={s.iconBtn}>📋</button>
                         </div>
                       </td>
                     </tr>
 
                     {isOpen && (
-                      <tr key={`${order._id}-detail`}>
-                        <td colSpan={10} style={{ padding: 0, background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
-                          <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
-                            <div>
-                              <p style={s.detailLabel}>Shipping address</p>
-                              <p style={s.detailVal}>{order.shippingAddress?.fullName}</p>
-                              <p style={s.detailVal}>{order.shippingAddress?.phone}</p>
-                              {order.shippingAddress?.email && <p style={s.detailVal}>{order.shippingAddress.email}</p>}
-                              <p style={s.detailVal}>{order.shippingAddress?.address}</p>
-                              <p style={s.detailVal}>{order.shippingAddress?.city}{order.shippingAddress?.district ? `, ${order.shippingAddress.district}` : ''}</p>
-                              {order.shippingAddress?.note && <p style={{ ...s.detailVal, fontStyle: 'italic', color: '#6b7280' }}>Note: {order.shippingAddress.note}</p>}
-                            </div>
-                            <div>
-                              <p style={s.detailLabel}>Items ordered</p>
-                              {order.items?.map((item, i) => (
-                                <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
-                                  {item.image && <img src={item.image} alt="" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />}
-                                  <div>
-                                    <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 2px' }}>{item.name}</p>
-                                    {item.variant && (
-                                      <p style={{ fontSize: 11, color: '#6b7280', margin: '0 0 2px' }}>
-                                        {Object.entries(item.variant).map(([k,v]) => `${k}: ${v}`).join(' · ')}
-                                      </p>
-                                    )}
-                                    <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>×{item.qty} · ৳{item.total?.toLocaleString()}</p>
+                      <tr>
+                        <td colSpan={11} style={{ padding: 0, background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
+                          <div style={{ padding: '20px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 30 }}>
+                              <div>
+                                <p style={s.detailLabel}>Shipping Details</p>
+                                <p style={s.detailVal}><strong>{order.shippingAddress?.fullName}</strong></p>
+                                <p style={s.detailVal}>{order.shippingAddress?.phone}</p>
+                                <p style={s.detailVal}>{order.shippingAddress?.address}, {order.shippingAddress?.city}</p>
+                                {order.shippingAddress?.note && <p style={{ ...s.detailVal, color: '#ef4444' }}>Note: {order.shippingAddress.note}</p>}
+                              </div>
+                              <div>
+                                <p style={s.detailLabel}>Items</p>
+                                {order.items?.map((item, i) => (
+                                  <div key={i} style={{ marginBottom: 8 }}>
+                                    <p style={{ ...s.detailVal, fontWeight: 600 }}>{item.name} × {item.qty}</p>
+                                    <p style={{ fontSize: 11, color: '#6b7280' }}>৳{item.price} per unit</p>
                                   </div>
+                                ))}
+                              </div>
+                              <div>
+                                <p style={s.detailLabel}>Summary</p>
+                                <div style={s.summaryRow}><span>Subtotal</span><span>৳{order.subtotal}</span></div>
+                                <div style={s.summaryRow}><span>Shipping</span><span>৳{order.shippingCharge}</span></div>
+                                <div style={{ ...s.summaryRow, fontWeight: 700, borderTop: '1px solid #e5e7eb', marginTop: 5, paddingTop: 5 }}>
+                                  <span>Total</span><span>৳{order.total}</span>
                                 </div>
-                              ))}
-                            </div>
-                            <div>
-                              <p style={s.detailLabel}>Order summary</p>
-                              {[
-                                { l: 'Subtotal',   v: `৳${order.subtotal?.toLocaleString()}` },
-                                { l: 'Shipping',   v: `৳${order.shippingCharge?.toLocaleString()}` },
-                                { l: 'Discount',   v: order.discount > 0 ? `-৳${order.discount?.toLocaleString()}` : '—' },
-                                { l: 'Total',      v: `৳${order.total?.toLocaleString()}`, bold: true },
-                                { l: 'Payment',    v: `${order.paymentMethod?.toUpperCase()} · ${order.paymentStatus}` },
-                                { l: 'Coupon',     v: order.couponCode || '—' },
-                              ].map(r => (
-                                <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0', borderBottom: '1px solid #e5e7eb' }}>
-                                  <span style={{ color: '#6b7280' }}>{r.l}</span>
-                                  <span style={{ fontWeight: r.bold ? 700 : 400 }}>{r.v}</span>
-                                </div>
-                              ))}
-                              <div style={{ marginTop: 12, display: 'flex', gap: 6 }}>
-                                <button onClick={() => copyOrderDetails(order)}
-                                  style={{ flex: 1, padding: '6px', border: '1px solid #e5e7eb', borderRadius: 6, background: '#fff', cursor: 'pointer', fontSize: 12 }}>
-                                  Copy Details
-                                </button>
-                                <button onClick={async () => {
-                                  const r = await pushToPathao([order]);
-                                  alert(`Pathao: ${r[0].ok ? 'Success — ' + r[0].ref : 'Failed — ' + r[0].error}`);
-                                }} style={{ flex: 1, padding: '6px', border: 'none', borderRadius: 6, background: '#059669', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
-                                  → Pathao
-                                </button>
-                                <button onClick={async () => {
-                                  const r = await pushToSteadfast([order]);
-                                  alert(`Steadfast: ${r[0].ok ? 'Success — ' + r[0].ref : 'Failed — ' + r[0].error}`);
-                                }} style={{ flex: 1, padding: '6px', border: 'none', borderRadius: 6, background: '#7c3aed', color: '#fff', cursor: 'pointer', fontSize: 12 }}>
-                                  → Steadfast
-                                </button>
                               </div>
                             </div>
+
+                            {/* Fraud Analysis Detailed Report */}
+                            {fraud && (
+                              <div style={{ marginTop: 20, background: '#fff', padding: 15, borderRadius: 8, border: '1px solid #e5e7eb' }}>
+                                <h4 style={{ margin: '0 0 10px', fontSize: 14 }}>Fraud Report: {fraud.overallRisk} Risk</h4>
+                                {fraud.checks.map((c, i) => (
+                                  <div key={i} style={{ fontSize: 12, marginBottom: 5 }}>
+                                    <span style={{ fontWeight: 700 }}>[{c.source}]</span> {c.riskLevel}: {c.reasons.join(', ')}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </tbody>
@@ -406,10 +391,18 @@ export default function OrderList() {
         </div>
       )}
 
+      {/* Pagination */}
       <div style={{ display: 'flex', gap: 6, marginTop: 16, justifyContent: 'center' }}>
         {Array.from({ length: data?.pagination?.pages || 1 }, (_, i) => i + 1).map(pg => (
           <button key={pg} onClick={() => setPage(pg)}
-            style={{ ...s.pageBtn, ...(page === pg && s.pageBtnActive) }}>
+            style={{ 
+              padding: '6px 12px', 
+              borderRadius: 6, 
+              border: '1px solid #e5e7eb', 
+              background: page === pg ? '#111827' : '#fff', 
+              color: page === pg ? '#fff' : '#374151',
+              cursor: 'pointer' 
+            }}>
             {pg}
           </button>
         ))}

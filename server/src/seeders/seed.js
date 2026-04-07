@@ -6,6 +6,7 @@ import { Brand } from '../modules/brand/brand.model.js';
 import { Product } from '../modules/product/product.model.js';
 import { Page } from '../modules/page/page.model.js';
 import { DeliveryZone } from '../modules/delivery/delivery.model.js';
+import { seedDefaultTemplates } from '../modules/email/emailTemplate.service.js';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -136,6 +137,8 @@ const seed = async () => {
     { zone:'Outside Dhaka', areas:['Chittagong','Rajshahi','Sylhet','Khulna','Barishal','Rangpur'],            charge:120, minDays:2, maxDays:5, isActive:true },
     { zone:'Sub-districts', areas:[],                                                                          charge:150, minDays:3, maxDays:7, isActive:true },
   ]);
+  await seedDefaultTemplates();
+  console.log('Email templates seeded');
 
   console.log('\n✅ Seed complete!');
   console.log('   Admin  → admin@gmail.com  / admin');

@@ -10,5 +10,9 @@ router.get('/product/:productId',    asyncHandler(async (req, res) => sendSucces
 router.post('/',                     protect, asyncHandler(async (req, res) => sendSuccess(res, { status: 201, data: await svc.createReview({ userId: req.user.id, ...req.body }) })));
 router.get('/admin',                 protect, adminOnly, asyncHandler(async (req, res) => sendSuccess(res, { data: await svc.getAllReviews(req.query) })));
 router.patch('/:id/moderate',        protect, adminOnly, asyncHandler(async (req, res) => sendSuccess(res, { data: await svc.moderateReview(req.params.id, req.body.isVisible) })));
+router.post('/:id/helpful', protect, asyncHandler(async (req, res) => {
+  const review = await Review.findByIdAndUpdate(req.params.id, { $inc: { helpfulCount: 1 } }, { new: true });
+  sendSuccess(res, { data: review });
+}));
 
 export default router;
