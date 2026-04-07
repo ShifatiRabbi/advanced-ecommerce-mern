@@ -1,6 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useLayout } from '../hooks/useLayout';
+import SliderRenderer from '../components/SliderRenderer';
+import { useLocation } from 'react-router-dom';
+import MarqueeBar from '../components/MarqueeBar';
 
 const HEADERS = {
   header1: lazy(() => import('../components/header/Header1')),
@@ -19,6 +22,7 @@ const FOOTERS = {
 export default function MainLayout() {
   const { data: layout, isLoading } = useLayout();
 
+  const { pathname } = useLocation();
   const headerKey = layout?.header || 'header1';
   const footerKey = layout?.footer || 'footer1';
 
@@ -30,9 +34,12 @@ export default function MainLayout() {
   return (
     <>
       <Suspense fallback={null}><Header /></Suspense>
+      <MarqueeBar position="below-header" page={pathname} />
+      <SliderRenderer position="after-hero" page={pathname} />
       <main>
         <Outlet />
       </main>
+      <SliderRenderer position="before-footer" page={pathname} />
       <Suspense fallback={null}><Footer /></Suspense>
     </>
   );

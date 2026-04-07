@@ -27,6 +27,9 @@ const CustomCode    = lazy(() => import('./pages/CustomCode/CustomCode'));
 const ThemeDesigner = lazy(() => import('./pages/ThemeDesigner/ThemeDesigner'));
 const MenuBuilder   = lazy(() => import('./pages/MenuBuilder/MenuBuilder'));
 const CheckoutBuilder= lazy(() => import('./pages/CheckoutBuilder/CheckoutBuilder'));
+const SliderBuilder = lazy(() => import('./pages/SliderBuilder/SliderBuilder'));
+const MarqueeManager= lazy(() => import('./pages/MarqueeManager/MarqueeManager'));
+const TimerManager  = lazy(() => import('./pages/TimerManager/TimerManager'));
 
 const Loader = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#6b7280' }}>
@@ -66,7 +69,9 @@ export default function App() {
           <Route path="theme"            element={<ThemeDesigner />} />
           <Route path="menu"             element={<MenuBuilder />} />
           <Route path="checkout-builder" element={<CheckoutBuilder />} />
-
+          <Route path="slider-builder"   element={<SliderBuilder />} />
+          <Route path="marquee"          element={<MarqueeManager />} />
+          <Route path="timer"            element={<TimerManager />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

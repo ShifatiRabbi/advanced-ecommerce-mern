@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { protect, adminOnly } from '../../middlewares/auth.middleware.js';
 import * as ctrl from './settings.controller.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import { sendSuccess } from '../../utils/response.js';
+import * as settingsService from './settings.service.js';
 
 const router = Router();
 

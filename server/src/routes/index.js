@@ -21,6 +21,10 @@ import flashsaleRoutes from '../modules/flashsale/flashsale.routes.js';
 import pageRoutes      from '../modules/page/page.routes.js';
 import menuRoutes      from '../modules/menu/menu.routes.js';
 import checkoutRoutes  from '../modules/checkout/checkout.routes.js';
+import courierRoutes   from '../modules/courier/courier.routes.js';
+import sliderRoutes    from '../modules/slider/slider.routes.js';
+import marqueeRoutes   from '../modules/marquee/marquee.routes.js';
+import timerRoutes     from '../modules/timer/timer.routes.js';
 import os              from 'os';
 
 const router = Router();
@@ -47,6 +51,10 @@ router.use('/flash-sales',flashsaleRoutes);
 router.use('/pages',      pageRoutes);
 router.use('/menus',      menuRoutes);
 router.use('/checkout-config', checkoutRoutes);
+router.use('/courier',    courierRoutes);
+router.use('/sliders',    sliderRoutes);
+router.use('/marquees',   marqueeRoutes);
+router.use('/timers',     timerRoutes);
 
 router.get('/health', (req, res) => res.json({
   success: true, status: 'ok',

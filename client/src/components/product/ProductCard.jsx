@@ -5,6 +5,7 @@ import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
+import ProductTimer from './ProductTimer';
 
 const useCardStyle = () => useQuery({
   queryKey: ['product-card-style'],
@@ -20,6 +21,7 @@ function Style1({ product, discount, price }) {
         {product.images?.[0] && <img src={product.images[0].url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />}
         {discount > 0 && <span style={{ position: 'absolute', top: 8, left: 8, background: 'var(--color-danger,#e53e3e)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 7px', borderRadius: 4 }}>{discount}% OFF</span>}
       </div>
+      {product._id && <div style={{ padding: '0 12px' }}><ProductTimer productId={product._id} categoryId={product.category?._id} position="product-card" /></div>}
       <div style={{ padding: '12px 14px' }}>
         <p style={{ fontSize: 11, color: 'var(--color-text-muted,#888)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{product.category?.name}</p>
         <h3 style={{ fontSize: 14, fontWeight: 600, margin: '0 0 8px', lineHeight: 1.3, color: 'var(--color-text,#111)' }}>{product.name}</h3>
@@ -44,6 +46,7 @@ function Style2({ product, discount, price }) {
         {product.images?.[0] && <img src={product.images[0].url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .3s' }} onMouseEnter={e => e.target.style.transform='scale(1.05)'} onMouseLeave={e => e.target.style.transform='scale(1)'} loading="lazy" />}
         {discount > 0 && <span style={{ position: 'absolute', top: 8, right: 8, background: 'var(--color-danger,#e53e3e)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 8px', borderRadius: 20 }}>{discount}% OFF</span>}
       </Link>
+      {product._id && <div style={{ padding: '0 12px' }}><ProductTimer productId={product._id} categoryId={product.category?._id} position="product-card" /></div>}
       <div style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Link to={`/product/${product.slug}`} style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
           <p style={{ fontSize: 12, color: 'var(--color-accent,#3b82f6)', margin: '0 0 6px', fontWeight: 600 }}>{product.brand?.name}</p>
@@ -69,6 +72,8 @@ function Style3({ product, discount, price }) {
       <Link to={`/product/${product.slug}`} style={{ flexShrink: 0, width: 90, height: 90, borderRadius: 8, overflow: 'hidden', background: '#f5f5f5', display: 'block' }}>
         {product.images?.[0] && <img src={product.images[0].url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
       </Link>
+      {product._id && <div style={{ padding: '0 12px' }}><ProductTimer productId={product._id} categoryId={product.category?._id} position="product-card" /></div>}
+
       <div style={{ flex: 1 }}>
         <Link to={`/product/${product.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
           <p style={{ fontSize: 11, color: 'var(--color-text-muted,#888)', margin: '0 0 3px', textTransform: 'uppercase' }}>{product.category?.name}</p>
@@ -104,6 +109,8 @@ function Style4({ product, discount, price }) {
       <Link to={`/product/${product.slug}`} style={{ display: 'block', aspectRatio: '1', overflow: 'hidden', background: '#f5f5f5' }}>
         {product.images?.[0] && <img src={product.images[0].url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />}
       </Link>
+      {product._id && <div style={{ padding: '0 12px' }}><ProductTimer productId={product._id} categoryId={product.category?._id} position="product-card" /></div>}
+
       {product.ratings?.average > 0 && (
         <div style={{ position: 'absolute', bottom: 100, left: 10, background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 12, padding: '3px 8px', borderRadius: 20 }}>
           ★ {product.ratings.average.toFixed(1)} ({product.ratings.count})

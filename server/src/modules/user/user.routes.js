@@ -3,7 +3,11 @@ import { validate } from '../../middlewares/validate.middleware.js';
 import { protect } from '../../middlewares/auth.middleware.js';
 import { authLimiter } from '../../middlewares/rateLimiter.js';
 import { registerSchema, loginSchema } from './user.validation.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import { sendSuccess } from '../../utils/response.js';
+import { User } from './user.model.js';
 import * as ctrl from './user.controller.js';
+
 console.log('--- DEBUGGING IMPORTS ---');
 console.log('authLimiter is:', typeof authLimiter);
 console.log('validate is:', typeof validate);

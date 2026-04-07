@@ -4,6 +4,9 @@ import { productUpload }     from '../../config/cloudinary.js';
 import { validate }          from '../../middlewares/validate.middleware.js';
 import { createProductSchema } from './product.validation.js';
 import * as ctrl from './product.controller.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import { sendSuccess } from '../../utils/response.js';
+import * as svc from './product.service.js';
 
 const router = Router();
 

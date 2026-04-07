@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet-async';
 import { useProduct, useRelatedProducts } from '../hooks/useProducts';
 import { useWishlistStore } from '../store/wishlistStore';
 import { useAuthStore } from '../store/authStore';
+import MarqueeBar from '../components/MarqueeBar';
+import ProductTimer from '../components/ProductTimer';
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -50,6 +52,7 @@ export default function ProductPage() {
         <meta property="og:image" content={product.images?.[0]?.url} />
         <meta property="og:description" content={product.shortDesc} />
       </Helmet>
+      <MarqueeBar position="product-detail" productId={product._id} categoryId={product.category?._id} />
 
       <div style={styles.page}>
         <div style={styles.grid}>
@@ -95,6 +98,8 @@ export default function ProductPage() {
                 ({product.ratings?.count || 0} reviews)
               </span>
             </div>
+            
+            <ProductTimer productId={product._id} categoryId={product.category?._id} position="above-price" />
 
             <div style={styles.priceBlock}>
               <span style={styles.finalPrice}>৳{finalPrice.toLocaleString()}</span>
@@ -102,6 +107,8 @@ export default function ProductPage() {
                 <span style={styles.origPrice}>৳{product.price.toLocaleString()}</span>
               )}
             </div>
+
+            <ProductTimer productId={product._id} categoryId={product.category?._id} position="below-price" />
 
             {product.shortDesc && <p style={styles.shortDesc}>{product.shortDesc}</p>}
 

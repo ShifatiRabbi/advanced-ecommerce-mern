@@ -4,6 +4,7 @@ import { useQuery }       from '@tanstack/react-query';
 import { Helmet }         from 'react-helmet-async';
 import { useFeaturedProducts } from '../hooks/useProducts';
 import api from '../services/api';
+import SliderRenderer from '../components/SliderRenderer';
 
 export default function Home() {
   const { data: featured } = useFeaturedProducts(8);
@@ -38,6 +39,8 @@ export default function Home() {
           </div>
         )}
       </section>
+      <SliderRenderer position="hero" page="/" />
+      <SliderRenderer position="after-hero" page="/" />
 
       {/* Flash Sale */}
       {flashSale && flashSale.items?.length > 0 && (
@@ -87,6 +90,8 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      <SliderRenderer position="before-footer" page="/" />
     </>
   );
 }

@@ -1,7 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
-import { useAnalytics, useCustomCode, useTheme } from './hooks/useAnalytics';
+import { useAnalytics } from './hooks/useAnalytics';
+import {  useCustomCode } from './hooks/useCustomCode';
+import {  useTheme } from './hooks/useTheme';
 
 const Home = lazy(() => import('./pages/Home'));
 const Shop = lazy(() => import('./pages/Shop'));
