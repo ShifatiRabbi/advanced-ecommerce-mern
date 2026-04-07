@@ -1,35 +1,58 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
+import { useQuery } from '@tanstack/react-query';
+
 import api from '../services/api';
 
-const DISTRICTS = [
-  'Dhaka','Chittagong','Rajshahi','Khulna','Sylhet','Barishal',
-  'Rangpur','Mymensingh','Comilla','Narayanganj',
-];
-
-const PAYMENT_METHODS = [
-  { value: 'cod',       label: 'Cash on Delivery' },
-  { value: 'bkash',     label: 'bKash' },
-  { value: 'sslcommerz',label: 'Card / Mobile Banking' },
-];
-
 export default function Checkout() {
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
   const { items, total, clearCart } = useCartStore();
-  const { user }   = useAuthStore();
+  const { user } = useAuthStore();
+
+  // Fetch checkout configuration and delivery zones from the API
+  const { data: checkoutConfig } = useQuery({
+    queryKey: ['checkout-config'],
+    queryFn: () => api.get('/checkout-config').then(r => r.data.data),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const { data: deliveryZones = [] } = useQuery({
+    queryKey: ['delivery-zones'],
+    queryFn: () => api.get('/delivery').then(r => r.data.data),
+  });
+
+  // Dynamic PAYMENT_METHODS from checkoutConfig
+  const PAYMENT_METHODS = checkoutConfig?.paymentMethods?.filter(m => m.isActive).sort((a, b) => a.sortOrder - b.sortOrder) || [
+    { key: 'cod', label: 'Cash on Delivery', note: 'Pay when your order arrives' },
+    { key: 'bkash', label: 'bKash', note: 'bKash mobile banking' },
+  ];
+
+  // Dynamic shipping cost based on district
+  const getShippingCost = useCallback((district) => {
+    if (!district || deliveryZones.length === 0) return 60;
+    for (const zone of deliveryZones) {
+      if (zone.areas?.some(a => a.toLowerCase() === district.toLowerCase())) return zone.charge;
+    }
+    return deliveryZones.find(z => z.zone.toLowerCase().includes('outside'))?.charge || 120;
+  }, [deliveryZones]);
+
+  const shipping = getShippingCost(form.district);
+
+  // Dynamic fields from checkoutConfig
+  const activeFields = checkoutConfig?.fields?.filter(f => f.isActive).sort((a, b) => a.sortOrder - b.sortOrder) || [];
 
   const [form, setForm] = useState({
-    fullName:      user?.name || '',
-    phone:         user?.phone || '',
-    email:         user?.email || '',
-    address:       '',
-    city:          '',
-    district:      '',
-    zip:           '',
-    note:          '',
+    fullName: user?.name || '',
+    phone: user?.phone || '',
+    email: user?.email || '',
+    address: '',
+    city: '',
+    district: '',
+    zip: '',
+    note: '',
     paymentMethod: 'cod',
   });
 
@@ -39,9 +62,8 @@ export default function Checkout() {
   const [couponError, setCouponError] = useState('');
 
   const incompleteTimerRef = useRef(null);
-  const hasSentIncomplete  = useRef(false);
+  const hasSentIncomplete = useRef(false);
 
-  const shipping = total >= 1000 ? 0 : 60;
   const discount = couponResult?.discount || 0;
   const grandTotal = total + shipping - discount;
 
@@ -54,10 +76,10 @@ export default function Checkout() {
     if (!form.phone || form.phone.length < 10) return;
     hasSentIncomplete.current = true;
     api.post('/orders/incomplete', {
-      phone:     form.phone,
-      email:     form.email,
+      phone: form.phone,
+      email: form.email,
       sessionId: localStorage.getItem('sessionId') || undefined,
-      items:     items.map((i) => ({ product: i._id, qty: i.qty })),
+      items: items.map((i) => ({ product: i._id, qty: i.qty })),
     }).catch(() => {});
   };
 
@@ -68,12 +90,12 @@ export default function Checkout() {
 
   const validate = () => {
     const e = {};
-    if (!form.fullName.trim())   e.fullName = 'Full name is required';
-    if (!form.phone.trim())      e.phone    = 'Phone is required';
+    if (!form.fullName.trim()) e.fullName = 'Full name is required';
+    if (!form.phone.trim()) e.phone = 'Phone is required';
     else if (!/^01[3-9]\d{8}$/.test(form.phone.replace(/\s/g, '')))
       e.phone = 'Enter a valid Bangladeshi phone number';
-    if (!form.address.trim())    e.address  = 'Address is required';
-    if (!form.city.trim())       e.city     = 'City is required';
+    if (!form.address.trim()) e.address = 'Address is required';
+    if (!form.city.trim()) e.city = 'City is required';
     return e;
   };
 
@@ -106,7 +128,7 @@ export default function Checkout() {
 
     const { paymentMethod, ...address } = form;
     orderMutation.mutate({
-      items:           items.map((i) => ({ product: i._id, qty: i.qty })),
+      items: items.map((i) => ({ product: i._id, qty: i.qty })),
       shippingAddress: address,
       paymentMethod,
       ...(couponResult && { couponCode: couponResult.code }),
@@ -118,66 +140,67 @@ export default function Checkout() {
     if (errors[key]) setErrors((e) => { const n = { ...e }; delete n[key]; return n; });
   };
 
+  const renderField = (field) => {
+    const err = errors[field.name];
+    const val = form[field.name] || field.defaultValue || '';
+    const onChange = (v) => set(field.name, v);
+
+    if (field.type === 'textarea') return (
+      <textarea value={val} onChange={(e) => onChange(e.target.value)} placeholder={field.placeholder}
+        style={{ ...s.input, height: 72, resize: 'vertical', ...(err && { borderColor: '#ef4444' }) }} />
+    );
+    if (field.type === 'select') return (
+      <select value={val} onChange={(e) => onChange(e.target.value)} style={{ ...s.input, ...(err && { borderColor: '#ef4444' }) }}>
+        <option value="">{field.placeholder || 'Select...'}</option>
+        {field.options?.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+    if (field.type === 'radio') return (
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {field.options?.map(o => (
+          <label key={o} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, cursor: 'pointer' }}>
+            <input type="radio" name={field.name} value={o} checked={val === o} onChange={() => onChange(o)} />
+            {o}
+          </label>
+        ))}
+      </div>
+    );
+    if (field.type === 'checkbox') return (
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer' }}>
+        <input type="checkbox" checked={!!val} onChange={e => onChange(e.target.checked)} />
+        {field.label}
+      </label>
+    );
+    return (
+      <input type={field.type} value={val} onChange={e => onChange(e.target.value)} placeholder={field.placeholder}
+        onBlur={field.name === 'phone' ? handlePhoneBlur : undefined}
+        style={{ ...s.input, ...(err && { borderColor: '#ef4444' }) }} />
+    );
+  };
+
   return (
     <div style={s.page}>
       <h1 style={s.heading}>Checkout</h1>
       <form onSubmit={handleSubmit} style={s.layout}>
-
         <div style={s.formCol}>
           <section style={s.section}>
             <h2 style={s.sectionTitle}>Delivery Information</h2>
-
             <div style={s.row2}>
-              <Field label="Full Name *" error={errors.fullName}>
-                <input style={{ ...s.input, ...(errors.fullName && s.inputErr) }}
-                  value={form.fullName} onChange={(e) => set('fullName', e.target.value)} placeholder="Your full name" />
-              </Field>
-              <Field label="Phone *" error={errors.phone}>
-                <input style={{ ...s.input, ...(errors.phone && s.inputErr) }}
-                  value={form.phone}
-                  onChange={(e) => set('phone', e.target.value)}
-                  onBlur={handlePhoneBlur}
-                  placeholder="01XXXXXXXXX" />
-              </Field>
+              {activeFields.map((field) => (
+                <Field key={field.name} label={field.label} error={errors[field.name]}>
+                  {renderField(field)}
+                </Field>
+              ))}
             </div>
-
-            <Field label="Email" error={errors.email}>
-              <input style={s.input} type="email" value={form.email}
-                onChange={(e) => set('email', e.target.value)} placeholder="your@email.com" />
-            </Field>
-
-            <Field label="Full Address *" error={errors.address}>
-              <textarea style={{ ...s.input, height: 80, resize: 'vertical' }}
-                value={form.address} onChange={(e) => set('address', e.target.value)}
-                placeholder="House, Road, Area" />
-            </Field>
-
-            <div style={s.row2}>
-              <Field label="City *" error={errors.city}>
-                <input style={{ ...s.input, ...(errors.city && s.inputErr) }}
-                  value={form.city} onChange={(e) => set('city', e.target.value)} placeholder="City" />
-              </Field>
-              <Field label="District">
-                <select style={s.input} value={form.district} onChange={(e) => set('district', e.target.value)}>
-                  <option value="">Select district</option>
-                  {DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </select>
-              </Field>
-            </div>
-
-            <Field label="Order Note">
-              <textarea style={{ ...s.input, height: 60 }} value={form.note}
-                onChange={(e) => set('note', e.target.value)} placeholder="Special instructions (optional)" />
-            </Field>
           </section>
 
           <section style={s.section}>
             <h2 style={s.sectionTitle}>Payment Method</h2>
             <div style={s.paymentGrid}>
               {PAYMENT_METHODS.map((m) => (
-                <label key={m.value} style={{ ...s.payCard, ...(form.paymentMethod === m.value && s.payCardActive) }}>
-                  <input type="radio" name="payment" value={m.value} checked={form.paymentMethod === m.value}
-                    onChange={() => set('paymentMethod', m.value)} style={{ marginRight: 8 }} />
+                <label key={m.key} style={{ ...s.payCard, ...(form.paymentMethod === m.key && s.payCardActive) }}>
+                  <input type="radio" name="payment" value={m.key} checked={form.paymentMethod === m.key}
+                    onChange={() => set('paymentMethod', m.key)} style={{ marginRight: 8 }} />
                   {m.label}
                 </label>
               ))}
@@ -210,7 +233,6 @@ export default function Checkout() {
               </span>
             </div>
 
-            {/* Coupon Input */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
               <input
                 value={couponCode}
@@ -238,7 +260,6 @@ export default function Checkout() {
             </button>
           </div>
         </div>
-
       </form>
     </div>
   );
@@ -255,27 +276,27 @@ function Field({ label, error, children }) {
 }
 
 const s = {
-  page:         { maxWidth: 1100, margin: '0 auto', padding: '32px 24px' },
-  heading:      { fontSize: 28, fontWeight: 700, marginBottom: 28 },
-  layout:       { display: 'grid', gridTemplateColumns: '1fr 380px', gap: 40, alignItems: 'start' },
-  formCol:      {},
-  section:      { border: '1px solid #eee', borderRadius: 12, padding: 24, marginBottom: 20 },
+  page: { maxWidth: 1100, margin: '0 auto', padding: '32px 24px' },
+  heading: { fontSize: 28, fontWeight: 700, marginBottom: 28 },
+  layout: { display: 'grid', gridTemplateColumns: '1fr 380px', gap: 40, alignItems: 'start' },
+  formCol: {},
+  section: { border: '1px solid #eee', borderRadius: 12, padding: 24, marginBottom: 20 },
   sectionTitle: { fontSize: 17, fontWeight: 700, marginTop: 0, marginBottom: 20 },
-  row2:         { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
-  input:        { width: '100%', padding: '10px 12px', border: '1px solid #e2e2e2', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' },
-  inputErr:     { borderColor: '#e53e3e' },
-  paymentGrid:  { display: 'flex', flexDirection: 'column', gap: 10 },
-  payCard:      { display: 'flex', alignItems: 'center', border: '1px solid #e2e2e2', borderRadius: 8, padding: '12px 16px', cursor: 'pointer', fontSize: 14 },
-  payCardActive:{ borderColor: '#1a1a1a', background: '#f9f9f9', fontWeight: 600 },
-  summaryCol:   {},
-  summaryCard:  { border: '1px solid #eee', borderRadius: 12, padding: 24, position: 'sticky', top: 20 },
-  orderItem:    { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 },
-  orderThumb:   { width: 52, height: 52, objectFit: 'cover', borderRadius: 6, background: '#f5f5f5', flexShrink: 0 },
-  orderName:    { fontSize: 14, fontWeight: 600, margin: '0 0 2px' },
-  orderQty:     { fontSize: 12, color: '#888', margin: 0 },
-  orderLineTotal:{ fontSize: 14, fontWeight: 700, flexShrink: 0 },
-  divider:      { borderTop: '1px solid #eee', margin: '12px 0' },
-  summaryRow:   { display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 14 },
-  grandTotal:   { fontWeight: 700, fontSize: 18, borderTop: '1px solid #eee', paddingTop: 12, marginTop: 4 },
-  placeBtn:     { width: '100%', padding: 14, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: 'pointer', marginTop: 16 },
+  row2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
+  input: { width: '100%', padding: '10px 12px', border: '1px solid #e2e2e2', borderRadius: 8, fontSize: 14, boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' },
+  inputErr: { borderColor: '#e53e3e' },
+  paymentGrid: { display: 'flex', flexDirection: 'column', gap: 10 },
+  payCard: { display: 'flex', alignItems: 'center', border: '1px solid #e2e2e2', borderRadius: 8, padding: '12px 16px', cursor: 'pointer', fontSize: 14 },
+  payCardActive: { borderColor: '#1a1a1a', background: '#f9f9f9', fontWeight: 600 },
+  summaryCol: {},
+  summaryCard: { border: '1px solid #eee', borderRadius: 12, padding: 24, position: 'sticky', top: 20 },
+  orderItem: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 },
+  orderThumb: { width: 52, height: 52, objectFit: 'cover', borderRadius: 6, background: '#f5f5f5', flexShrink: 0 },
+  orderName: { fontSize: 14, fontWeight: 600, margin: '0 0 2px' },
+  orderQty: { fontSize: 12, color: '#888', margin: 0 },
+  orderLineTotal: { fontSize: 14, fontWeight: 700, flexShrink: 0 },
+  divider: { borderTop: '1px solid #eee', margin: '12px 0' },
+  summaryRow: { display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 14 },
+  grandTotal: { fontWeight: 700, fontSize: 18, borderTop: '1px solid #eee', paddingTop: 12, marginTop: 4 },
+  placeBtn: { width: '100%', padding: 14, background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: 'pointer', marginTop: 16 },
 };

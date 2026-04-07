@@ -10,6 +10,25 @@ const PAGES = [
 ];
 
 export default function PageManager() {
+  const [showCreate, setShowCreate] = useState(false);
+  const [newPage, setNewPage]       = useState({ title: '', key: '', content: '' });
+
+  const createMutation = useMutation({
+    mutationFn: (data) => api.put(`/pages/${data.key}`, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-all-pages'] });
+      setShowCreate(false);
+      setNewPage({ title: '', key: '', content: '' });
+      alert('Page created!');
+    },
+  });
+
+  const { data: allPages } = useQuery({
+    queryKey: ['admin-all-pages'],
+    queryFn:  () => api.get('/pages').then(r => r.data.data),
+  });
+
+  const generateSlug = (title) => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const qc = useQueryClient();
   const [activeKey, setActiveKey] = useState('about');
 
@@ -61,6 +80,59 @@ export default function PageManager() {
             {p.label}
           </button>
         ))}
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>All pages ({allPages?.length || 0})</span>
+          </div>
+          <button onClick={() => setShowCreate(s => !s)}
+            style={{ padding: '7px 14px', background: '#111827', color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 13 }}>
+            {showCreate ? 'Cancel' : '+ Create New Page'}
+          </button>
+        </div>
+
+        {showCreate && (
+          <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 20, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+              <div>
+                <label style={s.label}>Page title *</label>
+                <input value={newPage.title} onChange={e => setNewPage(p => ({ ...p, title: e.target.value, key: generateSlug(e.target.value) }))}
+                  placeholder="e.g. Shipping Policy" style={s.input} />
+              </div>
+              <div>
+                <label style={s.label}>URL slug * (auto-generated)</label>
+                <input value={newPage.key} onChange={e => setNewPage(p => ({ ...p, key: e.target.value }))}
+                  placeholder="shipping-policy" style={{ ...s.input, fontFamily: 'monospace' }} />
+                <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Page will be at: /page/{newPage.key || 'your-slug'}</p>
+              </div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={s.label}>Initial content</label>
+              <textarea value={newPage.content} onChange={e => setNewPage(p => ({ ...p, content: e.target.value }))}
+                rows={4} placeholder="<h2>Heading</h2><p>Content...</p>"
+                style={{ ...s.input, height: 80, resize: 'vertical', fontFamily: 'monospace', fontSize: 13 }} />
+            </div>
+            <button onClick={() => { if (!newPage.title || !newPage.key) return alert('Title and slug required'); createMutation.mutate(newPage); }}
+              disabled={createMutation.isPending}
+              style={{ padding: '9px 20px', background: '#111827', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>
+              {createMutation.isPending ? 'Creating...' : 'Create Page'}
+            </button>
+          </div>
+        )}
+
+        {allPages && allPages.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+            {allPages.filter(p => !['about','privacy','terms','contact'].includes(p.key)).map(p => (
+              <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 20, padding: '4px 12px', fontSize: 13 }}>
+                <span>{p.title}</span>
+                <span style={{ color: '#9ca3af', fontFamily: 'monospace', fontSize: 11 }}>/page/{p.key}</span>
+                <button onClick={() => setActiveKey(p.key)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6', fontSize: 12, padding: 0 }}>Edit</button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {isLoading ? <p>Loading...</p> : (

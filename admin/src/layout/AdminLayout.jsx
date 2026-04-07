@@ -20,6 +20,8 @@ const NAV = [
   { label: 'SEO',        path: '/seo' },
   { label: 'Marketing',  path: '/marketing' },
   { label: 'Custom Code',path: '/custom-code' },
+  { label: 'Menu Builder',path: '/menu' },
+  { label: 'Checkout Builder',path: '/checkout-builder' },
   { label: 'Pages',      path: '/pages' },
   { label: 'Theme',      path: '/theme' },
   { label: 'Settings',   path: '/settings' },

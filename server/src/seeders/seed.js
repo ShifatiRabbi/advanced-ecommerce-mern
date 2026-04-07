@@ -5,6 +5,7 @@ import { Category } from '../modules/category/category.model.js';
 import { Brand } from '../modules/brand/brand.model.js';
 import { Product } from '../modules/product/product.model.js';
 import { Page } from '../modules/page/page.model.js';
+import { DeliveryZone } from '../modules/delivery/delivery.model.js';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -18,7 +19,8 @@ const seed = async () => {
   await Brand.deleteMany({});
   await Product.deleteMany({});
   await Page.deleteMany({});
-  
+  await DeliveryZone.deleteMany({});
+
   console.log('Cleared existing data.');
 
   // ── Users ───────────────────────────────────────────────────────────────
@@ -127,6 +129,12 @@ const seed = async () => {
     { key:'privacy', title:'Privacy Policy', content:'<h2>Privacy Policy</h2><p>Your privacy is important to us...</p>', isActive:true },
     { key:'terms',   title:'Terms & Conditions', content:'<h2>Terms & Conditions</h2><p>By using our site...</p>', isActive:true },
     { key:'contact', title:'Contact Us', extra:{ phone:'01700-000000', email:'support@shopbd.com', address:'Dhaka, Bangladesh', mapEmbed:'', socials:{ facebook:'', instagram:'', youtube:'' } }, content:'Get in touch with us anytime.', isActive:true },
+  ]);
+  
+  await DeliveryZone.insertMany([
+    { zone:'Inside Dhaka',  areas:['Dhaka City','Mirpur','Dhanmondi','Gulshan','Banani','Uttara','Motijheel'], charge:60,  minDays:1, maxDays:2, isActive:true },
+    { zone:'Outside Dhaka', areas:['Chittagong','Rajshahi','Sylhet','Khulna','Barishal','Rangpur'],            charge:120, minDays:2, maxDays:5, isActive:true },
+    { zone:'Sub-districts', areas:[],                                                                          charge:150, minDays:3, maxDays:7, isActive:true },
   ]);
 
   console.log('\n✅ Seed complete!');

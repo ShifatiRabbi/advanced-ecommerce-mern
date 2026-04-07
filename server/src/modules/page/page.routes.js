@@ -21,4 +21,14 @@ router.put('/:key', protect, adminOnly, asyncHandler(async (req,res) => {
   sendSuccess(res, { data: page });
 }));
 
+router.get('/', asyncHandler(async (req, res) => {
+  const pages = await Page.find().sort({ createdAt: -1 }).lean();
+  sendSuccess(res, { data: pages });
+}));
+
+router.delete('/:key', protect, adminOnly, asyncHandler(async (req, res) => {
+  await Page.findOneAndDelete({ key: req.params.key });
+  sendSuccess(res, { message: 'Page deleted' });
+}));
+
 export default router;

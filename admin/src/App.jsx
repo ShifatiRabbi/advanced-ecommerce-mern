@@ -18,12 +18,15 @@ const Offers        = lazy(() => import('./pages/Offers/Offers'));
 const Delivery      = lazy(() => import('./pages/Delivery/Delivery'));
 const PaymentList   = lazy(() => import('./pages/Payments/PaymentList'));
 const Blog          = lazy(() => import('./pages/Blog/Blog'));
+const BlogEditor    = lazy(() => import('./pages/Blog/BlogEditor'));
 const Settings      = lazy(() => import('./pages/Settings/Settings'));
 const SEOSettings   = lazy(() => import('./pages/SEO/SEOSettings'));
 const Marketing     = lazy(() => import('./pages/Marketing/Marketing'));
 const PageManager   = lazy(() => import('./pages/PageManager/PageManager'));
 const CustomCode    = lazy(() => import('./pages/CustomCode/CustomCode'));
 const ThemeDesigner = lazy(() => import('./pages/ThemeDesigner/ThemeDesigner'));
+const MenuBuilder   = lazy(() => import('./pages/MenuBuilder/MenuBuilder'));
+const CheckoutBuilder= lazy(() => import('./pages/CheckoutBuilder/CheckoutBuilder'));
 
 const Loader = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#6b7280' }}>
@@ -53,12 +56,16 @@ export default function App() {
           <Route path="delivery"         element={<Delivery />} />
           <Route path="payments"         element={<PaymentList />} />
           <Route path="blog"             element={<Blog />} />
+          <Route path="blog/new"         element={<BlogEditor />} />
+          <Route path="blog/edit/:id"    element={<BlogEditor />} />
           <Route path="settings"         element={<Settings />} />
           <Route path="seo"              element={<SEOSettings />} />
           <Route path="marketing"        element={<Marketing />} />
           <Route path="pages"            element={<PageManager />} />
           <Route path="custom-code"      element={<CustomCode />} />
           <Route path="theme"            element={<ThemeDesigner />} />
+          <Route path="menu"             element={<MenuBuilder />} />
+          <Route path="checkout-builder" element={<CheckoutBuilder />} />
 
         </Route>
 

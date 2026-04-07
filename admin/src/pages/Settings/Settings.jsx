@@ -24,6 +24,15 @@ export default function Settings() {
 
   const TABS = ['layout', 'health', 'metrics'];
 
+  const { data: cardStyle } = useQuery({ queryKey: ['card-style'], queryFn: () => api.get('/settings/product-card-style').then(r => r.data.data) });
+  const [selectedCard, setSelectedCard] = useState('style1');
+  useEffect(() => { if (cardStyle) setSelectedCard(cardStyle); }, [cardStyle]);
+
+  const cardStyleMutation = useMutation({
+    mutationFn: (style) => api.put('/settings/product-card-style', { style }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['card-style'] }); alert('Card style saved!'); },
+  });
+
   return (
     <div>
       <h2 style={{ margin: '0 0 20px' }}>Site Settings</h2>
@@ -62,6 +71,28 @@ export default function Settings() {
             style={{ padding: '12px 32px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
             {layoutMutation.isPending ? 'Saving...' : 'Save Layout'}
           </button>
+
+          <div style={s.card}>
+            <h3 style={s.sectionTitle}>Product card style</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 16 }}>
+              {['style1','style2','style3','style4'].map(style => (
+                <button key={style} onClick={() => setSelectedCard(style)}
+                  style={{ padding: '12px', border: `2px solid ${selectedCard === style ? '#111827' : '#e5e7eb'}`, borderRadius: 10, background: selectedCard === style ? '#f9fafb' : '#fff', cursor: 'pointer', textAlign: 'center' }}>
+                  <div style={{ fontSize: 24, marginBottom: 6 }}>
+                    {style === 'style1' ? '▦' : style === 'style2' ? '▣' : style === 'style3' ? '▬' : '◼'}
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: selectedCard === style ? 700 : 400 }}>
+                    {style === 'style1' ? 'Classic' : style === 'style2' ? 'Modern' : style === 'style3' ? 'List' : 'Minimal'}
+                  </div>
+                  {selectedCard === style && <div style={{ fontSize: 11, color: '#059669', marginTop: 2 }}>Active</div>}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => cardStyleMutation.mutate(selectedCard)} disabled={cardStyleMutation.isPending}
+              style={{ padding: '9px 20px', background: '#111827', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>
+              {cardStyleMutation.isPending ? 'Saving...' : 'Apply Card Style'}
+            </button>
+          </div>
         </div>
       )}
 

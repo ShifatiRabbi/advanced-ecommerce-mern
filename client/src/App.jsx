@@ -19,6 +19,8 @@ const Register      = lazy(() => import('./pages/auth/Register'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 const StaticPage  = lazy(() => import('./pages/StaticPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const BlogList   = lazy(() => import('./pages/BlogList'));
+const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 
 export default function App() {
   useTheme();
@@ -45,7 +47,9 @@ export default function App() {
           <Route path="/privacy" element={<StaticPage pageKey="privacy" />} />
           <Route path="/terms"   element={<StaticPage pageKey="terms"   />} />
           <Route path="/contact" element={<ContactPage />} />
-
+          <Route path="/page/:key" element={<StaticPage />} />
+          <Route path="/blog"        element={<BlogList />} />
+          <Route path="/blog/:slug"  element={<BlogDetail />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

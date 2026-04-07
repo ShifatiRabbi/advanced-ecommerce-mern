@@ -1,20 +1,27 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate from react-router-dom
 import api from '../../services/api';
 
 export default function Blog() {
   const qc = useQueryClient();
+  const navigate = useNavigate();  // Initialize navigate
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing]   = useState(null);
-  const [form, setForm]         = useState({ title: '', content: '', excerpt: '', category: 'General', isPublished: false });
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ title: '', content: '', excerpt: '', category: 'General', isPublished: false });
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-blogs'],
     queryFn:  () => api.get('/blog/admin/all').then(r => r.data.data),
   });
 
-  const reset = () => { setForm({ title: '', content: '', excerpt: '', category: 'General', isPublished: false }); setEditing(null); setShowForm(false); };
-  const set   = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const reset = () => { 
+    setForm({ title: '', content: '', excerpt: '', category: 'General', isPublished: false }); 
+    setEditing(null); 
+    setShowForm(false); 
+  };
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const saveMutation = useMutation({
     mutationFn: (data) => editing ? api.put(`/blog/${editing._id}`, data) : api.post('/blog', data),
@@ -41,6 +48,7 @@ export default function Blog() {
           style={{ padding: '8px 16px', background: '#111827', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>
           {showForm ? 'Cancel' : '+ New Post'}
         </button>
+        <button onClick={() => navigate('/blog/new')} style={{ padding: '8px 16px', background: '#111827', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>+ New Post</button>
       </div>
 
       {showForm && (
@@ -116,7 +124,7 @@ export default function Blog() {
                   </td>
                   <td style={{ padding: '12px 14px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => startEdit(post)} style={{ padding: '4px 10px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Edit</button>
+                      <button onClick={() => navigate(`/blog/edit/${post._id}`)} style={{ padding: '4px 10px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Edit</button>
                       <button onClick={() => window.confirm('Delete this post?') && deleteMutation.mutate(post._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}>Delete</button>
                     </div>
                   </td>

@@ -91,3 +91,12 @@ export const resetTheme = async () => {
   await Settings.findOneAndDelete({ key: 'theme' });
   return DEFAULT_THEME;
 };
+
+export const getProductCardStyle = async () => {
+  const doc = await Settings.findOne({ key: 'productCardStyle' });
+  return doc?.value || 'style1';
+};
+export const updateProductCardStyle = async (style) => {
+  await Settings.findOneAndUpdate({ key: 'productCardStyle' }, { value: style }, { upsert: true });
+  return style;
+};
