@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
+import { OrderRowSkeleton } from '../../components/Skeleton';
 
 const STATUSES = [
   { key: '',         label: 'All',             color: '#374151', bg: '#f3f4f6' },
@@ -262,21 +263,30 @@ export default function OrderList() {
       </div>
 
       {/* Orders Table */}
-      {isLoading ? <p style={{ padding: 20 }}>Loading...</p> : (
-        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
-          <table style={s.table}>
-            <thead>
-              <tr style={s.thead}>
-                <th style={s.th}>
-                  <input type="checkbox" checked={selected.size === data?.orders?.length && data?.orders?.length > 0} onChange={toggleAll} />
-                </th>
-                {['Order #', 'Date', 'Customer', 'Phone', 'Items', 'Total', 'Payment', 'Status', 'Fraud', 'Actions'].map(h => (
-                  <th key={h} style={s.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data?.orders?.map(order => {
+      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+        <table style={s.table}>
+          <thead>
+            <tr style={s.thead}>
+              <th style={s.th}>
+                <input 
+                  type="checkbox" 
+                  checked={selected.size === data?.orders?.length && data?.orders?.length > 0} 
+                  onChange={toggleAll} 
+                />
+              </th>
+              {['Order #', 'Date', 'Customer', 'Phone', 'Items', 'Total', 'Payment', 'Status', 'Fraud', 'Actions'].map(h => (
+                <th key={h} style={s.th}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              /* Render 8 skeleton rows to fill the table while loading */
+              Array.from({ length: 8 }).map((_, i) => (
+                <OrderRowSkeleton key={i} />
+              ))
+            ) : (
+              data?.orders?.map(order => {
                 const st = STATUS_MAP[order.status] || STATUS_MAP[''];
                 const isOpen = expanded === order._id;
                 const fraud = fraudReports[order._id];
@@ -284,19 +294,27 @@ export default function OrderList() {
                 return (
                   <React.Fragment key={order._id}>
                     <tr style={{ ...s.tr, background: selected.has(order._id) ? '#eff6ff' : '#fff' }}>
-                      <td style={s.td}><input type="checkbox" checked={selected.has(order._id)} onChange={() => toggleSelect(order._id)} /></td>
-                      <td style={s.td}><div style={{ fontFamily: 'monospace', fontWeight: 700 }}>{order.orderNumber}</div></td>
+                      <td style={s.td}>
+                        <input type="checkbox" checked={selected.has(order._id)} onChange={() => toggleSelect(order._id)} />
+                      </td>
+                      <td style={s.td}>
+                        <div style={{ fontFamily: 'monospace', fontWeight: 700 }}>{order.orderNumber}</div>
+                      </td>
                       <td style={s.td}>
                         <div style={{ fontSize: 13 }}>{new Date(order.createdAt).toLocaleDateString()}</div>
-                        <div style={{ fontSize: 11, color: '#9ca3af' }}>{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        <div style={{ fontSize: 11, color: '#9ca3af' }}>
+                          {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       </td>
                       <td style={s.td}>
                         <div style={{ fontWeight: 600 }}>{order.shippingAddress?.fullName}</div>
                         <div style={{ fontSize: 11, color: '#6b7280' }}>{order.shippingAddress?.city}</div>
                       </td>
                       <td style={s.td}>
-                        <button onClick={() => { copyText(order.shippingAddress?.phone || ''); alert('Phone copied!'); }}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'monospace', padding: 0 }}>
+                        <button 
+                          onClick={() => { copyText(order.shippingAddress?.phone || ''); alert('Phone copied!'); }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'monospace', padding: 0 }}
+                        >
                           {order.shippingAddress?.phone}
                         </button>
                       </td>
@@ -310,20 +328,28 @@ export default function OrderList() {
                         </span>
                       </td>
                       <td style={s.td}>
-                        <select value={order.status} onChange={e => statusMutation.mutate({ id: order._id, status: e.target.value })}
-                          style={{ padding: '4px 8px', borderRadius: 6, background: st.bg, color: st.color, border: 'none', fontSize: 12, fontWeight: 600 }}>
-                          {STATUSES.filter(s => s.key).map(st => <option key={st.key} value={st.key}>{st.label}</option>)}
+                        <select 
+                          value={order.status} 
+                          onChange={e => statusMutation.mutate({ id: order._id, status: e.target.value })}
+                          style={{ padding: '4px 8px', borderRadius: 6, background: st.bg, color: st.color, border: 'none', fontSize: 12, fontWeight: 600 }}
+                        >
+                          {STATUSES.filter(s => s.key).map(st => (
+                            <option key={st.key} value={st.key}>{st.label}</option>
+                          ))}
                         </select>
                       </td>
 
-                      {/* FRAUD CELL */}
                       <td style={s.td}>
                         {fraud ? (
                           <span style={{ padding: '3px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700, background: fraud.overallRisk === 'HIGH' ? '#fee2e2' : '#d1fae5', color: fraud.overallRisk === 'HIGH' ? '#991b1b' : '#065f46' }}>
                             {fraud.overallRisk}
                           </span>
                         ) : (
-                          <button onClick={() => checkFraud(order._id)} disabled={fraudLoading[order._id]} style={{ padding: '3px 8px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 11 }}>
+                          <button 
+                            onClick={() => checkFraud(order._id)} 
+                            disabled={fraudLoading[order._id]} 
+                            style={{ padding: '3px 8px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 11 }}
+                          >
                             {fraudLoading[order._id] ? '...' : 'Check'}
                           </button>
                         )}
@@ -331,7 +357,9 @@ export default function OrderList() {
 
                       <td style={s.td}>
                         <div style={{ display: 'flex', gap: 4 }}>
-                          <button onClick={() => setExpanded(isOpen ? null : order._id)} style={s.iconBtn}>{isOpen ? '▲' : '▼'}</button>
+                          <button onClick={() => setExpanded(isOpen ? null : order._id)} style={s.iconBtn}>
+                            {isOpen ? '▲' : '▼'}
+                          </button>
                           <button onClick={() => copyOrderDetails(order)} style={s.iconBtn}>📋</button>
                         </div>
                       </td>
@@ -368,7 +396,6 @@ export default function OrderList() {
                               </div>
                             </div>
 
-                            {/* Fraud Analysis Detailed Report */}
                             {fraud && (
                               <div style={{ marginTop: 20, background: '#fff', padding: 15, borderRadius: 8, border: '1px solid #e5e7eb' }}>
                                 <h4 style={{ margin: '0 0 10px', fontSize: 14 }}>Fraud Report: {fraud.overallRisk} Risk</h4>
@@ -385,11 +412,15 @@ export default function OrderList() {
                     )}
                   </React.Fragment>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+              })
+            )}
+          </tbody>
+        </table>
+        
+        {!isLoading && data?.orders?.length === 0 && (
+          <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>No orders found.</div>
+        )}
+      </div>
 
       {/* Pagination */}
       <div style={{ display: 'flex', gap: 6, marginTop: 16, justifyContent: 'center' }}>

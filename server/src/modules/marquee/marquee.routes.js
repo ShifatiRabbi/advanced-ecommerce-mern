@@ -6,11 +6,19 @@ import { Marquee }            from './marquee.model.js';
 
 const router = Router();
 
-router.get('/', asyncHandler(async(req,res) => {
+router.get('/', asyncHandler(async (req, res) => {
+  const { productId, categoryId, page, position } = req.query;
   const filter = { isActive: true };
-  if (req.query.productId)  filter.$or = [{ showOnAll: true }, { productIds: req.query.productId }];
-  if (req.query.categoryId) filter.$or = [{ showOnAll: true }, { categoryIds: req.query.categoryId }];
-  if (req.query.page)       filter.$or = [{ showOnAll: true }, { showOnPages: req.query.page }];
+  if (position) filter.position = position;
+
+  if (productId || categoryId || page) {
+    const orClauses = [{ showOnAll: true }];
+    if (productId)  orClauses.push({ productIds: productId });
+    if (categoryId) orClauses.push({ categoryIds: categoryId });
+    if (page)       orClauses.push({ showOnPages: page });
+    filter.$or = orClauses;
+  }
+  // If no targeting params, return all active
   sendSuccess(res, { data: await Marquee.find(filter).lean() });
 }));
 

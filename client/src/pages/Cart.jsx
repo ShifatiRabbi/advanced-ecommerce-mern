@@ -1,77 +1,117 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useCartStore } from '../store/cartStore';
+import { useCartStore }      from '../store/cartStore';
+import { toast }             from '../utils/toast';
 
 export default function Cart() {
-  const { items, removeItem, updateQty, total, clearCart } = useCartStore();
   const navigate = useNavigate();
+  const { items, removeItem, updateQty, subtotal, itemCount, clearCart } = useCartStore();
 
-  if (items.length === 0) {
-    return (
-      <div style={s.empty}>
-        <p style={{ fontSize: 18, marginBottom: 16 }}>Your cart is empty</p>
-        <Link to="/shop" style={s.shopBtn}>Continue Shopping</Link>
-      </div>
-    );
-  }
-
-  const shipping = total >= 1000 ? 0 : 60;
+  if (items.length === 0) return (
+    <div style={{ textAlign:'center', padding:'80px 24px' }}>
+      <div style={{ fontSize:64, marginBottom:16 }}>🛒</div>
+      <h2 style={{ margin:'0 0 12px' }}>Your cart is empty</h2>
+      <button onClick={() => navigate('/shop')}
+        style={{ padding:'12px 28px', background:'#111827', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontSize:15, fontWeight:600 }}>
+        Browse Products
+      </button>
+    </div>
+  );
 
   return (
-    <div style={s.page}>
-      <h1 style={s.heading}>Shopping Cart</h1>
+    <div style={{ maxWidth:1100, margin:'0 auto', padding:'32px 20px' }}>
+      <h1 style={{ margin:'0 0 24px', fontSize:24, fontWeight:800 }}>Shopping Cart ({itemCount} items)</h1>
 
-      <div style={s.layout}>
-        <div style={s.itemsCol}>
-          {items.map((item) => (
-            <div key={item._id} style={s.row}>
-              <img
-                src={item.images?.[0]?.url}
-                alt={item.name}
-                style={s.thumb}
-              />
-              <div style={s.info}>
-                <Link to={`/product/${item.slug}`} style={s.name}>{item.name}</Link>
-                <p style={s.brand}>{item.brand?.name}</p>
-                <p style={s.unitPrice}>৳{(item.discountPrice || item.price).toLocaleString()} each</p>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 360px', gap:24, alignItems:'start' }}>
+        <div>
+          {items.map(item => (
+            <div key={item.cartKey} style={{ display:'flex', gap:16, border:'1px solid #e5e7eb', borderRadius:10, padding:16, marginBottom:12, background:'#fff' }}>
+              <Link to={`/product/${item.slug}`} style={{ display:'block', width:88, height:88, borderRadius:8, overflow:'hidden', flexShrink:0, background:'#f5f5f5' }}>
+                {item.image && <img src={item.image} alt={item.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />}
+              </Link>
+              <div style={{ flex:1 }}>
+                <Link to={`/product/${item.slug}`} style={{ textDecoration:'none', color:'#111', fontWeight:600, fontSize:15 }}>{item.name}</Link>
+
+                {/* Variant display */}
+                {Object.keys(item.selectedVariants || {}).length > 0 && (
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:6, margin:'6px 0' }}>
+                    {Object.entries(item.selectedVariants).map(([k,v]) => (
+                      <span key={k} style={{ fontSize:12, background:'#f3f4f6', padding:'2px 8px', borderRadius:20, color:'#374151' }}>
+                        {k}: <strong>{v?.label}</strong>
+                        {v?.priceModifier !== 0 && v?.priceModifier && (
+                          <span style={{ color: v.priceModifier>0?'#059669':'#dc2626', marginLeft:4 }}>
+                            {v.priceModifier>0?'+':''}৳{v.priceModifier}
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:8 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <div style={{ display:'flex', alignItems:'center', border:'1px solid #e5e7eb', borderRadius:6, overflow:'hidden' }}>
+                      <button onClick={() => updateQty(item.cartKey, item.qty - 1)}
+                        style={{ width:32, height:32, border:'none', background:'#f9fafb', cursor:'pointer', fontSize:18, fontWeight:700 }}>−</button>
+                      <span style={{ width:40, textAlign:'center', fontSize:15, fontWeight:600 }}>{item.qty}</span>
+                      <button onClick={() => { if (item.qty >= item.stock) { toast.warning(`Only ${item.stock} in stock`); return; } updateQty(item.cartKey, item.qty + 1); }}
+                        style={{ width:32, height:32, border:'none', background:'#f9fafb', cursor:'pointer', fontSize:18, fontWeight:700 }}>+</button>
+                    </div>
+                    <button onClick={() => removeItem(item.cartKey)}
+                      style={{ fontSize:13, color:'#dc2626', background:'none', border:'none', cursor:'pointer', textDecoration:'underline' }}>
+                      Remove
+                    </button>
+                  </div>
+                  <div style={{ textAlign:'right' }}>
+                    <div style={{ fontWeight:800, fontSize:17, color:'#111' }}>৳{item.total.toLocaleString()}</div>
+                    <div style={{ fontSize:12, color:'#9ca3af' }}>৳{item.unitPrice.toLocaleString()} each</div>
+                  </div>
+                </div>
               </div>
-              <div style={s.qtyWrap}>
-                <button style={s.qtyBtn} onClick={() => updateQty(item._id, item.qty - 1)}>−</button>
-                <span style={s.qtyNum}>{item.qty}</span>
-                <button style={s.qtyBtn} onClick={() => updateQty(item._id, item.qty + 1)}>+</button>
-              </div>
-              <div style={s.lineTotal}>
-                ৳{((item.discountPrice || item.price) * item.qty).toLocaleString()}
-              </div>
-              <button style={s.removeBtn} onClick={() => removeItem(item._id)}>✕</button>
             </div>
           ))}
 
-          <button onClick={clearCart} style={s.clearBtn}>Clear Cart</button>
+          <button onClick={() => { clearCart(); toast.success('Cart cleared'); }}
+            style={{ background:'none', border:'1px solid #fecaca', color:'#dc2626', padding:'8px 16px', borderRadius:8, cursor:'pointer', fontSize:13 }}>
+            Clear cart
+          </button>
         </div>
 
-        <div style={s.summary}>
-          <h2 style={s.summaryTitle}>Order Summary</h2>
-          <div style={s.summaryRow}>
-            <span>Subtotal</span>
-            <span>৳{total.toLocaleString()}</span>
+        {/* Summary */}
+        <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, padding:24, position:'sticky', top:20 }}>
+          <h3 style={{ margin:'0 0 16px', fontSize:16, fontWeight:700 }}>Order Summary</h3>
+
+          {items.map(item => (
+            <div key={item.cartKey} style={{ display:'flex', justifyContent:'space-between', fontSize:13, padding:'5px 0', borderBottom:'1px solid #f3f4f6' }}>
+              <span style={{ color:'#555', flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', marginRight:8 }}>
+                {item.name}
+                {Object.keys(item.selectedVariants||{}).length>0 && (
+                  <span style={{ color:'#9ca3af', marginLeft:4, fontSize:11 }}>
+                    ({Object.values(item.selectedVariants).map(v=>v?.label).join(', ')})
+                  </span>
+                )}
+                {' '}×{item.qty}
+              </span>
+              <span style={{ fontWeight:600, flexShrink:0 }}>৳{item.total.toLocaleString()}</span>
+            </div>
+          ))}
+
+          <div style={{ display:'flex', justifyContent:'space-between', padding:'12px 0', fontSize:15 }}>
+            <span style={{ color:'#6b7280' }}>Subtotal</span>
+            <span style={{ fontWeight:700 }}>৳{subtotal.toLocaleString()}</span>
           </div>
-          <div style={s.summaryRow}>
-            <span>Shipping</span>
-            <span style={{ color: shipping === 0 ? '#38a169' : 'inherit' }}>
-              {shipping === 0 ? 'Free' : `৳${shipping}`}
-            </span>
+
+          <div style={{ padding:'10px 0', borderTop:'1px solid #e5e7eb', marginBottom:16, fontSize:13, color:'#6b7280' }}>
+            Shipping calculated at checkout
           </div>
-          {shipping === 0 && (
-            <p style={s.freeShipNote}>Free shipping on orders over ৳1000</p>
-          )}
-          <div style={{ ...s.summaryRow, ...s.totalRow }}>
-            <span>Total</span>
-            <span>৳{(total + shipping).toLocaleString()}</span>
-          </div>
-          <button onClick={() => navigate('/checkout')} style={s.checkoutBtn}>
+
+          <button onClick={() => navigate('/checkout')}
+            style={{ width:'100%', padding:14, background:'#111827', color:'#fff', border:'none', borderRadius:8, fontSize:15, fontWeight:700, cursor:'pointer' }}>
             Proceed to Checkout
           </button>
-          <Link to="/shop" style={s.continueLink}>Continue Shopping</Link>
+          <button onClick={() => navigate('/shop')}
+            style={{ width:'100%', marginTop:10, padding:10, border:'1px solid #e5e7eb', borderRadius:8, background:'#fff', cursor:'pointer', fontSize:14 }}>
+            Continue Shopping
+          </button>
         </div>
       </div>
     </div>

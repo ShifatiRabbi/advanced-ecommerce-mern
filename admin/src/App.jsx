@@ -2,6 +2,8 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from './layout/AdminLayout';
 import AuthGuard   from './components/AuthGuard';
+import GlobalLoader from './components/GlobalLoader';
+import SuspenseFallback from './components/SuspenseFallback';
 
 const Login         = lazy(() => import('./pages/Auth/Login'));
 const Dashboard     = lazy(() => import('./pages/Dashboard/Dashboard'));
@@ -32,6 +34,7 @@ const MarqueeManager= lazy(() => import('./pages/MarqueeManager/MarqueeManager')
 const TimerManager  = lazy(() => import('./pages/TimerManager/TimerManager'));
 const EmailTemplates = lazy(() => import('./pages/EmailTemplates/EmailTemplates'));
 const GeneralSettings = lazy(() => import('./pages/Settings/GeneralSettings'));
+const ContactMessages = lazy(() => import('./pages/ContactMessages/ContactMessages'));
 
 const Loader = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#6b7280' }}>
@@ -41,46 +44,49 @@ const Loader = () => (
 
 export default function App() {
   return (
-    <Suspense fallback={<Loader />}>
-      <Routes>
-        <Route path="/login" element={<Login />} />
+    <>
+      <GlobalLoader />
+      <Suspense fallback={<SuspenseFallback />}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
 
-        <Route path="/" element={<AuthGuard><AdminLayout /></AuthGuard>}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard"        element={<Dashboard />} />
-          <Route path="orders"           element={<OrderList />} />
-          <Route path="products"         element={<ProductList />} />
-          <Route path="products/add"     element={<AddProduct />} />
-          <Route path="products/edit/:id" element={<EditProduct />} />
-          <Route path="categories"       element={<CategoryList />} />
-          <Route path="brands"           element={<BrandList />} />
-          <Route path="inventory"        element={<Inventory />} />
-          <Route path="customers"        element={<Customers />} />
-          <Route path="employees"        element={<AuthGuard requiredRole="admin"><Employees /></AuthGuard>} />
-          <Route path="offers"           element={<Offers />} />
-          <Route path="delivery"         element={<Delivery />} />
-          <Route path="payments"         element={<PaymentList />} />
-          <Route path="blog"             element={<Blog />} />
-          <Route path="blog/new"         element={<BlogEditor />} />
-          <Route path="blog/edit/:id"    element={<BlogEditor />} />
-          <Route path="settings"         element={<Settings />} />
-          <Route path="seo"              element={<SEOSettings />} />
-          <Route path="marketing"        element={<Marketing />} />
-          <Route path="pages"            element={<PageManager />} />
-          <Route path="custom-code"      element={<CustomCode />} />
-          <Route path="theme"            element={<ThemeDesigner />} />
-          <Route path="menu"             element={<MenuBuilder />} />
-          <Route path="checkout-builder" element={<CheckoutBuilder />} />
-          <Route path="slider-builder"   element={<SliderBuilder />} />
-          <Route path="marquee"          element={<MarqueeManager />} />
-          <Route path="timer"            element={<TimerManager />} />
-          <Route path="email-templates"  element={<EmailTemplates />} />
-          <Route path="general"          element={<GeneralSettings />} />
-        
-        </Route>
+          <Route path="/" element={<AuthGuard><AdminLayout /></AuthGuard>}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard"        element={<Dashboard />} />
+            <Route path="orders"           element={<OrderList />} />
+            <Route path="products"         element={<ProductList />} />
+            <Route path="products/add"     element={<AddProduct />} />
+            <Route path="products/edit/:id" element={<EditProduct />} />
+            <Route path="categories"       element={<CategoryList />} />
+            <Route path="brands"           element={<BrandList />} />
+            <Route path="inventory"        element={<Inventory />} />
+            <Route path="customers"        element={<Customers />} />
+            <Route path="employees"        element={<AuthGuard requiredRole="admin"><Employees /></AuthGuard>} />
+            <Route path="offers"           element={<Offers />} />
+            <Route path="delivery"         element={<Delivery />} />
+            <Route path="payments"         element={<PaymentList />} />
+            <Route path="blog"             element={<Blog />} />
+            <Route path="blog/new"         element={<BlogEditor />} />
+            <Route path="blog/edit/:id"    element={<BlogEditor />} />
+            <Route path="settings"         element={<Settings />} />
+            <Route path="seo"              element={<SEOSettings />} />
+            <Route path="marketing"        element={<Marketing />} />
+            <Route path="pages"            element={<PageManager />} />
+            <Route path="custom-code"      element={<CustomCode />} />
+            <Route path="theme"            element={<ThemeDesigner />} />
+            <Route path="menu"             element={<MenuBuilder />} />
+            <Route path="checkout-builder" element={<CheckoutBuilder />} />
+            <Route path="slider-builder"   element={<SliderBuilder />} />
+            <Route path="marquee"          element={<MarqueeManager />} />
+            <Route path="timer"            element={<TimerManager />} />
+            <Route path="email-templates"  element={<EmailTemplates />} />
+            <Route path="general"          element={<GeneralSettings />} />
+            <Route path="messages"         element={<ContactMessages />} />
+          </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </Suspense>
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Suspense>
+    </>
   );
 }

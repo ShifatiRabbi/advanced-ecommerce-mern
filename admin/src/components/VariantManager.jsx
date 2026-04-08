@@ -82,20 +82,28 @@ export default function VariantManager({ productId, variants = [], onUpdate }) {
       )}
 
       {variants.map((variant, idx) => (
-        <div key={idx} style={{ border:'1px solid #e5e7eb', borderRadius:8, padding:12, marginBottom:8, background:'#fff' }}>
+        <div key={idx} style={{ border:'1px solid #e5e7eb', borderRadius:8, padding:12, marginBottom:8 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
             <span style={{ fontWeight:600, fontSize:14 }}>{variant.name}</span>
-            <button onClick={()=>window.confirm(`Delete variation "${variant.name}"?`)&&deleteVariantMutation.mutate(idx)}
-              style={{ padding:'3px 8px', background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca', borderRadius:6, cursor:'pointer', fontSize:12 }}>
-              Delete
-            </button>
+            <div style={{ display:'flex', gap:8 }}>
+              <select
+                value={variant.defaultOptionIndex ?? 0}
+                onChange={e => updateDefaultOptionMutation.mutate({ idx, defaultOptionIndex: Number(e.target.value) })}
+                style={{ fontSize:12, padding:'3px 8px', border:'1px solid #e5e7eb', borderRadius:6 }}>
+                {variant.options?.map((opt, oi) => (
+                  <option key={oi} value={oi}>Default: {opt.label}</option>
+                ))}
+              </select>
+              <button onClick={() => window.confirm('Delete?') && deleteVariantMutation.mutate(idx)}
+                style={{ padding:'3px 8px', background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca', borderRadius:5, cursor:'pointer', fontSize:12 }}>Del</button>
+            </div>
           </div>
           <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
             {variant.options?.map((opt, oi) => (
-              <span key={oi} style={{ padding:'4px 12px', background:'#f3f4f6', borderRadius:20, fontSize:13, color:'#374151' }}>
+              <span key={oi} style={{ padding:'4px 12px', background: oi === (variant.defaultOptionIndex??0) ? '#d1fae5' : '#f3f4f6', border: oi === (variant.defaultOptionIndex??0) ? '1px solid #a7f3d0' : 'none', borderRadius:20, fontSize:13 }}>
                 {opt.label}
-                {opt.priceModifier !== 0 && <span style={{marginLeft:4,color:opt.priceModifier>0?'#059669':'#dc2626',fontSize:11}}>{opt.priceModifier>0?'+':''}৳{opt.priceModifier}</span>}
-                <span style={{marginLeft:4,fontSize:11,color:'#9ca3af'}}>·{opt.stock}</span>
+                {opt.priceModifier !== 0 && <span style={{ marginLeft:4, color: opt.priceModifier>0?'#059669':'#dc2626', fontSize:11 }}>{opt.priceModifier>0?'+':''}৳{opt.priceModifier}</span>}
+                <span style={{ marginLeft:4, fontSize:11, color:'#9ca3af' }}>({opt.stock})</span>
               </span>
             ))}
           </div>

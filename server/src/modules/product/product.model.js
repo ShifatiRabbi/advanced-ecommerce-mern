@@ -9,6 +9,7 @@ const imageSchema = new mongoose.Schema({
 const variantSchema = new mongoose.Schema({
   name:     { type: String, required: true },
   options:  [{ label: String, priceModifier: { type: Number, default: 0 }, stock: { type: Number, default: 0 } }],
+  defaultOptionIndex: { type: Number, default: 0 },
 }, { _id: false });
 
 const productSchema = new mongoose.Schema(

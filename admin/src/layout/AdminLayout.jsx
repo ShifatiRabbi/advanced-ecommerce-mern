@@ -12,6 +12,7 @@ const NAV = [
   { label: 'Brands',     path: '/brands' },
   { label: 'Inventory',  path: '/inventory' },
   { label: 'Customers',  path: '/customers' },
+  { label: 'Messages',   path: '/messages' },
   { label: 'Employees',  path: '/employees' },
   { label: 'Offers',     path: '/offers' },
   { label: 'Delivery',   path: '/delivery' },

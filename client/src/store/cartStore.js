@@ -1,51 +1,78 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const calcItemPrice = (item) => {
+  const base  = item.discountPrice || item.price;
+  const adj   = Object.values(item.selectedVariants || {})
+    .reduce((s, o) => s + (o?.priceModifier || 0), 0);
+  return base + adj;
+};
+
 export const useCartStore = create(
   persist(
     (set, get) => ({
       items: [],
 
-      addItem: (product, qty = 1) => {
-        const items = get().items;
-        const existing = items.find((i) => i._id === product._id);
+      // Build a unique key from product + variant combo
+      _key: (productId, variants) => {
+        const varStr = Object.entries(variants || {})
+          .sort(([a],[b]) => a.localeCompare(b))
+          .map(([k,v]) => `${k}:${v?.label}`)
+          .join('|');
+        return `${productId}__${varStr}`;
+      },
+
+      addItem: (product, qty = 1, selectedVariants = {}) => {
+        const { items, _key } = get();
+        const key  = _key(product._id, selectedVariants);
+        const unit = calcItemPrice({ ...product, selectedVariants });
+        const existing = items.find(i => i.cartKey === key);
+
         if (existing) {
-          set({
-            items: items.map((i) =>
-              i._id === product._id
-                ? { ...i, qty: Math.min(i.qty + qty, product.stock) }
-                : i
-            ),
-          });
+          set({ items: items.map(i => i.cartKey === key
+            ? { ...i, qty: i.qty + qty, total: (i.qty + qty) * unit }
+            : i
+          )});
         } else {
-          set({ items: [...items, { ...product, qty }] });
+          set({ items: [...items, {
+            cartKey:           key,
+            _id:               product._id,
+            name:              product.name,
+            slug:              product.slug,
+            image:             product.images?.[0]?.url || '',
+            price:             product.price,
+            discountPrice:     product.discountPrice,
+            selectedVariants,
+            unitPrice:         unit,
+            qty,
+            total:             qty * unit,
+            stock:             product.stock,
+            category:          product.category,
+          }]});
         }
       },
 
-      removeItem: (id) =>
-        set({ items: get().items.filter((i) => i._id !== id) }),
+      removeItem: (cartKey) =>
+        set({ items: get().items.filter(i => i.cartKey !== cartKey) }),
 
-      updateQty: (id, qty) => {
-        if (qty < 1) return get().removeItem(id);
-        set({ items: get().items.map((i) => (i._id === id ? { ...i, qty } : i)) });
+      updateQty: (cartKey, qty) => {
+        if (qty < 1) { get().removeItem(cartKey); return; }
+        set({ items: get().items.map(i =>
+          i.cartKey === cartKey
+            ? { ...i, qty, total: qty * i.unitPrice }
+            : i
+        )});
       },
 
       clearCart: () => set({ items: [] }),
 
-      get total() {
-        return get().items.reduce(
-          (sum, i) => sum + (i.discountPrice || i.price) * i.qty,
-          0
-        );
-      },
-
-      get itemCount() {
-        return get().items.reduce((sum, i) => sum + i.qty, 0);
-      },
+      get itemCount() { return get().items.reduce((s, i) => s + i.qty, 0); },
+      get subtotal()  { return get().items.reduce((s, i) => s + i.total, 0); },
     }),
     {
-      name: 'cart-store',
-      partialize: (state) => ({ items: state.items }),
+      name:    'shopbd-cart',
+      version: 2, // bump version to clear old cart shape
+      migrate: (old, version) => version < 2 ? { items: [] } : old,
     }
   )
 );

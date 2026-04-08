@@ -5,6 +5,9 @@ import { useAnalytics } from './hooks/useAnalytics';
 import {  useCustomCode } from './hooks/useCustomCode';
 import {  useTheme } from './hooks/useTheme';
 import { useSiteSettings } from './hooks/useSiteSettings';
+import GlobalLoader from './components/GlobalLoader';
+import ErrorBoundary from './components/ErrorBoundary';
+import SuspenseFallback from './components/SuspenseFallback';
 
 const Home = lazy(() => import('./pages/Home'));
 const Shop = lazy(() => import('./pages/Shop'));
@@ -25,38 +28,55 @@ const ContactPage = lazy(() => import('./pages/ContactPage'));
 const BlogList   = lazy(() => import('./pages/BlogList'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 
+
+const withBoundary = (Component) => (
+  <ErrorBoundary>
+    <Suspense fallback={<SuspenseFallback />}>
+      <Component />
+    </Suspense>
+  </ErrorBoundary>
+);
+
 export default function App() {
   useTheme();
   useCustomCode();
   useAnalytics();
   useSiteSettings();
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <>
+      <GlobalLoader />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login"    element={withBoundary(Login)} />
+        <Route path="/register" element={withBoundary(Register)} />
+
         <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop"          element={<Shop />} />
-          <Route path="/product/:slug" element={<Product />} />
-          <Route path="/cart"                      element={<Cart />} />
-          <Route path="/checkout"                  element={<Checkout />} />
-          <Route path="/order-success/:orderNumber" element={<OrderSuccess />} />
-          <Route path="/my-orders"                 element={<MyOrders />} />
-          <Route path="/payment/success" element={<PaymentSuccess />} />
-          <Route path="/payment/fail"    element={<PaymentFail />} />
-          <Route path="/payment/cancel"  element={<PaymentFail />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="/about"   element={<StaticPage pageKey="about"   />} />
-          <Route path="/privacy" element={<StaticPage pageKey="privacy" />} />
-          <Route path="/terms"   element={<StaticPage pageKey="terms"   />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/page/:key" element={<StaticPage />} />
-          <Route path="/blog"        element={<BlogList />} />
-          <Route path="/blog/:slug"  element={<BlogDetail />} />
-        </Route>
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+          <Route path="/"         element={withBoundary(Home)} />
+          <Route path="/shop"     element={withBoundary(Shop)} />
+          <Route path="/product/:slug" element={withBoundary(Product)} />
+          <Route path="/cart"     element={withBoundary(Cart)} />
+          <Route path="/checkout" element={
+            <ErrorBoundary>
+              <Suspense fallback={<SuspenseFallback />}>
+                <Checkout />
+              </Suspense>
+            </ErrorBoundary>
+          } />
+            <Route path="/order-success/:orderNumber" element={withBoundary(OrderSuccess)} />
+            <Route path="/my-orders"                 element={withBoundary(MyOrders)} />
+            <Route path="/payment/success" element={withBoundary(PaymentSuccess)} />
+            <Route path="/payment/fail"    element={withBoundary(PaymentFail)} />
+            <Route path="/payment/cancel"  element={withBoundary(PaymentFail)} />
+            <Route path="/dashboard" element={withBoundary(UserDashboard)} />
+            <Route path="/about"   element={withBoundary(StaticPage)} />
+            <Route path="/privacy" element={withBoundary(StaticPage)} />
+            <Route path="/terms"   element={withBoundary(StaticPage)} />
+            <Route path="/contact" element={withBoundary(ContactPage)} />
+            <Route path="/page/:key" element={withBoundary(StaticPage)} />
+            <Route path="/blog"        element={withBoundary(BlogList)} />
+            <Route path="/blog/:slug"  element={withBoundary(BlogDetail)} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    </>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useProducts, useCategories, useBrands } from '../hooks/useProducts';
 import { useTranslation } from 'react-i18next';
-
+import { ProductCardSkeleton } from '../components/Skeleton';
 const SORTS = [
   { value: 'newest',     label: 'Newest' },
   { value: 'price_asc',  label: 'Price: Low to High' },
@@ -113,25 +113,43 @@ export default function Shop() {
           </select>
         </div>
 
-        {isLoading && <p style={{ padding: 40, textAlign: 'center' }}>Loading products...</p>}
-        {isError   && <p style={{ padding: 40, textAlign: 'center', color: 'red' }}>Failed to load products.</p>}
+        {/* 1. Remove the old isLoading text and replace with this: */}
+        {isLoading ? (
+          <div style={styles.grid}>
+            {Array.from({ length: 8 }, (_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : isError ? (
+          <p style={{ padding: 40, textAlign: 'center', color: 'red' }}>
+            Failed to load products.
+          </p>
+        ) : (
+          data && (
+            <>
+              <p style={styles.resultCount}>{data.pagination.total} products found</p>
+              <div style={styles.grid}>
+                {data.products.map((p) => (
+                  <ProductCard key={p._id} product={p} />
+                ))}
+              </div>
 
-        {data && (
-          <>
-            <p style={styles.resultCount}>{data.pagination.total} products found</p>
-            <div style={styles.grid}>
-              {data.products.map((p) => <ProductCard key={p._id} product={p} />)}
-            </div>
-
-            <div style={styles.pagination}>
-              {Array.from({ length: data.pagination.pages }, (_, i) => i + 1).map((pg) => (
-                <button key={pg} onClick={() => set('page', pg)}
-                  style={{ ...styles.pageBtn, ...(Number(params.page) === pg && styles.pageBtnActive) }}>
-                  {pg}
-                </button>
-              ))}
-            </div>
-          </>
+              <div style={styles.pagination}>
+                {Array.from({ length: data.pagination.pages }, (_, i) => i + 1).map((pg) => (
+                  <button
+                    key={pg}
+                    onClick={() => set('page', pg)}
+                    style={{
+                      ...styles.pageBtn,
+                      ...(Number(params.page) === pg && styles.pageBtnActive),
+                    }}
+                  >
+                    {pg}
+                  </button>
+                ))}
+              </div>
+            </>
+          )
         )}
       </main>
     </div>

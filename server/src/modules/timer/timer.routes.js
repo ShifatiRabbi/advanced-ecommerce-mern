@@ -6,13 +6,19 @@ import { Timer }              from './timer.model.js';
 
 const router = Router();
 
-router.get('/', asyncHandler(async(req,res) => {
+router.get('/', asyncHandler(async (req, res) => {
+  const { productId, categoryId, position } = req.query;
   const filter = { isActive: true };
-  if (req.query.productId)  filter.$or = [{ showOnAll: true }, { productIds: req.query.productId }];
-  if (req.query.categoryId) filter.$or = [{ showOnAll: true }, { categoryIds: req.query.categoryId }];
+  if (position) filter.position = position;
+
+  if (productId || categoryId) {
+    const orClauses = [{ showOnAll: true }];
+    if (productId)  orClauses.push({ productIds: productId });
+    if (categoryId) orClauses.push({ categoryIds: categoryId });
+    filter.$or = orClauses;
+  }
   sendSuccess(res, { data: await Timer.find(filter).lean() });
 }));
-
 router.get('/all', protect, adminOnly, asyncHandler(async(req,res) => sendSuccess(res,{data:await Timer.find().populate('productIds','name').populate('categoryIds','name').lean()})));
 router.post('/',   protect, adminOnly, asyncHandler(async(req,res) => sendSuccess(res,{status:201,data:await Timer.create({...req.body,startTime:new Date()})})));
 router.put('/:id', protect, adminOnly, asyncHandler(async(req,res) => sendSuccess(res,{data:await Timer.findByIdAndUpdate(req.params.id,req.body,{new:true})})));
