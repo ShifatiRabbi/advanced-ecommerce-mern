@@ -8,6 +8,8 @@ import { useAuthStore } from '../store/authStore';
 import ProductTimer from '../components/ProductTimer';
 import MarqueeBar from '../components/MarqueeBar';
 import ReviewSection from '../components/ReviewSection';
+import { useWishlistStore } from '../store/wishlistStore';
+import { useMemo } from 'react';
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -20,7 +22,7 @@ export default function ProductPage() {
   const [selVariants, setSelVariants] = useState({});
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [isZooming, setIsZooming] = useState(false);
-
+  const { toggle, isWishlisted, fetchWishlist } = useWishlistStore();
   const imgRef = useRef(null);
 
   const { data: product, isLoading, isError } = useQuery({
@@ -51,17 +53,39 @@ export default function ProductPage() {
   const hasVariantRange = minVariantPrice !== maxVariantPrice;
 
   // Default select first available option for each variant on mount
-  useEffect(() => {
-    if (!product?.variants?.length) return;
+  // useEffect(() => {
+  //   if (!product?.variants?.length) return;
+
+  //   const defaults = {};
+  //   product.variants.forEach(variant => {
+  //     if (!variant.options?.length) return;
+
+  //     const defaultIdx = variant.defaultOptionIndex ?? 0;
+  //     let selectedOpt = variant.options[defaultIdx];
+
+  //     // If default option is out of stock, pick the first in-stock option
+  //     if (!selectedOpt || selectedOpt.stock <= 0) {
+  //       selectedOpt = variant.options.find(o => o.stock > 0);
+  //     }
+
+  //     if (selectedOpt) {
+  //       defaults[variant.name] = selectedOpt;
+  //     }
+  //   });
+
+  //   setSelVariants(defaults);
+  // }, [product]);
+  const defaultVariants = useMemo(() => {
+    if (!product?.variants?.length) return {};
 
     const defaults = {};
+
     product.variants.forEach(variant => {
       if (!variant.options?.length) return;
 
       const defaultIdx = variant.defaultOptionIndex ?? 0;
       let selectedOpt = variant.options[defaultIdx];
 
-      // If default option is out of stock, pick the first in-stock option
       if (!selectedOpt || selectedOpt.stock <= 0) {
         selectedOpt = variant.options.find(o => o.stock > 0);
       }
@@ -71,8 +95,14 @@ export default function ProductPage() {
       }
     });
 
-    setSelVariants(defaults);
+    return defaults;
   }, [product]);
+
+  useEffect(() => {
+    setSelVariants(defaultVariants);
+  }, [defaultVariants]);
+
+  useEffect(() => { if (user) fetchWishlist(); }, [user, fetchWishlist]);
 
   const handleMouseMove = useCallback((e) => {
     const rect = imgRef.current?.getBoundingClientRect();
@@ -109,6 +139,10 @@ export default function ProductPage() {
         <title>{product.meta?.title || product.name}</title>
         <meta name="description" content={product.meta?.description || product.shortDesc} />
         {product.images?.[0] && <meta property="og:image" content={product.images[0].url} />}
+        <meta name="keywords" content={product.meta?.keywords?.join(', ') || product.tags?.join(', ')} />
+        <meta property="og:title" content={product.name} />
+        <meta property="og:image" content={product.images?.[0]?.url} />
+        <meta property="og:description" content={product.shortDesc} />
       </Helmet>
 
       <MarqueeBar position="below-header" page="/product" productId={product._id} categoryId={product.category?._id} />
@@ -312,6 +346,21 @@ export default function ProductPage() {
                 </div>
                 <button onClick={handleAddToCart} style={ps.addCartBtn}>
                   🛒 Add to Cart
+                </button>
+                 {/* ❤️ HEART BUTTON */}
+                <button
+                  onClick={() => user ? toggle(product._id) : navigate('/login')}
+                  style={{
+                    padding: '12px 16px',
+                    border: '1px solid #e2e2e2',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    fontSize: 18,
+                    background: isWishlisted(product._id) ? '#fff0f0' : '#fff',
+                    color: isWishlisted(product._id) ? '#e53e3e' : '#888'
+                  }}
+                >
+                  {isWishlisted(product._id) ? '♥' : '♡'}
                 </button>
                 <button onClick={handleBuyNow} style={ps.buyNowBtn}>
                   ⚡ Buy Now

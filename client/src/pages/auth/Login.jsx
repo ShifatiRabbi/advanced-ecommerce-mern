@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import api, { setAccessToken } from '../services/api';
-import { useAuthStore } from '../store/authStore';
+import api, { setAccessToken } from '../../services/api';
+import { useAuthStore } from '../../store/authStore';
 
 export default function Login() {
   const navigate    = useNavigate();

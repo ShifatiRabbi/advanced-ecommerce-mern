@@ -7,7 +7,7 @@ import api from '../services/api';
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items: cartItems, total: subtotal, clearCart } = useCartStore();
+  const { items: cartItems, total: subtotal=0, clearCart } = useCartStore();
   const { user } = useAuthStore();
 
   // Fetch checkout configuration
@@ -22,10 +22,6 @@ export default function Checkout() {
     queryKey: ['delivery-zones'],
     queryFn: () => api.get('/delivery').then(r => r.data.data),
   });
-
-  if (configLoading || zonesLoading) {
-    return <div style={{ padding: 100, textAlign: 'center' }}>Loading Checkout...</div>;
-  }
 
   // Form State
   const [form, setForm] = useState({
@@ -185,6 +181,10 @@ export default function Checkout() {
     const payload = buildOrderPayload();
     orderMutation.mutate(payload);
   };
+
+  if (configLoading || zonesLoading) {
+    return <div style={{ padding: 100, textAlign: 'center' }}>Loading Checkout...</div>;
+  }
 
   const renderField = (field) => {
     const err = errors[field.name];
