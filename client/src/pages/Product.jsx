@@ -49,6 +49,10 @@ export default function ProductPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
 
+  useEffect(() => {
+    setActiveImg(0);
+  }, [slug, selVariants]);
+
   // ── Zoom on hover ──────────────────────────────────────────────────────────
   const handleMouseMove = useCallback((e) => {
     const rect = imgRef.current?.getBoundingClientRect();
@@ -78,7 +82,8 @@ export default function ProductPage() {
   );
 
   // ── Price calculations ─────────────────────────────────────────────────────
-  const basePrice    = product.discountPrice ?? product.price;
+  const baseRegularPrice = product.basePrice ?? product.price ?? 0;
+  const basePrice    = product.discountPrice ?? baseRegularPrice;
   const variantAdj   = Object.values(selVariants).reduce((s, o) => s + (o?.priceModifier ?? 0), 0);
   const displayPrice = basePrice + variantAdj;
   const discount     = product.discountPrice
@@ -103,7 +108,19 @@ export default function ProductPage() {
     if (ok) navigate('/checkout');
   };
 
-  const currentImage = product.images?.[activeImg];
+  const selectedVariantImage =
+    Object.values(selVariants).find((opt) => opt?.images?.[0]?.url)?.images?.[0]?.url
+    || null;
+  const galleryImages = selectedVariantImage
+    ? [{ url: selectedVariantImage }, ...(product.images || [])]
+    : (product.images || []);
+  const currentImage = galleryImages[activeImg];
+  const selectedStocks = Object.values(selVariants)
+    .map((opt) => opt?.stock)
+    .filter((stock) => Number.isFinite(stock));
+  const availableStock = selectedStocks.length
+    ? Math.min(...selectedStocks)
+    : (product.totalStock ?? product.stock ?? 0);
 
   return (
     <>
@@ -181,14 +198,14 @@ export default function ProductPage() {
               )}
 
               <span style={S.imgCounter}>
-                {activeImg + 1} / {product.images?.length || 1}
+                {activeImg + 1} / {galleryImages.length || 1}
               </span>
             </div>
 
             {/* Thumbnails */}
-            {product.images?.length > 1 && (
+            {galleryImages.length > 1 && (
               <div style={S.thumbRow}>
-                {product.images.map((img, i) => (
+                {galleryImages.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveImg(i)}
@@ -295,9 +312,9 @@ export default function ProductPage() {
                       </div>
 
                       {/* Variant thumbnail */}
-                      {product.images?.[0] && (
+                      {(opt.images?.[0]?.url || product.images?.[0]?.url) && (
                         <div style={{ width: 36, height: 36, borderRadius: 4, overflow: 'hidden', flexShrink: 0 }}>
-                          <img src={product.images[0].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={opt.images?.[0]?.url || product.images?.[0]?.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                       )}
 
@@ -343,8 +360,8 @@ export default function ProductPage() {
 
             {/* Stock badge */}
             <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 16,
-              color: product.stock > 0 ? '#2e7d32' : '#dc2626' }}>
-              {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
+              color: availableStock > 0 ? '#2e7d32' : '#dc2626' }}>
+              {availableStock > 0 ? `In Stock (${availableStock} available)` : 'Out of Stock'}
             </p>
 
             {/* Qty + Add to Cart + Buy Now */}
@@ -356,14 +373,14 @@ export default function ProductPage() {
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                style={{ ...S.btnOutline, flex: 1, opacity: product.stock === 0 ? 0.5 : 1 }}>
+                disabled={availableStock === 0}
+                style={{ ...S.btnOutline, flex: 1, opacity: availableStock === 0 ? 0.5 : 1 }}>
                 🛒 Add to Cart
               </button>
               <button
                 onClick={handleBuyNow}
-                disabled={product.stock === 0}
-                style={{ ...S.btnSolid, flex: 1, opacity: product.stock === 0 ? 0.5 : 1 }}>
+                disabled={availableStock === 0}
+                style={{ ...S.btnSolid, flex: 1, opacity: availableStock === 0 ? 0.5 : 1 }}>
                 ⚡ Buy Now
               </button>
             </div>

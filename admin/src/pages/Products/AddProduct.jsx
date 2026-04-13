@@ -25,7 +25,7 @@ const TAB_KEYS = {
 export default function AddProduct() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(TAB_KEYS.INFO);
-  const [productType, setProductType] = useState('simple'); // 'simple' or 'variation'
+  const [productType, setProductType] = useState('simple'); // 'simple' or 'variable'
   const [fieldErrors, setFieldErrors] = useState({});
   const [newVariantImages, setNewVariantImages] = useState({}); // from VariantManager
   // const [variants, setVariants] = useState([]);           // from VariantManager
@@ -104,7 +104,7 @@ export default function AddProduct() {
     const validationForm = { ...form };
     
     // Remove price/stock from validation for variable products
-    if (productType === 'variation') {
+    if (productType === 'variable') {
       delete validationForm.price;
       delete validationForm.stock;
     }
@@ -160,7 +160,7 @@ export default function AddProduct() {
     });
 
     // ==================== VARIANTS (Most Important) ====================
-    if (productType === 'variation' && variants?.length > 0) {
+    if (productType === 'variable' && variants?.length > 0) {
       payload.append('variants', JSON.stringify(variants));
 
       // Append per-variant-option images
@@ -256,8 +256,8 @@ export default function AddProduct() {
                   </div>
                 </button>
                 <button
-                  className={`type-option ${productType === 'variation' ? 'active' : ''}`}
-                  onClick={() => setProductType('variation')}
+                  className={`type-option ${productType === 'variable' ? 'active' : ''}`}
+                  onClick={() => setProductType('variable')}
                 >
                   <div className="type-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -269,7 +269,7 @@ export default function AddProduct() {
                     <span className="type-desc">Multiple variants with different options</span>
                   </div>
                   <div className="type-check">
-                    {productType === 'variation' && (
+                    {productType === 'variable' && (
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                       </svg>

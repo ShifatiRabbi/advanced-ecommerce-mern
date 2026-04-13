@@ -16,7 +16,7 @@ function AddCartBtn({ product, fullWidth = false }) {
   const addToCart = useAddToCart();
   const navigate  = useNavigate();
   const hasVariants = product.variants?.length > 0;
-  const outOfStock  = product.stock === 0;
+  const outOfStock  = (product.totalStock ?? product.stock ?? 0) === 0;
 
   const style = {
     width: fullWidth ? '100%' : 'auto',
@@ -126,7 +126,7 @@ function Style3({ product, price, discount }) {
 function Style4({ product, price, discount }) {
   return (
     <div style={{ border: 'var(--card-border,1px solid #e5e7eb)', borderRadius: 'var(--card-radius,12px)', overflow: 'hidden', background: '#fff', position: 'relative' }}>
-      {product.stock === 0 && (
+      {(product.totalStock ?? product.stock ?? 0) === 0 && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.7)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ background: '#111', color: '#fff', padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Out of Stock</span>
         </div>

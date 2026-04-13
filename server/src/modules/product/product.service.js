@@ -3,6 +3,39 @@ import { Product } from './product.model.js';
 import { cloudinary } from '../../config/cloudinary.js';
 
 const makeSlug = (name) => slugify(name, { lower: true, strict: true });
+const normalizeProductType = (type) => (type === 'variation' ? 'variable' : (type || 'simple'));
+const toNum = (value, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+const parseVariants = (variants) => {
+  if (!variants) return [];
+  if (Array.isArray(variants)) return variants;
+  if (typeof variants === 'string') {
+    try {
+      return JSON.parse(variants);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+const sanitizeVariants = (variants = []) =>
+  variants.map((variant) => ({
+    name: variant.name,
+    defaultOptionIndex: toNum(variant.defaultOptionIndex, 0),
+    options: (variant.options || []).map((opt) => ({
+      label: opt.label,
+      sku: opt.sku || '',
+      priceModifier: toNum(opt.priceModifier, 0),
+      stock: toNum(opt.stock, 0),
+      images: Array.isArray(opt.images) ? opt.images : [],
+    })),
+  }));
+const getTotalVariantStock = (variants = []) =>
+  variants.reduce((sum, variant) => (
+    sum + (variant.options || []).reduce((optSum, opt) => optSum + toNum(opt.stock, 0), 0)
+  ), 0);
 
 const buildFilter = (query) => {
   const filter = { isActive: true };
@@ -24,20 +57,33 @@ export const createProduct = async (data, files = []) => {
     const e = new Error('Product slug already exists'); e.status = 409; throw e;
   }
 
-  let images = [];
-  // Separate main images vs variant images (you need to send metadata from frontend)
-  // Example: req.body.variantImages = { "0-0": ["file1", "file2"] } etc.
+  const productType = normalizeProductType(data.productType);
+  const variants = sanitizeVariants(parseVariants(data.variants));
+  const productData = { ...data, slug, productType };
 
-  const productData = { ...data, slug };
-
-  if (data.productType === 'variable' && data.variants) {
-    productData.basePrice = data.price;
-    productData.price = null; // or keep as base
-    // You can calculate totalStock here
+  if (files?.length) {
+    productData.images = files
+      .filter((f) => f.fieldname === 'images')
+      .map((f) => ({
+        url: f.path,
+        public_id: f.filename,
+      }));
   }
 
-  // Handle images (main + variant-specific)
-  // This part needs coordination with frontend (e.g. via formData with keys)
+  if (productType === 'variable') {
+    const basePrice = toNum(data.basePrice ?? data.price, 0);
+    productData.basePrice = basePrice;
+    productData.price = basePrice;
+    productData.stock = getTotalVariantStock(variants);
+    productData.totalStock = productData.stock;
+    productData.variants = variants;
+  } else {
+    productData.price = toNum(data.price, 0);
+    productData.stock = toNum(data.stock, 0);
+    productData.basePrice = undefined;
+    productData.totalStock = productData.stock;
+    productData.variants = [];
+  }
 
   return Product.create(productData);
 };
@@ -46,19 +92,50 @@ export const updateProduct = async (id, data, files = []) => {
   const product = await Product.findById(id);
   if (!product) throw { status: 404, message: 'Product not found' };
 
-  if (data.productType === 'variable') {
-    product.basePrice = data.price || product.basePrice;
-    product.price = null;
+  const productType = normalizeProductType(data.productType || product.productType);
+  product.productType = productType;
+
+  if (files?.length) {
+    const nextImages = files
+      .filter((f) => f.fieldname === 'images')
+      .map((f) => ({ url: f.path, public_id: f.filename }));
+    product.images = [...(product.images || []), ...nextImages];
+  }
+
+  if (productType === 'variable') {
+    const basePrice = data.basePrice ?? data.price ?? product.basePrice ?? product.price;
+    product.basePrice = toNum(basePrice, 0);
+    product.price = product.basePrice;
+    if (data.variants) {
+      product.variants = sanitizeVariants(parseVariants(data.variants));
+    }
+    const stockFromVariants = getTotalVariantStock(product.variants || []);
+    product.stock = stockFromVariants;
+    product.totalStock = stockFromVariants;
   } else {
-    product.price = data.price;
+    product.price = data.price !== undefined ? toNum(data.price, 0) : product.price;
+    product.stock = data.stock !== undefined ? toNum(data.stock, 0) : product.stock;
+    product.basePrice = undefined;
+    product.totalStock = product.stock;
+    product.variants = [];
   }
 
-  // Merge variants if sent
-  if (data.variants) {
-    product.variants = data.variants;
+  if (data.name !== undefined) product.name = data.name;
+  if (data.description !== undefined) product.description = data.description;
+  if (data.shortDesc !== undefined) product.shortDesc = data.shortDesc;
+  if (data.category !== undefined) product.category = data.category || null;
+  if (data.brand !== undefined) product.brand = data.brand || null;
+  if (data.discountPrice !== undefined) {
+    product.discountPrice = data.discountPrice === '' || data.discountPrice === null
+      ? null
+      : toNum(data.discountPrice, 0);
   }
+  if (data.sku !== undefined) product.sku = data.sku;
+  if (data.weight !== undefined) product.weight = data.weight === '' ? null : toNum(data.weight, null);
+  if (data.tags !== undefined) product.tags = Array.isArray(data.tags) ? data.tags : [data.tags];
+  if (data.isActive !== undefined) product.isActive = data.isActive === true || data.isActive === 'true';
+  if (data.isFeatured !== undefined) product.isFeatured = data.isFeatured === true || data.isFeatured === 'true';
 
-  // Handle new files...
   return product.save();
 };
 

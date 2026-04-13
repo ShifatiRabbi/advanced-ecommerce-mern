@@ -119,6 +119,7 @@ export default function VariantManager({
     }
 
     // For existing product
+    onUpdate?.({ variants: localVariants });
     updateVariantMutation.mutate({ variants: localVariants });
   };
 

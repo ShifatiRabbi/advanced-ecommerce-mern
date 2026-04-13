@@ -86,7 +86,7 @@ export default function EditProduct() {
       });
       setExistingImages(product.images || []);
       setVariants(product.variants || []);
-      setProductType(product.variants?.length > 0 ? 'variation' : 'simple');
+      setProductType(product.productType === 'variable' || product.variants?.length > 0 ? 'variable' : 'simple');
       setIsLoaded(true);
     }
   }, [product, isLoaded]);
@@ -181,7 +181,7 @@ export default function EditProduct() {
     payload.append('productType', productType);
 
     // Variants
-    if (productType === 'variation' && variants.length > 0) {
+    if (productType === 'variable' && variants.length > 0) {
       payload.append('variants', JSON.stringify(variants));
     }
 
@@ -287,8 +287,8 @@ export default function EditProduct() {
                   </div>
                 </button>
                 <button
-                  className={`type-option ${productType === 'variation' ? 'active' : ''}`}
-                  onClick={() => setProductType('variation')}
+                  className={`type-option ${productType === 'variable' ? 'active' : ''}`}
+                  onClick={() => setProductType('variable')}
                 >
                   <div className="type-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -300,7 +300,7 @@ export default function EditProduct() {
                     <span className="type-desc">Multiple variants with different options</span>
                   </div>
                   <div className="type-check">
-                    {productType === 'variation' && (
+                    {productType === 'variable' && (
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                       </svg>
@@ -579,7 +579,10 @@ export default function EditProduct() {
                     <VariantManager
                       productId={id}
                       variants={variants}
-                      onUpdate={() => qc.invalidateQueries({ queryKey: ['product-edit', id] })}
+                      onUpdate={({ variants: nextVariants } = {}) => {
+                        if (nextVariants) setVariants(nextVariants);
+                        qc.invalidateQueries({ queryKey: ['product-edit', id] });
+                      }}
                     />
                   )}
                 </div>

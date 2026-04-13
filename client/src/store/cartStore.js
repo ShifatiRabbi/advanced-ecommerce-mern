@@ -36,8 +36,12 @@ export const useCartStore = create(
         const existing = items.find(i => i.cartKey === cartKey);
 
         // Stock check
-        const variantOpt = Object.values(selectedVariants)[0]; // first variant for stock check
-        const availableStock = variantOpt?.stock ?? product.stock ?? 999;
+        const variantStocks = Object.values(selectedVariants)
+          .map((opt) => opt?.stock)
+          .filter((stock) => Number.isFinite(stock));
+        const availableStock = variantStocks.length
+          ? Math.min(...variantStocks)
+          : (product.totalStock ?? product.stock ?? 999);
         const currentQty = existing?.qty ?? 0;
 
         if (availableStock === 0) {
