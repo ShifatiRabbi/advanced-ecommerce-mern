@@ -20,11 +20,46 @@ const buildFilter = (query) => {
 
 export const createProduct = async (data, files = []) => {
   const slug = data.slug || makeSlug(data.name);
-  const exists = await Product.findOne({ slug });
-  if (exists) { const e = new Error('Product slug exists'); e.status = 409; throw e; }
+  if (await Product.findOne({ slug })) {
+    const e = new Error('Product slug already exists'); e.status = 409; throw e;
+  }
 
-  const images = files.map((f) => ({ url: f.path, public_id: f.filename, alt: data.name }));
-  return Product.create({ ...data, slug, images });
+  let images = [];
+  // Separate main images vs variant images (you need to send metadata from frontend)
+  // Example: req.body.variantImages = { "0-0": ["file1", "file2"] } etc.
+
+  const productData = { ...data, slug };
+
+  if (data.productType === 'variable' && data.variants) {
+    productData.basePrice = data.price;
+    productData.price = null; // or keep as base
+    // You can calculate totalStock here
+  }
+
+  // Handle images (main + variant-specific)
+  // This part needs coordination with frontend (e.g. via formData with keys)
+
+  return Product.create(productData);
+};
+
+export const updateProduct = async (id, data, files = []) => {
+  const product = await Product.findById(id);
+  if (!product) throw { status: 404, message: 'Product not found' };
+
+  if (data.productType === 'variable') {
+    product.basePrice = data.price || product.basePrice;
+    product.price = null;
+  } else {
+    product.price = data.price;
+  }
+
+  // Merge variants if sent
+  if (data.variants) {
+    product.variants = data.variants;
+  }
+
+  // Handle new files...
+  return product.save();
 };
 
 export const getProducts = async (query = {}) => {
@@ -83,19 +118,6 @@ export const getProductById = async (id) => {
     .lean();
   if (!product) { const e = new Error('Product not found'); e.status = 404; throw e; }
   return product;
-};
-
-export const updateProduct = async (id, data, files = []) => {
-  const product = await Product.findById(id);
-  if (!product) { const e = new Error('Product not found'); e.status = 404; throw e; }
-
-  if (files.length > 0) {
-    const newImages = files.map((f) => ({ url: f.path, public_id: f.filename, alt: data.name || product.name }));
-    data.images = [...product.images, ...newImages];
-  }
-  if (data.name && !data.slug) data.slug = makeSlug(data.name);
-
-  return Product.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 };
 
 export const deleteProductImage = async (productId, publicId) => {
