@@ -18,6 +18,9 @@ const orderItemSchema = new mongoose.Schema({
   price:     { type: Number, required: true },
   qty:       { type: Number, required: true, min: 1 },
   total:     { type: Number, required: true },
+  variant:       { type: String,  default: null },   // human-readable string
+  variantDetails:{ type: mongoose.Schema.Types.Mixed, default: null }, // object
+
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema(

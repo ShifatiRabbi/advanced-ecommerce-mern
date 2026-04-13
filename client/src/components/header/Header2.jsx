@@ -10,7 +10,8 @@ export default function Header2() {
   const settings = useSiteSettings();
   const logo     = settings?.logo;
   const siteName = settings?.siteName || 'ShopBD';
-  const { itemCount } = useCartStore();
+  const store         = useCartStore();
+  const itemCount     = store.items.reduce((s, i) => s + i.qty, 0);
   const { user }      = useAuthStore();
   const navigate      = useNavigate();
   const [search, setSearch] = useState('');

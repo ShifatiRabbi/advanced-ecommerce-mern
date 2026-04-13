@@ -1,114 +1,105 @@
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { useSSLPayment, useBkashPayment } from '../hooks/usePayment';
-import api from '../services/api';
+import { Link, useParams } from 'react-router-dom';
+import { useQuery }         from '@tanstack/react-query';
+import api                  from '../services/api';
 
 export default function OrderSuccess() {
   const { orderNumber } = useParams();
-  const sslMutation = useSSLPayment();
-  const bkashMutation = useBkashPayment();
 
   const { data: order, isLoading } = useQuery({
-    queryKey: ['order-track', orderNumber],
-    queryFn: () => api.get(`/orders/track/${orderNumber}`).then((r) => r.data.data),
-    enabled: !!orderNumber,
+    queryKey:  ['order-track', orderNumber],
+    queryFn:   () => api.get(`/orders/track/${orderNumber}`).then(r => r.data.data),
+    enabled:   !!orderNumber,
+    retry:     3,
+    retryDelay: 1000,
   });
 
-  if (isLoading) return <div style={{ padding: 80, textAlign: 'center' }}>Loading...</div>;
+  if (isLoading) return (
+    <div style={{ textAlign: 'center', padding: 80 }}>
+      <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
+      <p>Loading your order...</p>
+    </div>
+  );
 
-  const renderPaymentDetails = () => {
-    if (order?.paymentStatus === 'paid' && order?.paymentMethod === 'cod') {
-      return (
-        <>
-          <h1 style={s.title}>Order Placed Successfully!</h1>
-          <p style={s.subtitle}>Thank you for your purchase. We will contact you soon.</p>
+  return (
+    <div style={{ maxWidth: 600, margin: '60px auto', padding: '0 24px', textAlign: 'center' }}>
+      <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
+      <h1 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 8px', color: '#111' }}>
+        Order Placed!
+      </h1>
+      <p style={{ fontSize: 16, color: '#6b7280', marginBottom: 32 }}>
+        Thank you for your order. We'll contact you to confirm delivery.
+      </p>
 
-          <div style={s.infoBox}>
-            <div style={s.infoRow}>
-              <span style={s.label}>Order Number</span>
-              <span style={s.value}>{order?.orderNumber}</span>
+      {order && (
+        <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 24, textAlign: 'left', marginBottom: 28 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div>
+              <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 2px', textTransform: 'uppercase', fontWeight: 700 }}>Order number</p>
+              <p style={{ fontSize: 20, fontWeight: 900, margin: 0, fontFamily: 'monospace', color: '#111' }}>{order.orderNumber}</p>
             </div>
-            <div style={s.infoRow}>
-              <span style={s.label}>Status</span>
-              <span style={{ ...s.value, ...s.statusBadge }}>{order?.status}</span>
-            </div>
-            <div style={s.infoRow}>
-              <span style={s.label}>Total Paid</span>
-              <span style={{ ...s.value, fontSize: 20, fontWeight: 700 }}>
-                ৳{order?.total?.toLocaleString()}
-              </span>
-            </div>
-            <div style={s.infoRow}>
-              <span style={s.label}>Payment</span>
-              <span style={s.value}>{order?.paymentMethod?.toUpperCase()}</span>
-            </div>
-            <div style={s.infoRow}>
-              <span style={s.label}>Deliver To</span>
-              <span style={s.value}>
-                {order?.shippingAddress?.fullName}, {order?.shippingAddress?.city}
-              </span>
-            </div>
+            <span style={{ padding: '5px 12px', background: '#d1fae5', color: '#065f46', borderRadius: 20, fontSize: 13, fontWeight: 700 }}>
+              {order.status}
+            </span>
           </div>
 
-          <div style={s.items}>
-            {order?.items?.map((item, i) => (
-              <div key={i} style={s.itemRow}>
-                {item.image && <img src={item.image} alt={item.name} style={s.itemImg} />}
-                <span style={{ flex: 1 }}>{item.name}</span>
-                <span style={{ color: '#888' }}>x{item.qty}</span>
-                <span style={{ fontWeight: 700 }}>৳{item.total?.toLocaleString()}</span>
+          {/* Items */}
+          <div style={{ marginBottom: 16 }}>
+            {order.items?.map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid #f3f4f6', alignItems: 'center' }}>
+                {item.image && (
+                  <img src={item.image} alt={item.name} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, margin: '0 0 2px' }}>{item.name}</p>
+                  {item.variant && <p style={{ fontSize: 11, color: '#6b7280', margin: '0 0 2px' }}>{item.variant}</p>}
+                  <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>×{item.qty}</p>
+                </div>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>৳{item.total?.toLocaleString()}</span>
               </div>
             ))}
           </div>
-        </>
-      );
-    }
 
-    if (order?.paymentStatus !== 'paid' && order?.paymentMethod !== 'cod') {
-      return (
-        <div style={{ borderTop: '1px solid #eee', paddingTop: 20, marginTop: 8 }}>
-          <p style={{ fontSize: 14, color: '#888', marginBottom: 12 }}>Complete your payment:</p>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-            <button
-              onClick={() => sslMutation.mutate(order._id)}
-              disabled={sslMutation.isPending}
-              style={s.paymentBtn}
-            >
-              {sslMutation.isPending ? 'Redirecting...' : 'Pay with Card'}
-            </button>
-            <button
-              onClick={() => bkashMutation.mutate(order._id)}
-              disabled={bkashMutation.isPending}
-              style={s.paymentBtn}
-            >
-              {bkashMutation.isPending ? 'Redirecting...' : 'Pay with bKash'}
-            </button>
+          {/* Totals */}
+          {[
+            { l: 'Subtotal',   v: `৳${order.subtotal?.toLocaleString()}` },
+            { l: 'Shipping',   v: `৳${order.shippingCharge?.toLocaleString()}` },
+            ...(order.discount > 0 ? [{ l: 'Discount', v: `-৳${order.discount?.toLocaleString()}` }] : []),
+          ].map(r => (
+            <div key={r.l} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0', color: '#6b7280' }}>
+              <span>{r.l}</span><span>{r.v}</span>
+            </div>
+          ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, padding: '10px 0', borderTop: '2px solid #e5e7eb', marginTop: 4 }}>
+            <span>Total</span>
+            <span style={{ color: '#2e7d32' }}>৳{order.total?.toLocaleString()}</span>
+          </div>
+
+          {/* Delivery address */}
+          {order.shippingAddress && (
+            <div style={{ marginTop: 16, padding: '12px 14px', background: '#f9fafb', borderRadius: 8, fontSize: 13, color: '#374151' }}>
+              <p style={{ fontWeight: 700, margin: '0 0 6px', fontSize: 12, textTransform: 'uppercase', color: '#9ca3af' }}>Deliver to</p>
+              <p style={{ margin: '0 0 2px', fontWeight: 600 }}>{order.shippingAddress.fullName}</p>
+              <p style={{ margin: '0 0 2px' }}>{order.shippingAddress.phone}</p>
+              <p style={{ margin: 0 }}>{order.shippingAddress.address}, {order.shippingAddress.city}</p>
+            </div>
+          )}
+
+          <div style={{ marginTop: 16, padding: '10px 14px', background: '#eff6ff', borderRadius: 8, fontSize: 13, color: '#1d4ed8', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Payment: <strong>{order.paymentMethod?.toUpperCase()}</strong></span>
+            <span>Status: <strong>{order.paymentStatus}</strong></span>
           </div>
         </div>
-      );
-    }
-  };
+      )}
 
-  return (
-    <div style={s.page}>
-      <div style={s.card}>
-        <div style={s.iconWrap}>
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <circle cx="24" cy="24" r="24" fill="#c6f6d5" />
-            <path
-              d="M14 24l7 7 13-13"
-              stroke="#276749"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-        {renderPaymentDetails()}
-        <div style={s.actions}>
-          <Link to="/shop" style={s.shopBtn}>Continue Shopping</Link>
-          <Link to="/my-orders" style={s.ordersBtn}>View My Orders</Link>
-        </div>
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <Link to="/shop"
+          style={{ padding: '12px 24px', background: '#2e7d32', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 15 }}>
+          Continue Shopping
+        </Link>
+        <Link to="/dashboard"
+          style={{ padding: '12px 24px', border: '1px solid #e5e7eb', background: '#fff', borderRadius: 8, textDecoration: 'none', color: '#374151', fontSize: 15 }}>
+          My Orders
+        </Link>
       </div>
     </div>
   );

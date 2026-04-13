@@ -8,7 +8,9 @@ export default function Header4() {
   const settings = useSiteSettings();
   const logo     = settings?.logo;
   const siteName = settings?.siteName || 'ShopBD';
-  const { itemCount } = useCartStore();
+  const store         = useCartStore();
+  const itemCount     = store.items.reduce((s, i) => s + i.qty, 0);
+  
   return (
     <>
       <div style={{ background: '#111', color: '#fff', textAlign: 'center', padding: '8px', fontSize: 13 }}>

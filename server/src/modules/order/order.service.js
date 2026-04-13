@@ -38,72 +38,57 @@ export const saveIncompleteOrder = async ({ phone, email, sessionId, items, ip, 
   });
 };
 
-export const createOrder = async ({ userId, items, shippingAddress, paymentMethod, couponCode, ip, userAgent }) => {
-  const productIds = items.map((i) => i.product);
-  const products   = await Product.find({ _id: { $in: productIds }, isActive: true });
+// server/src/modules/order/order.service.js — createOrder:
+export const createOrder = async (userId, body) => {
+  const {
+    items, shippingAddress, paymentMethod,
+    subtotal, shippingCharge, discount = 0, total,
+    couponCode,
+  } = body;
 
-  if (products.length !== items.length) {
-    const err = new Error('One or more products are unavailable');
-    err.status = 400;
-    throw err;
-  }
-
-  const orderItems = [];
-  let subtotal = 0;
-
+  // Validate items exist + are still in stock
   for (const item of items) {
-    const product = products.find((p) => p._id.toString() === item.product);
-    if (!product) continue;
-
+    const product = await Product.findById(item.product).select('stock name price discountPrice').lean();
+    if (!product) throw Object.assign(new Error(`Product not found: ${item.product}`), { status: 400 });
     if (product.stock < item.qty) {
-      const err = new Error(`Insufficient stock for: ${product.name}`);
-      err.status = 400;
-      throw err;
+      throw Object.assign(
+        new Error(`"${product.name}" only has ${product.stock} in stock, but ${item.qty} requested`),
+        { status: 400 }
+      );
     }
-
-    const price = product.discountPrice || product.price;
-    const lineTotal = price * item.qty;
-    subtotal += lineTotal;
-
-    orderItems.push({
-      product:  product._id,
-      name:     product.name,
-      image:    product.images?.[0]?.url || '',
-      price,
-      qty:      item.qty,
-      total:    lineTotal,
-    });
   }
 
-  const shippingCharge = subtotal >= 1000 ? 0 : 60;
-  let discount = 0;
-  const total = subtotal + shippingCharge - discount;
+  // Decrement stock
+  await Promise.all(items.map(item =>
+    Product.findByIdAndUpdate(item.product, { $inc: { stock: -item.qty } })
+  ));
 
-  const fakeCheck = detectFakeOrder({
-    phone:   shippingAddress.phone,
-    address: shippingAddress.address,
-    city:    shippingAddress.city,
-    items:   orderItems,
-    total,
-  });
+  const orderNumber = await generateOrderNumber();
 
   const order = await Order.create({
+    orderNumber,
     user:            userId || null,
-    items:           orderItems,
+    items:           items.map(item => ({
+      product:       item.product,
+      name:          item.name,
+      slug:          item.slug,
+      image:         item.image,
+      qty:           item.qty,
+      unitPrice:     item.unitPrice,
+      total:         item.total,
+      variant:       item.variant || null,          // "Size: XL, Color: Red"
+      variantDetails:item.variantDetails || null,   // { Size: 'XL', Color: 'Red' }
+    })),
     shippingAddress,
-    subtotal,
-    shippingCharge,
-    discount,
-    total,
     paymentMethod,
-    couponCode,
-    status:          fakeCheck.isFake ? 'fake' : 'pending',
-    isFake:          fakeCheck.isFake,
-    fakeReason:      fakeCheck.reasons.join(', ') || null,
-    ip,
-    userAgent,
+    paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
+    status:        'pending',
+    subtotal:      subtotal  || items.reduce((s, i) => s + i.total, 0),
+    shippingCharge:shippingCharge || 60,
+    discount:      discount || 0,
+    total:         total || (subtotal + (shippingCharge || 60) - (discount || 0)),
+    couponCode:    couponCode || null,
   });
-
   if (!fakeCheck.isFake) {
     // 1. Send SMS (Existing)
     sendOrderSms(order).catch(() => {});
@@ -132,6 +117,11 @@ export const createOrder = async ({ userId, items, shippingAddress, paymentMetho
     'shippingAddress.phone': shippingAddress.phone,
     status: 'incomplete',
   });
+
+  // Apply coupon usage
+  if (couponCode) {
+    await Offer.findOneAndUpdate({ code: couponCode }, { $inc: { usedCount: 1 } });
+  }
 
   return order;
 };

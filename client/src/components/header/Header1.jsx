@@ -12,10 +12,11 @@ export default function Header1() {
   const logo     = settings?.logo;
   const siteName = settings?.siteName || 'ShopBD';
   const { data: menuData } = useMenu('header');
-  const { itemCount } = useCartStore();
   const { user }      = useAuthStore();
   const { i18n }      = useTranslation();
   const navigate      = useNavigate();
+  const store         = useCartStore();
+  const itemCount     = store.items.reduce((s, i) => s + i.qty, 0);
 
   const menuItems = menuData?.items || [
     { id: '1', label: 'Home',  url: '/', target: '_self' },

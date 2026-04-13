@@ -1,6 +1,6 @@
 // centered logo with category mega nav
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useCartStore }      from '../../store/cartStore';
 import { useCategories }     from '../../hooks/useProducts';
 import { useSiteSettings } from '../../hooks/useSiteSettings';
@@ -9,7 +9,8 @@ export default function Header3() {
   const settings = useSiteSettings();
   const logo     = settings?.logo;
   const siteName = settings?.siteName || 'ShopBD';
-  const { itemCount }  = useCartStore();
+  const store         = useCartStore();
+  const itemCount     = store.items.reduce((s, i) => s + i.qty, 0);
   const { data: cats } = useCategories();
   return (
     <header style={{ background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
