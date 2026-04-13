@@ -6,11 +6,14 @@ import { toast } from '../../utils/toast';
 import { validateSchema, required, minLen, maxLen, min } from '../../utils/validate';
 import VariantManager from '../../components/VariantManager';
 
-const PRODUCT_SCHEMA = {
+const BASE_PRODUCT_SCHEMA = {
   name: [v => required(v, 'Name'), v => minLen(v, 3, 'Name'), v => maxLen(v, 200, 'Name')],
-  price: [v => required(v, 'Price'), v => min(Number(v), 0, 'Price')],
   category: [v => required(v, 'Category')],
   description: [v => v && maxLen(v, 5000, 'Description')].filter(Boolean),
+};
+const SIMPLE_PRODUCT_SCHEMA = {
+  ...BASE_PRODUCT_SCHEMA,
+  price: [v => required(v, 'Price'), v => min(Number(v), 0, 'Price')],
 };
 
 const TAB_KEYS = {
@@ -101,16 +104,25 @@ export default function AddProduct() {
   };
 
   const handleSubmit = async () => {
-    const validationForm = { ...form };
-    
-    // Remove price/stock from validation for variable products
+    const schema = productType === 'simple' ? SIMPLE_PRODUCT_SCHEMA : BASE_PRODUCT_SCHEMA;
+    const { errors, isValid } = validateSchema(form, schema);
     if (productType === 'variable') {
-      delete validationForm.price;
-      delete validationForm.stock;
+      if (!variants?.length) errors.variants = 'Add at least one variant and click "Save to Form"';
+      else {
+        const invalidVariant = variants.find(
+          (variant) => !variant?.name?.trim()
+            || !variant?.options?.length
+            || variant.options.some((opt) => !opt?.label?.trim())
+        );
+        if (invalidVariant) errors.variants = 'Every variant needs a name and at least one option label';
+      }
     }
-
-    const { errors, isValid } = validateSchema(validationForm, PRODUCT_SCHEMA);
     if (!isValid) {
+      setFieldErrors(errors);
+      toast.error('Please fix the errors before submitting');
+      return;
+    }
+    if (Object.keys(errors).length) {
       setFieldErrors(errors);
       toast.error('Please fix the errors before submitting');
       return;
@@ -236,7 +248,14 @@ export default function AddProduct() {
               <div className="type-options">
                 <button
                   className={`type-option ${productType === 'simple' ? 'active' : ''}`}
-                  onClick={() => setProductType('simple')}
+                  onClick={() => {
+                    setProductType('simple');
+                    setFieldErrors((prev) => {
+                      const next = { ...prev };
+                      delete next.variants;
+                      return next;
+                    });
+                  }}
                 >
                   <div className="type-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -523,6 +542,7 @@ export default function AddProduct() {
                     <h3>Product Variations</h3>
                     <span className="optional-tag">Optional</span>
                   </div>
+                  {fieldErrors.variants && <span className="field-error">{fieldErrors.variants}</span>}
 
                   {productType === 'simple' ? (
                     <div className="variants-pricing-notice">
@@ -543,6 +563,11 @@ export default function AddProduct() {
                       onUpdate={({ variants: updatedVariants, newVariantImages: newImgs }) => {
                         setVariants(updatedVariants);
                         setNewVariantImages(newImgs || {});
+                        setFieldErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.variants;
+                          return next;
+                        });
                       }}
                     />
                   )}

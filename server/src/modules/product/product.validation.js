@@ -12,7 +12,7 @@ export const createProductSchema = Joi.object({
   brand:         Joi.string().optional(),
   stock:         Joi.number().min(0).optional(),
   tags:          Joi.array().items(Joi.string()).optional(),
-  sku:           Joi.string().optional(),
+  sku:           Joi.string().allow('').optional(),
   weight:        Joi.number().optional(),
   isActive:      Joi.boolean().optional(),
   isFeatured:    Joi.boolean().optional(),
@@ -24,19 +24,32 @@ export const createProductSchema = Joi.object({
 
   productType: Joi.string().valid('simple', 'variable', 'variation').default('simple'),
 
-  variants: Joi.array().items(Joi.object({
-    name: Joi.string().required(),
-    options: Joi.array().items(Joi.object({
-      label: Joi.string().required(),
-      sku: Joi.string().allow(null, ''),
-      priceModifier: Joi.number().default(0),
-      stock: Joi.number().min(0).default(0),
-      // images handled via files + mapping in controller
-    })).min(1),
-    defaultOptionIndex: Joi.number().default(0)
-  })).when('productType', {
+  variants: Joi.alternatives().try(
+    Joi.array().items(Joi.object({
+      name: Joi.string().required(),
+      options: Joi.array().items(Joi.object({
+        label: Joi.string().required(),
+        sku: Joi.string().allow(null, ''),
+        priceModifier: Joi.number().default(0),
+        stock: Joi.number().min(0).default(0),
+        // images handled via files + mapping in controller
+      })).min(1),
+      defaultOptionIndex: Joi.number().default(0)
+    })),
+    Joi.string().custom((value, helpers) => {
+      try {
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          return helpers.error('any.invalid');
+        }
+        return value;
+      } catch {
+        return helpers.error('any.invalid');
+      }
+    })
+  ).when('productType', {
     is: Joi.valid('variable', 'variation'),
-    then: Joi.array().min(1).required(),
+    then: Joi.required(),
     otherwise: Joi.forbidden()
   })
 })

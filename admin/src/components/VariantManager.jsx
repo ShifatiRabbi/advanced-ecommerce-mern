@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import { toast } from '../utils/toast';
 
 export default function VariantManager({
   productId,
@@ -11,6 +12,9 @@ export default function VariantManager({
   const qc = useQueryClient();
   const [localVariants, setLocalVariants] = useState(variants);
   const [activeVariant, setActiveVariant] = useState(0);
+  useEffect(() => {
+    setLocalVariants(variants || []);
+  }, [variants]);
 
   // For new images (File objects) - only used in new product flow
   const [newVariantImages, setNewVariantImages] = useState({}); // e.g. "0-1": [File, File]
@@ -115,6 +119,7 @@ export default function VariantManager({
     if (isNewProduct) {
       // Pass both variants and new images to parent
       onUpdate?.({ variants: localVariants, newVariantImages });
+      toast.success('Variants saved to form');
       return;
     }
 
@@ -134,7 +139,7 @@ export default function VariantManager({
       <div className="variant-manager">
         <div className="variant-header">
           <h3>Product Variants</h3>
-          <button className="add-variant-btn" onClick={addVariant}>
+          <button type="button" className="add-variant-btn" onClick={addVariant}>
             + Add Variant (e.g. Size, Color)
           </button>
         </div>
@@ -149,6 +154,7 @@ export default function VariantManager({
               >
                 {variant.name || `Variant ${vIndex + 1}`}
                 <button
+                  type="button"
                   className="remove-tab"
                   onClick={(e) => { e.stopPropagation(); removeVariant(vIndex); }}
                 >
@@ -228,7 +234,7 @@ export default function VariantManager({
                     {option.images?.map((img, idx) => (
                       <div key={idx} className="preview">
                         <img src={img.url} alt="" />
-                        <button onClick={() => {/* remove existing image logic */}}>
+                        <button type="button" onClick={() => {/* remove existing image logic */}}>
                           ✕
                         </button>
                       </div>
@@ -238,7 +244,7 @@ export default function VariantManager({
                     {newVariantImages[`${activeVariant}-${oIndex}`]?.map((file, idx) => (
                       <div key={idx} className="preview">
                         <img src={URL.createObjectURL(file)} alt="" />
-                        <button onClick={() => removeNewImage(activeVariant, oIndex, idx)}>
+                        <button type="button" onClick={() => removeNewImage(activeVariant, oIndex, idx)}>
                           ✕
                         </button>
                       </div>
@@ -256,20 +262,20 @@ export default function VariantManager({
                     />
                     Default
                   </label>
-                  <button onClick={() => removeOption(oIndex)} disabled={localVariants[activeVariant].options.length === 1}>
+                  <button type="button" onClick={() => removeOption(oIndex)} disabled={localVariants[activeVariant].options.length === 1}>
                     Delete Option
                   </button>
                 </div>
               </div>
             ))}
 
-            <button className="add-option-btn" onClick={addOption}>
+            <button type="button" className="add-option-btn" onClick={addOption}>
               + Add Option
             </button>
 
             <div className="variant-footer">
               <p><strong>{combinationCount}</strong> possible combinations</p>
-              <button className="save-btn" onClick={saveVariants}>
+              <button type="button" className="save-btn" onClick={saveVariants}>
                 {isNewProduct ? 'Save to Form' : 'Save Variants'}
               </button>
             </div>
