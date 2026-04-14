@@ -209,7 +209,7 @@ export default function EditProduct() {
 
   if (isLoading) {
     return (
-      <div className="product-page">
+      <div className="product-page admin-edit-product-page" id="admin-edit-product-page">
         <div className="loading-container">
           <div className="loading-spinner" />
           <p>Loading product...</p>
@@ -229,12 +229,12 @@ export default function EditProduct() {
   const filteredTabs = tabs.filter((tab) => visibleTabs.includes(tab.id));
 
   return (
-    <>
+    <div className="admin-page-products-edit-product" id="admin-page-products-edit-product">
       <style>{styles}</style>
 
       <div className="product-page">
         {/* Header */}
-        <div className="page-header">
+        <div className="page-header admin-edit-product-header" id="admin-edit-product-header">
           <div className="header-left">
             <button className="back-btn" onClick={() => navigate('/products')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -258,7 +258,7 @@ export default function EditProduct() {
                 <>
                   <span className="btn-spinner" />
                   Saving...
-                </>
+                </div>
               ) : (
                 <>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -271,9 +271,9 @@ export default function EditProduct() {
           </div>
         </div>
 
-        <div className="product-layout">
+        <div className="product-layout admin-edit-product-layout" id="admin-edit-product-layout">
           {/* Main Content */}
-          <div className="product-main">
+          <div className="product-main admin-edit-product-main" id="admin-edit-product-main">
             {/* Product Type Selector */}
             <div className="product-type-selector">
               <label className="section-label">Product Type</label>
@@ -345,7 +345,7 @@ export default function EditProduct() {
             </div>
 
             {/* Tab Content */}
-            <div className="tab-content">
+            <div className="tab-content admin-edit-product-tab-content" id="admin-edit-product-tab-content">
               {/* Basic Info Tab */}
               {activeTab === TAB_KEYS.INFO && (
                 <div className="content-card">
@@ -761,7 +761,7 @@ export default function EditProduct() {
           </div>
 
           {/* Sidebar */}
-          <div className="product-sidebar">
+          <div className="product-sidebar admin-edit-product-sidebar" id="admin-edit-product-sidebar">
             <div className="sidebar-card">
               <h3 className="sidebar-title">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">

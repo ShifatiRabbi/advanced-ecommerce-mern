@@ -69,10 +69,10 @@ function AddCartBtn({ product, fullWidth = false }) {
     cursor: outOfStock ? 'not-allowed' : 'pointer',
   };
 
-  if (outOfStock) return <button disabled style={style}>Out of Stock</button>;
+  if (outOfStock) return <button className="client-component-add-cart-btn" id="client-component-add-cart-btn" disabled style={style}>Out of Stock</button>;
   if (hasVariants) {
     return (
-      <button onClick={() => navigate(`/product/${product.slug}`)} style={style}>
+      <button className="client-component-add-cart-btn" id="client-component-add-cart-btn" onClick={() => navigate(`/product/${product.slug}`)} style={style}>
         View Options
       </button>
     );
@@ -89,7 +89,7 @@ function AddCartBtn({ product, fullWidth = false }) {
 // ── Style 1: Classic ──────────────────────────────────────────────────────────
 function Style1({ product, price, discount }) {
   return (
-    <div style={{ border: 'var(--card-border,1px solid #e5e7eb)', borderRadius: 'var(--card-radius,12px)', overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
+    <div className="client-component-product-card-style1" id="client-component-product-card-style1" style={{ border: 'var(--card-border,1px solid #e5e7eb)', borderRadius: 'var(--card-radius,12px)', overflow: 'hidden', background: '#fff', display: 'flex', flexDirection: 'column' }}>
       <Link to={`/product/${product.slug}`} style={{ display: 'block', aspectRatio: '1', overflow: 'hidden', background: '#f5f5f5', position: 'relative', flexShrink: 0 }}>
         {product.images?.[0] && <img src={product.images[0].url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />}
         {discount > 0 && <span style={{ position: 'absolute', top: 8, left: 8, background: '#dc2626', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 3 }}>{discount}% OFF</span>}
@@ -112,7 +112,7 @@ function Style1({ product, price, discount }) {
 // ── Style 2: Modern ───────────────────────────────────────────────────────────
 function Style2({ product, price, discount }) {
   return (
-    <div style={{ border: 'var(--card-border,1px solid #e5e7eb)', borderRadius: 'var(--card-radius,12px)', overflow: 'hidden', background: '#fff' }}>
+    <div className="client-component-product-card-style2" id="client-component-product-card-style2" style={{ border: 'var(--card-border,1px solid #e5e7eb)', borderRadius: 'var(--card-radius,12px)', overflow: 'hidden', background: '#fff' }}>
       <Link to={`/product/${product.slug}`} style={{ display: 'block', aspectRatio: '4/3', overflow: 'hidden', background: '#f5f5f5', position: 'relative' }}>
         {product.images?.[0] && <img src={product.images[0].url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform .3s' }} onMouseEnter={e => e.target.style.transform='scale(1.06)'} onMouseLeave={e => e.target.style.transform='scale(1)'} loading="lazy" />}
         {discount > 0 && <span style={{ position: 'absolute', top: 8, right: 8, background: '#dc2626', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20 }}>{discount}% OFF</span>}
@@ -137,7 +137,7 @@ function Style2({ product, price, discount }) {
 // ── Style 3: List ─────────────────────────────────────────────────────────────
 function Style3({ product, price, discount }) {
   return (
-    <div style={{ display: 'flex', gap: 12, border: 'var(--card-border,1px solid #e5e7eb)', borderRadius: 'var(--card-radius,12px)', padding: 12, background: '#fff', alignItems: 'center' }}>
+    <div className="client-component-product-card-style3" id="client-component-product-card-style3" style={{ display: 'flex', gap: 12, border: 'var(--card-border,1px solid #e5e7eb)', borderRadius: 'var(--card-radius,12px)', padding: 12, background: '#fff', alignItems: 'center' }}>
       <Link to={`/product/${product.slug}`} style={{ display: 'block', width: 88, height: 88, borderRadius: 6, overflow: 'hidden', background: '#f5f5f5', flexShrink: 0 }}>
         {product.images?.[0] && <img src={product.images[0].url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
       </Link>
@@ -161,7 +161,7 @@ function Style3({ product, price, discount }) {
 // ── Style 4: Minimal ──────────────────────────────────────────────────────────
 function Style4({ product, price, discount }) {
   return (
-    <div style={{ border: 'var(--card-border,1px solid #e5e7eb)', borderRadius: 'var(--card-radius,12px)', overflow: 'hidden', background: '#fff', position: 'relative' }}>
+    <div className="client-component-product-card-style4" id="client-component-product-card-style4" style={{ border: 'var(--card-border,1px solid #e5e7eb)', borderRadius: 'var(--card-radius,12px)', overflow: 'hidden', background: '#fff', position: 'relative' }}>
       {(product.totalStock ?? product.stock ?? 0) === 0 && (
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.7)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <span style={{ background: '#111', color: '#fff', padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700 }}>Out of Stock</span>
@@ -198,5 +198,9 @@ export default function ProductCard({ product }) {
     price: regularPrice,
     discountPrice: price < regularPrice ? price : null,
   };
-  return <Card product={cardProduct} price={price} discount={discount} />;
+  return (
+    <div className="client-component-product-card" id="client-component-product-card" style={{ display: 'contents' }}>
+      <Card product={cardProduct} price={price} discount={discount} />
+    </div>
+  );
 }

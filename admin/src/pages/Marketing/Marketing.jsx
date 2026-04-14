@@ -32,7 +32,7 @@ export default function Marketing() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   return (
-    <div>
+    <div className="admin-page-marketing-marketing" id="admin-page-marketing-marketing">
       <h2 style={{ margin: '0 0 24px' }}>Marketing & Analytics</h2>
 
       <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 12, padding: 24, marginBottom: 24 }}>

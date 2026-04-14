@@ -15,7 +15,7 @@ export default function ImageUpload({ value, onChange, label = 'Image', multiple
   };
 
   return (
-    <div>
+    <div className="admin-component-image-upload" id="admin-component-image-upload">
       <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 6 }}>{label}</label>
       <div
         onClick={() => ref.current.click()}

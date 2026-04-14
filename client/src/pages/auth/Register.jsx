@@ -43,7 +43,7 @@ export default function Register() {
   const set = (k,v) => { setForm(f=>({...f,[k]:v})); setErrors(e=>{const n={...e};delete n[k];delete n.submit;return n;}); };
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="client-page-auth-register" id="client-page-auth-register">
       <div style={s.card}>
         <h1 style={s.title}>Create account</h1>
         <p style={s.sub}>Join us — it's free!</p>

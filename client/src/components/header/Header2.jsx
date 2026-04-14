@@ -17,7 +17,7 @@ export default function Header2() {
   const [search, setSearch] = useState('');
 
   return (
-    <header style={{ background: '#fff', borderBottom: '1px solid #eee', padding: '0 40px' }}>
+    <header className="client-component-header2" id="client-component-header2" style={{ background: '#fff', borderBottom: '1px solid #eee', padding: '0 40px' }}>
       <div style={{ display: 'flex', alignItems: 'center', height: 70, gap: 24 }}>
         <Link to="/" style={{ fontWeight: 800, fontSize: 22, color: '#111', textDecoration: 'none', flexShrink: 0 }}>
           {logo

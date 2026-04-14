@@ -25,7 +25,7 @@ export default function BlogDetail() {
   const readTime = Math.max(1, Math.round(post.content?.replace(/<[^>]+>/g, '').split(' ').length / 200));
 
   return (
-    <>
+    <div className="client-page-blog-detail" id="client-page-blog-detail">
       <Helmet>
         <title>{post.meta?.title || post.title}</title>
         <meta name="description" content={post.meta?.description || post.excerpt} />
@@ -126,6 +126,6 @@ export default function BlogDetail() {
         .blog-content th, .blog-content td { padding: 10px 14px; border: 1px solid #e5e7eb; text-align: left; }
         .blog-content th { background: #f9fafb; font-weight: 700; }
       `}</style>
-    </>
+    </div>
   );
 }

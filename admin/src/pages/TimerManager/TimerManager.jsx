@@ -56,7 +56,7 @@ export default function TimerManager() {
   };
 
   return (
-    <div>
+    <div className="admin-page-timer-manager-timer-manager" id="admin-page-timer-manager-timer-manager">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Timer / Countdown Manager</h2>
         <button onClick={() => { setEditing(null); setForm(empty()); }} style={s.addBtn}>+ New Timer</button>

@@ -6,7 +6,7 @@ export default function Footer2() {
   const [email, setEmail] = useState('');
   const [done,  setDone]  = useState(false);
   return (
-    <footer style={{ background: '#f8f9fa', borderTop: '1px solid #eee', padding: '48px 40px 24px' }}>
+    <footer className="client-component-footer2" id="client-component-footer2" style={{ background: '#f8f9fa', borderTop: '1px solid #eee', padding: '48px 40px 24px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, marginBottom: 40 }}>
           <div>

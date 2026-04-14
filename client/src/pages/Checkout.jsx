@@ -254,7 +254,7 @@ export default function Checkout() {
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 60px' }}>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 60px' }} className="client-page-checkout" id="client-page-checkout">
       <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 28px' }}>Checkout</h1>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 28, alignItems: 'start' }}>

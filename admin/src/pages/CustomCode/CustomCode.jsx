@@ -36,7 +36,7 @@ export default function CustomCode() {
   const current = TABS.find(t=>t.key===tab);
 
   return (
-    <div>
+    <div className="admin-page-custom-code-custom-code" id="admin-page-custom-code-custom-code">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
         <div>
           <h2 style={{margin:'0 0 4px',fontSize:20,fontWeight:700}}>Custom Code Injection</h2>

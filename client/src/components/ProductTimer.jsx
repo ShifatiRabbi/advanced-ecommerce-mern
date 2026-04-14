@@ -41,7 +41,7 @@ function Countdown({ timer }) {
   const s = String(Math.floor((remaining % 60_000) / 1_000)).padStart(2, '0');
 
   return (
-    <div style={{ 
+    <div className="client-component-countdown" id="client-component-countdown" style={{ 
       background: timer.bgColor || '#ef4444', 
       borderRadius: 8, 
       padding: '10px 14px', 
@@ -102,10 +102,10 @@ export default function ProductTimer({ productId, categoryId, position = 'above-
   if (!timers.length) return null;
 
   return (
-    <>
+    <div className="client-component-product-timer" id="client-component-product-timer" style={{ display: 'contents' }}>
       {timers.map(t => (
         <Countdown key={t._id} timer={t} />
       ))}
-    </>
+    </div>
   );
 }

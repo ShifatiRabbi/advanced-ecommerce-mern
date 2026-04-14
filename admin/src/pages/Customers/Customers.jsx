@@ -25,7 +25,7 @@ export default function Customers() {
   });
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 360px' : '1fr', gap: 20 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: selected ? '1fr 360px' : '1fr', gap: 20 }} className="admin-page-customers-customers" id="admin-page-customers-customers">
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
           <h2 style={{ margin: 0 }}>Customers ({data?.pagination?.total ?? 0})</h2>

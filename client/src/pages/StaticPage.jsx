@@ -18,7 +18,7 @@ export default function StaticPage({ pageKey }) {
   if (!page)     return <div style={{padding:80,textAlign:'center'}}>Page not found.</div>;
 
   return (
-    <>
+    <div className="client-page-static-page" id="client-page-static-page">
       <Helmet>
         <title>{page.metaTitle || page.title}</title>
         {page.metaDesc && <meta name="description" content={page.metaDesc} />}
@@ -28,6 +28,6 @@ export default function StaticPage({ pageKey }) {
         <div dangerouslySetInnerHTML={{ __html: page.content }}
           style={{lineHeight:1.8,fontSize:15,color:'#374151'}} />
       </div>
-    </>
+    </div>
   );
 }

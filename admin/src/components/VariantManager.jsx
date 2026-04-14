@@ -136,10 +136,10 @@ export default function VariantManager({
   );
 
   return (
-    <>
+    <div className="admin-component-variant-manager" id="admin-component-variant-manager" style={{ display: 'contents' }}>
     <style>{variantStyles}</style>
-      <div className="variant-manager">
-        <div className="variant-header">
+      <div className="variant-manager admin-variant-manager" id="admin-variant-manager">
+        <div className="variant-header admin-variant-manager-header" id="admin-variant-manager-header">
           <h3>Product Variants</h3>
           <button type="button" className="add-variant-btn" onClick={addVariant}>
             + Add Variant (e.g. Size, Color)
@@ -147,7 +147,7 @@ export default function VariantManager({
         </div>
 
         {localVariants.length > 0 && (
-          <div className="variant-tabs">
+          <div className="variant-tabs admin-variant-tabs" id="admin-variant-tabs">
             {localVariants.map((variant, vIndex) => (
               <div
                 key={vIndex}
@@ -168,7 +168,7 @@ export default function VariantManager({
         )}
 
         {localVariants.length > 0 && localVariants[activeVariant] && (
-          <div className="variant-content">
+          <div className="variant-content admin-variant-content" id="admin-variant-content">
             {/* Variant Name */}
             <div className="form-group">
               <label>Variant Name (e.g., Size, Color)</label>
@@ -300,7 +300,7 @@ export default function VariantManager({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
 

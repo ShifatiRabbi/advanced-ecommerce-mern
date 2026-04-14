@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore';
 function StarPicker({ value, onChange, size = 28 }) {
   const [hover, setHover] = useState(0);
   return (
-    <div style={{ display: 'flex', gap: 4 }}>
+    <div className="client-component-star-picker" id="client-component-star-picker" style={{ display: 'flex', gap: 4 }}>
       {[1,2,3,4,5].map(s => (
         <span
           key={s}
@@ -24,7 +24,7 @@ function StarPicker({ value, onChange, size = 28 }) {
 function RatingBar({ star, count, total }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+    <div className="client-component-rating-bar" id="client-component-rating-bar" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
       <span style={{ fontSize: 13, width: 40, flexShrink: 0 }}>{star} ★</span>
       <div style={{ flex: 1, height: 8, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: '#f59e0b', borderRadius: 4 }} />
@@ -80,7 +80,7 @@ export default function ReviewSection({ product }) {
   reviews.forEach(r => { if (dist[r.rating] !== undefined) dist[r.rating]++; });
 
   return (
-    <section style={rs.section}>
+    <section className="client-component-review-section" id="client-component-review-section" style={rs.section}>
       <h2 style={rs.sectionTitle}>Customer Reviews</h2>
 
       {/* ── Summary ── */}

@@ -18,7 +18,7 @@ export default function MarqueeBar({ position = 'below-header', productId, categ
   if (!marquees.length) return null;
 
   return (
-    <div>
+    <div className="client-component-marquee-bar" id="client-component-marquee-bar">
       {marquees.map(m => {
         // Calculate speed (minimum 5s to prevent seizure-inducing speeds)
         const animDuration = `${Math.max(5, Math.round(200 / (m.speed || 10)))}s`;

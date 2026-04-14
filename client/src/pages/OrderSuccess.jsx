@@ -21,7 +21,7 @@ export default function OrderSuccess() {
   );
 
   return (
-    <div style={{ maxWidth: 600, margin: '60px auto', padding: '0 24px', textAlign: 'center' }}>
+    <div style={{ maxWidth: 600, margin: '60px auto', padding: '0 24px', textAlign: 'center' }} className="client-page-order-success" id="client-page-order-success">
       <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
       <h1 style={{ fontSize: 28, fontWeight: 900, margin: '0 0 8px', color: '#111' }}>
         Order Placed!

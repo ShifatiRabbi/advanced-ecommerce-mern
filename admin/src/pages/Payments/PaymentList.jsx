@@ -45,7 +45,7 @@ export default function PaymentList() {
   });
 
   return (
-    <div>
+    <div className="admin-page-payments-payment-list" id="admin-page-payments-payment-list">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>Payments</h2>
         <button onClick={() => setShowManualModal(true)}

@@ -29,7 +29,7 @@ export default function LayoutSettings() {
   const handleSave = () => mutation.mutate(active);
 
   return (
-    <div>
+    <div className="admin-page-settings-layout-settings" id="admin-page-settings-layout-settings">
       <h2>Layout Settings</h2>
       <section>
         <h3>Header</h3>

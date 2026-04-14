@@ -11,7 +11,7 @@ export const Input = ({
   className = '',
   ...props
 }) => (
-  <div className={`input-group ${className}`}>
+  <div className={`input-group ${className} admin-component-input`} id="admin-component-input">
     {label && (
       <label className="input-label">
         {label}
@@ -41,7 +41,7 @@ export const Textarea = ({
   className = '',
   ...props
 }) => (
-  <div className={`input-group ${className}`}>
+  <div className={`input-group ${className} admin-component-textarea`} id="admin-component-textarea">
     {label && (
       <label className="input-label">
         {label}
@@ -69,7 +69,7 @@ export const Select = ({
   className = '',
   ...props
 }) => (
-  <div className={`input-group ${className}`}>
+  <div className={`input-group ${className} admin-component-select`} id="admin-component-select">
     {label && (
       <label className="input-label">
         {label}
@@ -96,7 +96,7 @@ export const Select = ({
 
 // Toggle Switch Component
 export const Toggle = ({ label, checked, onChange, description }) => (
-  <label className="toggle-wrapper">
+  <label className="toggle-wrapper admin-component-toggle" id="admin-component-toggle">
     <div className="toggle-info">
       <span className="toggle-label">{label}</span>
       {description && <span className="toggle-desc">{description}</span>}
@@ -109,7 +109,7 @@ export const Toggle = ({ label, checked, onChange, description }) => (
 
 // Card Component
 export const Card = ({ title, subtitle, icon, children, className = '', action }) => (
-  <div className={`card ${className}`}>
+  <div className={`card ${className} admin-component-card`} id="admin-component-card">
     {(title || action) && (
       <div className="card-header">
         <div className="card-title-wrapper">
@@ -146,7 +146,7 @@ export const ImageUpload = ({ images, onChange, maxImages = 10 }) => {
   };
 
   return (
-    <div className="image-upload-container">
+    <div className="image-upload-container admin-component-image-upload-ui" id="admin-component-image-upload-ui">
       <div
         className="image-upload-zone"
         onDragOver={(e) => e.preventDefault()}
@@ -193,7 +193,7 @@ export const ImageUpload = ({ images, onChange, maxImages = 10 }) => {
 
 // Tab Component
 export const Tab = ({ tabs, activeTab, onChange }) => (
-  <div className="tab-container">
+  <div className="tab-container admin-component-tab" id="admin-component-tab">
     {tabs.map((tab) => (
       <button
         key={tab.id}
@@ -220,7 +220,8 @@ export const Button = ({
   ...props
 }) => (
   <button
-    className={`btn btn-${variant} btn-${size} ${className}`}
+    id="admin-component-button"
+    className={`btn btn-${variant} btn-${size} ${className} admin-component-button`}
     disabled={disabled || loading}
     {...props}
   >
@@ -237,12 +238,12 @@ export const Button = ({
 
 // Badge Component
 export const Badge = ({ children, variant = 'default', size = 'medium' }) => (
-  <span className={`badge badge-${variant} badge-${size}`}>{children}</span>
+  <span className={`badge badge-${variant} badge-${size} admin-component-badge`} id="admin-component-badge">{children}</span>
 );
 
 // Divider Component
 export const Divider = ({ text }) => (
-  <div className="divider">
+  <div className="divider admin-component-divider" id="admin-component-divider">
     {text && <span className="divider-text">{text}</span>}
   </div>
 );

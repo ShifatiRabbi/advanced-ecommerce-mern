@@ -7,16 +7,16 @@ const shimmerStyle = {
 
 export default function Skeleton({ width = '100%', height = 16, style = {}, borderRadius = 6 }) {
   return (
-    <>
+    <div className="client-component-skeleton" id="client-component-skeleton" style={{ display: 'contents' }}>
       <div style={{ ...shimmerStyle, width, height, borderRadius, ...style }} />
       <style>{`@keyframes skeletonShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}`}</style>
-    </>
+    </div>
   );
 }
 
 export function ProductCardSkeleton() {
   return (
-    <div style={{ border: '1px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
+    <div className="client-component-product-card-skeleton" id="client-component-product-card-skeleton" style={{ border: '1px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
       <Skeleton height={200} borderRadius={0} />
       <div style={{ padding: 14 }}>
         <Skeleton height={14} width="60%" style={{ marginBottom: 8 }} />
@@ -42,7 +42,7 @@ export function OrderRowSkeleton() {
 
 export function PageSkeleton() {
   return (
-    <div style={{ padding: '32px 20px', maxWidth: 900, margin: '0 auto' }}>
+    <div className="client-component-page-skeleton" id="client-component-page-skeleton" style={{ padding: '32px 20px', maxWidth: 900, margin: '0 auto' }}>
       <Skeleton height={32} width="50%" style={{ marginBottom: 24 }} />
       <Skeleton height={16} style={{ marginBottom: 10 }} />
       <Skeleton height={16} width="80%" style={{ marginBottom: 10 }} />

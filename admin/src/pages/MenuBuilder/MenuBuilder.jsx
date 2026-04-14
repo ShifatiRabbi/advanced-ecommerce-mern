@@ -81,7 +81,7 @@ export default function MenuBuilder() {
   };
 
   return (
-    <div>
+    <div className="admin-page-menu-builder-menu-builder" id="admin-page-menu-builder-menu-builder">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Menu Builder</h2>
         <button onClick={() => saveMutation.mutate({ items })} disabled={saveMutation.isPending}

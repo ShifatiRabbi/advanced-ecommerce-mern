@@ -37,7 +37,7 @@ export default function GeneralSettings() {
   ];
 
   return (
-    <div>
+    <div className="admin-page-settings-general-settings" id="admin-page-settings-general-settings">
       <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 700 }}>General Settings</h2>
 
       {FIELDS.map(group => (

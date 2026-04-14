@@ -28,7 +28,7 @@ function SingleSlider({ slider }) {
   const slide = slides[current];
 
   return (
-    <div style={{ position: 'relative', height: slider.height || '480px', overflow: 'hidden', background: slide.bgColor }}>
+    <div className="client-component-single-slider" id="client-component-single-slider" style={{ position: 'relative', height: slider.height || '480px', overflow: 'hidden', background: slide.bgColor }}>
       {slide.imageUrl && (
         <img src={slide.imageUrl} alt={slide.heading}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -95,8 +95,8 @@ export default function SliderRenderer({ position, page = '/' }) {
   const { data: sliders = [] } = useSliders(position, page);
   if (!sliders.length) return null;
   return (
-    <>
+    <div className="client-component-slider-renderer" id="client-component-slider-renderer" style={{ display: 'contents' }}>
       {sliders.map(slider => <SingleSlider key={slider._id} slider={slider} />)}
-    </>
+    </div>
   );
 }

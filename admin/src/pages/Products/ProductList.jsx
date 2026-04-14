@@ -45,7 +45,7 @@ export default function ProductList() {
   });
 
   return (
-    <div>
+    <div className="admin-page-products-product-list" id="admin-page-products-product-list">
       <div style={s.topRow}>
         <h2 style={s.heading}>Products {data?.pagination?.total ? `(${data.pagination.total})` : ''}</h2>
         <div style={{ display: 'flex', gap: 10 }}>

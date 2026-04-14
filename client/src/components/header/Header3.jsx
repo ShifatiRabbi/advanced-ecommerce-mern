@@ -13,7 +13,7 @@ export default function Header3() {
   const itemCount     = store.items.reduce((s, i) => s + i.qty, 0);
   const { data: cats } = useCategories();
   return (
-    <header style={{ background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+    <header className="client-component-header3" id="client-component-header3" style={{ background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
       <div style={{ textAlign: 'center', padding: '16px 0 8px', borderBottom: '1px solid #f0f0f0' }}>
         <Link to="/" style={{ fontSize: 28, fontWeight: 900, color: '#111', textDecoration: 'none', letterSpacing: '-0.04em' }}>
           {logo

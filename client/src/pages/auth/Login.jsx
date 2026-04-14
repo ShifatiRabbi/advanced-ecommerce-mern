@@ -29,7 +29,7 @@ export default function Login() {
   const set = (k,v) => { setForm(f=>({...f,[k]:v})); setError(''); };
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="client-page-auth-login" id="client-page-auth-login">
       <div style={s.card}>
         <h1 style={s.title}>Welcome back</h1>
         <p style={s.sub}>Sign in to your account</p>

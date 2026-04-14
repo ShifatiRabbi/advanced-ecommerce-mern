@@ -50,7 +50,7 @@ export default function Delivery() {
   };
 
   return (
-    <div>
+    <div className="admin-page-delivery-delivery" id="admin-page-delivery-delivery">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>Delivery Zones</h2>
         <button onClick={() => { reset(); setShowForm(s => !s); }}

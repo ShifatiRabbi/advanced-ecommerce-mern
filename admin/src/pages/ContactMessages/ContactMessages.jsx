@@ -45,7 +45,7 @@ export default function ContactMessages() {
   const unread = data?.messages?.filter(m => !m.isRead).length || 0;
 
   return (
-    <div>
+    <div className="admin-page-contact-messages-contact-messages" id="admin-page-contact-messages-contact-messages">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>Contact Messages</h2>

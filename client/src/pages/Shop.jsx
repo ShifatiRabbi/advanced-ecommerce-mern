@@ -129,8 +129,8 @@ export default function Shop() {
   };
 
   return (
-    <div style={styles.page}>
-      <aside style={styles.sidebar}>
+    <div style={styles.page} className="shop-page client-page-shop" id="client-page-shop">
+      <aside style={styles.sidebar} className="shop-sidebar" id="shop-sidebar">
         <h3 style={styles.sidebarTitle}>Categories</h3>
         <button style={{ ...styles.filterBtn, ...(! params.category && styles.filterBtnActive) }} onClick={() => set('category', '')}>All</button>
         {categories.map((c) => (
@@ -154,9 +154,9 @@ export default function Shop() {
         </div>
       </aside>
 
-      <main style={styles.main}>
-        <div style={styles.topBar}>
-          <form onSubmit={handleSearch} style={styles.searchForm}>
+      <main style={styles.main} className="shop-main" id="shop-main">
+        <div style={styles.topBar} className="shop-topbar" id="shop-topbar">
+          <form onSubmit={handleSearch} style={styles.searchForm} className="shop-search-form" id="shop-search-form">
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." style={styles.searchInput} />
             <button type="submit" style={styles.searchBtn}>Search</button>
           </form>
@@ -167,7 +167,7 @@ export default function Shop() {
 
         {/* 1. Remove the old isLoading text and replace with this: */}
         {isLoading ? (
-          <div style={styles.grid}>
+          <div style={styles.grid} className="shop-product-grid is-loading" id="shop-product-grid-loading">
             {Array.from({ length: 8 }, (_, i) => (
               <ProductCardSkeleton key={i} />
             ))}
@@ -179,14 +179,14 @@ export default function Shop() {
         ) : (
           data && (
             <>
-              <p style={styles.resultCount}>{data.pagination.total} products found</p>
-              <div style={styles.grid}>
+              <p style={styles.resultCount} className="shop-result-count" id="shop-result-count">{data.pagination.total} products found</p>
+              <div style={styles.grid} className="shop-product-grid" id="shop-product-grid">
                 {data.products.map((p) => (
                   <ProductCard key={p._id} product={p} />
                 ))}
               </div>
 
-              <div style={styles.pagination}>
+              <div style={styles.pagination} className="shop-pagination" id="shop-pagination">
                 {Array.from({ length: data.pagination.pages }, (_, i) => i + 1).map((pg) => (
                   <button
                     key={pg}

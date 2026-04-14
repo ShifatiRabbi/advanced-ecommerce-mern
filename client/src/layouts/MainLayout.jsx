@@ -29,18 +29,28 @@ export default function MainLayout() {
   const Header = HEADERS[headerKey] ?? HEADERS.header1;
   const Footer = FOOTERS[footerKey] ?? FOOTERS.footer1;
 
-  if (isLoading) return <div style={{ minHeight: '100vh' }} />;
+  if (isLoading) return <div style={{ minHeight: '100vh' }} className="client-main-layout-loading" id="client-main-layout-loading" />;
 
   return (
-    <>
-      <Suspense fallback={null}><Header /></Suspense>
-      <MarqueeBar position="below-header" page={pathname} />
-      <SliderRenderer position="after-hero" page={pathname} />
-      <main>
+    <div className="client-main-layout" id="client-main-layout">
+      <div className="client-main-layout-header" id="client-main-layout-header">
+        <Suspense fallback={null}><Header /></Suspense>
+      </div>
+      <div className="client-main-layout-marquee" id="client-main-layout-marquee">
+        <MarqueeBar position="below-header" page={pathname} />
+      </div>
+      <div className="client-main-layout-slider-after-hero" id="client-main-layout-slider-after-hero">
+        <SliderRenderer position="after-hero" page={pathname} />
+      </div>
+      <main className="client-main-layout-content" id="client-main-layout-content">
         <Outlet />
       </main>
-      <SliderRenderer position="before-footer" page={pathname} />
-      <Suspense fallback={null}><Footer /></Suspense>
-    </>
+      <div className="client-main-layout-slider-before-footer" id="client-main-layout-slider-before-footer">
+        <SliderRenderer position="before-footer" page={pathname} />
+      </div>
+      <div className="client-main-layout-footer" id="client-main-layout-footer">
+        <Suspense fallback={null}><Footer /></Suspense>
+      </div>
+    </div>
   );
 }

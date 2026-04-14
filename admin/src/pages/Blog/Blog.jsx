@@ -41,7 +41,7 @@ export default function Blog() {
   };
 
   return (
-    <div>
+    <div className="admin-page-blog-blog" id="admin-page-blog-blog">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>Blog Posts ({data?.pagination?.total ?? 0})</h2>
         <button onClick={() => { reset(); setShowForm(s => !s); }}

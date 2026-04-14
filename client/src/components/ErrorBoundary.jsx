@@ -19,7 +19,7 @@ export default class ErrorBoundary extends Component {
   render() {
     if (!this.state.hasError) return this.props.children;
     return (
-      <div style={{ padding: '60px 24px', textAlign: 'center', maxWidth: 480, margin: '0 auto' }}>
+      <div className="client-component-error-boundary" id="client-component-error-boundary" style={{ padding: '60px 24px', textAlign: 'center', maxWidth: 480, margin: '0 auto' }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Something went wrong</h2>
         <p style={{ color: '#6b7280', marginBottom: 24, fontSize: 14 }}>{this.state.error?.message}</p>

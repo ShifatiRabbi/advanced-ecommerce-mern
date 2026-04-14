@@ -66,7 +66,7 @@ export default function CheckoutBuilder() {
   if (isLoading) return <p style={{ padding: 20 }}>Loading...</p>;
 
   return (
-    <div>
+    <div className="admin-page-checkout-builder-checkout-builder" id="admin-page-checkout-builder-checkout-builder">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Checkout Builder</h2>
         <button onClick={handleSave} disabled={saveMutation.isPending}

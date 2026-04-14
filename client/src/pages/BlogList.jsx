@@ -25,7 +25,7 @@ export default function BlogList() {
   });
 
   return (
-    <>
+    <div className="client-page-blog-list" id="client-page-blog-list">
       <Helmet><title>Blog — ShopBD</title></Helmet>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
         <h1 style={{ fontSize: 32, fontWeight: 800, margin: '0 0 8px' }}>Blog</h1>
@@ -106,7 +106,7 @@ export default function BlogList() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
     </>

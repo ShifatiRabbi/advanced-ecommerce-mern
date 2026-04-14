@@ -83,7 +83,7 @@ export default function SEOSettings() {
   };
 
   return (
-    <div>
+    <div className="admin-page-seo-seosettings" id="admin-page-seo-seosettings">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h2 style={{ margin: 0 }}>SEO Settings</h2>
         <div style={{ background: '#eee', padding: 4, borderRadius: 8 }}>

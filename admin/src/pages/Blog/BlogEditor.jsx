@@ -97,7 +97,7 @@ export default function BlogEditor() {
   ];
 
   return (
-    <div>
+    <div className="admin-page-blog-blog-editor" id="admin-page-blog-blog-editor">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button onClick={() => navigate('/blog')} style={{ padding: '7px 14px', border: '1px solid #d1d5db', borderRadius: 8, background: '#fff', cursor: 'pointer', fontSize: 14 }}>← Back</button>

@@ -34,7 +34,7 @@ export default function MyOrders() {
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }} className="client-page-my-orders" id="client-page-my-orders">
       <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 24 }}>My Orders</h1>
       {orders.map((order) => {
         const col = STATUS_COLORS[order.status] || STATUS_COLORS.pending;

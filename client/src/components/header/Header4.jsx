@@ -12,7 +12,7 @@ export default function Header4() {
   const itemCount     = store.items.reduce((s, i) => s + i.qty, 0);
   
   return (
-    <>
+    <div className="client-component-header4" id="client-component-header4" style={{ display: 'contents' }}>
       <div style={{ background: '#111', color: '#fff', textAlign: 'center', padding: '8px', fontSize: 13 }}>
         Free shipping on orders over ৳1000! &nbsp;
         <Link to="/shop" style={{ color: '#fbbf24', fontWeight: 700, textDecoration: 'none' }}>Shop now →</Link>
@@ -32,6 +32,6 @@ export default function Header4() {
           Cart {itemCount > 0 && `(${itemCount})`}
         </Link>
       </header>
-    </>
+    </div>
   );
 }

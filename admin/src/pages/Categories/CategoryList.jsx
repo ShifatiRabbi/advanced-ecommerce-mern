@@ -47,7 +47,7 @@ export default function CategoryList() {
   };
 
   return (
-    <div>
+    <div className="admin-page-categories-category-list" id="admin-page-categories-category-list">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>Categories ({categories?.length ?? 0})</h2>
         <button onClick={() => { reset(); setShowForm(s => !s); }}

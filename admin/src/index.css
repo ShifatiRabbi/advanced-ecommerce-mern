@@ -55,6 +55,44 @@ body {
   padding: 0 !important;
 }
 
+/* Debug section hooks */
+.admin-app-shell,
+#admin-app-shell,
+.admin-layout-shell,
+#admin-layout-shell,
+.admin-layout-sidebar,
+#admin-layout-sidebar,
+.admin-layout-main,
+#admin-layout-main,
+.admin-layout-topbar,
+#admin-layout-topbar,
+.admin-layout-content,
+#admin-layout-content,
+.admin-add-product-page,
+#admin-add-product-page,
+.admin-add-product-layout,
+#admin-add-product-layout,
+.admin-add-product-main,
+#admin-add-product-main,
+.admin-add-product-sidebar,
+#admin-add-product-sidebar,
+.admin-edit-product-page,
+#admin-edit-product-page,
+.admin-edit-product-layout,
+#admin-edit-product-layout,
+.admin-edit-product-main,
+#admin-edit-product-main,
+.admin-edit-product-sidebar,
+#admin-edit-product-sidebar,
+.admin-variant-manager,
+#admin-variant-manager,
+.admin-variant-manager-header,
+#admin-variant-manager-header,
+.admin-variant-content,
+#admin-variant-content {
+  position: relative;
+}
+
 #root {
   width: 1126px;
   max-width: 100%;
@@ -109,4 +147,78 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+/* admin page debug hooks */
+#admin-page-auth-login,
+#admin-page-blog-blog,
+#admin-page-blog-blog-editor,
+#admin-page-brands-brand-list,
+#admin-page-categories-category-list,
+#admin-page-checkout-builder-checkout-builder,
+#admin-page-contact-messages-contact-messages,
+#admin-page-custom-code-custom-code,
+#admin-page-customers-customers,
+#admin-page-dashboard-dashboard,
+#admin-page-delivery-delivery,
+#admin-page-email-templates-email-templates,
+#admin-page-employees-employees,
+#admin-page-inventory-inventory,
+#admin-page-marketing-marketing,
+#admin-page-marquee-manager-marquee-manager,
+#admin-page-menu-builder-menu-builder,
+#admin-page-offers-offers,
+#admin-page-orders-order-list,
+#admin-page-page-manager-page-manager,
+#admin-page-payments-payment-list,
+#admin-page-products-add-product,
+#admin-page-products-edit-product,
+#admin-page-products-product-list,
+#admin-page-seo-seosettings,
+#admin-page-settings-general-settings,
+#admin-page-settings-layout-settings,
+#admin-page-settings-settings,
+#admin-page-slider-builder-slider-builder,
+#admin-page-theme-designer-theme-designer,
+#admin-page-timer-manager-timer-manager {
+  position: relative;
+}
+
+
+
+/* admin component debug hooks */
+.admin-component-badge,
+#admin-component-badge,
+.admin-component-button,
+#admin-component-button,
+.admin-component-card,
+#admin-component-card,
+.admin-component-divider,
+#admin-component-divider,
+.admin-component-global-loader,
+#admin-component-global-loader,
+.admin-component-image-upload,
+#admin-component-image-upload,
+.admin-component-image-upload-ui,
+#admin-component-image-upload-ui,
+.admin-component-input,
+#admin-component-input,
+.admin-component-page-skeleton,
+#admin-component-page-skeleton,
+.admin-component-product-card-skeleton,
+#admin-component-product-card-skeleton,
+.admin-component-select,
+#admin-component-select,
+.admin-component-skeleton,
+#admin-component-skeleton,
+.admin-component-suspense-fallback,
+#admin-component-suspense-fallback,
+.admin-component-tab,
+#admin-component-tab,
+.admin-component-textarea,
+#admin-component-textarea,
+.admin-component-toggle,
+#admin-component-toggle,
+.admin-component-variant-manager,
+#admin-component-variant-manager {
+  position: relative;
 }

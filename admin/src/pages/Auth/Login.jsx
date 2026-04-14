@@ -28,7 +28,7 @@ export default function Login() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="admin-page-auth-login" id="admin-page-auth-login">
       <div style={s.card}>
         <div style={s.brand}>ShopAdmin</div>
         <p style={s.sub}>Sign in to your admin account</p>

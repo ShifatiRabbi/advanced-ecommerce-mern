@@ -38,7 +38,7 @@ export default function Inventory() {
   ];
 
   return (
-    <div>
+    <div className="admin-page-inventory-inventory" id="admin-page-inventory-inventory">
       <h2 style={{margin:'0 0 20px',fontSize:20,fontWeight:700}}>Inventory</h2>
 
       {summary && (

@@ -71,7 +71,7 @@ export default function SliderBuilder() {
   const currentSlide = form.slides?.[activeSlide] || defaultSlide();
 
   return (
-    <div>
+    <div className="admin-page-slider-builder-slider-builder" id="admin-page-slider-builder-slider-builder">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Slider / Carousel Builder</h2>
         <button onClick={() => { setEditing(null); setForm(emptySlider()); setActive(0); }}

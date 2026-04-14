@@ -46,16 +46,16 @@ export default function AdminLayout() {
   };
 
   return (
-    <div style={s.shell}>
-      <aside style={{ ...s.sidebar, width: collapsed ? 60 : 230 }}>
-        <div style={s.sidebarHead}>
+    <div style={s.shell} className="admin-layout-shell" id="admin-layout-shell">
+      <aside style={{ ...s.sidebar, width: collapsed ? 60 : 230 }} className="admin-layout-sidebar" id="admin-layout-sidebar">
+        <div style={s.sidebarHead} className="admin-layout-sidebar-head" id="admin-layout-sidebar-head">
           {!collapsed && <span style={s.logo}>ShopAdmin</span>}
           <button onClick={() => setCollapsed(c => !c)} style={s.collapseBtn}>
             {collapsed ? '›' : '‹'}
           </button>
         </div>
 
-        <nav style={s.nav}>
+        <nav style={s.nav} className="admin-layout-nav" id="admin-layout-nav">
           {NAV.map((item) => (
             <NavLink
               key={item.path}
@@ -66,7 +66,7 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div style={s.sidebarFooter}>
+        <div style={s.sidebarFooter} className="admin-layout-sidebar-footer" id="admin-layout-sidebar-footer">
           {!collapsed && (
             <>
               <p style={s.userName}>{user?.name}</p>
@@ -79,8 +79,8 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      <div style={s.main}>
-        <header style={s.topbar}>
+      <div style={s.main} className="admin-layout-main" id="admin-layout-main">
+        <header style={s.topbar} className="admin-layout-topbar" id="admin-layout-topbar">
           <div style={{ fontSize: 13, color: '#888' }}>
             Welcome back, <strong>{user?.name}</strong>
           </div>
@@ -89,7 +89,7 @@ export default function AdminLayout() {
             <Link to="/settings" style={s.settingsLink}>Settings</Link>
           </div>
         </header>
-        <main style={s.content}>
+        <main style={s.content} className="admin-layout-content" id="admin-layout-content">
           <Outlet />
         </main>
       </div>

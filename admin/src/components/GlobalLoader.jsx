@@ -23,7 +23,7 @@ export default function GlobalLoader() {
   const loading = useGlobalLoader();
   if (!loading) return null;
   return (
-    <div style={{
+    <div className="admin-component-global-loader" id="admin-component-global-loader" style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100000,
       height: 3, background: 'var(--color-primary, #2e7d32)',
     }}>

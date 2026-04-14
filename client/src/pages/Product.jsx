@@ -170,10 +170,10 @@ export default function ProductPage() {
 
       <MarqueeBar position="below-header" productId={product._id} categoryId={product.category?._id} />
 
-      <div style={S.page} className="client-product-page" id={`client-product-page-${product._id}`}>
+      <div style={S.page} className="client-product-page client-page-product" id="client-page-product">
 
         {/* Breadcrumb */}
-        <nav style={S.breadcrumb}>
+        <nav style={S.breadcrumb} className="client-product-breadcrumb" id="client-product-breadcrumb">
           <Link to="/" style={S.breadLink}>Home</Link>
           <span style={S.sep}> › </span>
           <Link to="/shop" style={S.breadLink}>Products</Link>
@@ -192,14 +192,16 @@ export default function ProductPage() {
         </Link>
 
         {/* ── Two-column layout ───────────────────────────────────────────── */}
-        <div style={S.grid}>
+        <div style={S.grid} className="client-product-main-grid" id="client-product-main-grid">
 
           {/* ── LEFT: Images ──────────────────────────────────────────────── */}
-          <div>
+          <div className="client-product-gallery-section" id="client-product-gallery-section">
             {/* Main image with zoom */}
             <div
               ref={imgRef}
               style={{ ...S.mainImg, cursor: isZooming ? 'crosshair' : 'default' }}
+              className="client-product-main-image"
+              id="client-product-main-image"
               onMouseMove={handleMouseMove}
               onMouseEnter={() => setIsZooming(true)}
               onMouseLeave={() => setIsZooming(false)}>
@@ -243,7 +245,7 @@ export default function ProductPage() {
 
             {/* Thumbnails */}
             {galleryImages.length > 1 && (
-              <div style={S.thumbRow}>
+              <div style={S.thumbRow} className="client-product-thumb-row" id="client-product-thumb-row">
                 {galleryImages.map((img, i) => (
                   <button
                     key={i}
@@ -257,7 +259,7 @@ export default function ProductPage() {
           </div>
 
           {/* ── RIGHT: Info ───────────────────────────────────────────────── */}
-          <div>
+          <div className="client-product-info-section" id="client-product-info-section">
             {product.brand && (
               <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 6px' }}>{product.brand.name}</p>
             )}
@@ -278,7 +280,7 @@ export default function ProductPage() {
             )}
 
             {/* Price */}
-            <div style={S.priceBlock}>
+            <div style={S.priceBlock} className="client-product-price-block" id="client-product-price-block">
               {allVariantsChosen || !product.variants?.length ? (
                 /* Show exact selected price */
                 <>
@@ -317,7 +319,7 @@ export default function ProductPage() {
 
             {/* ── Variant selector rows ──────────────────────────────────── */}
             {product.variants?.map(variant => (
-              <div key={variant.name} style={{ marginBottom: 18 }}>
+              <div key={variant.name} style={{ marginBottom: 18 }} className="client-variant-group" id={`client-variant-group-${variant.name}`}>
                 <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 8px', color: '#111' }}>
                   Select {variant.name}:
                   {selVariants[variant.name] && (
@@ -412,7 +414,7 @@ export default function ProductPage() {
             </p>
 
             {/* Qty + Add to Cart + Buy Now */}
-            <div style={S.actionRow}>
+            <div style={S.actionRow} className="client-product-action-row" id="client-product-action-row">
               <div style={S.qtyWrap}>
                 <button style={S.qtyBtn} onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
                 <span style={S.qtyNum}>{qty}</span>
@@ -433,7 +435,7 @@ export default function ProductPage() {
             </div>
 
             {/* Trust badges */}
-            <div style={S.trustRow}>
+            <div style={S.trustRow} className="client-product-trust-row" id="client-product-trust-row">
               {[
                 { icon: '🚚', label: 'Fast Delivery', sub: '2-5 days' },
                 { icon: '✅', label: '100% Original', sub: 'Guaranteed' },
@@ -452,9 +454,9 @@ export default function ProductPage() {
         </div>
 
         {/* ── Product Details — full width ─────────────────────────────────── */}
-        <section style={S.section}>
+        <section style={S.section} className="client-product-details-section" id="client-product-details-section">
           <h2 style={S.secTitle}>Product Details</h2>
-          <div style={S.detailGrid}>
+          <div style={S.detailGrid} className="client-product-details-grid" id="client-product-details-grid">
             {[
               { k: 'Brand',    v: product.brand?.name },
               { k: 'Category', v: product.category?.name },
@@ -480,13 +482,13 @@ export default function ProductPage() {
 
         {/* ── Related Products ─────────────────────────────────────────────── */}
         {related.length > 0 && (
-          <section style={S.section}>
+          <section style={S.section} className="client-product-related-section" id="client-product-related-section">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
               <div style={{ width: 4, height: 22, background: '#2e7d32', borderRadius: 2 }} />
               <span style={{ fontSize: 12, fontWeight: 700, color: '#2e7d32', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Related</span>
             </div>
             <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 20px' }}>Related Products</h2>
-            <div style={S.relatedGrid}>
+            <div style={S.relatedGrid} className="client-product-related-grid" id="client-product-related-grid">
               {related.map(p => <RelatedCard key={p._id} product={p} />)}
             </div>
           </section>
