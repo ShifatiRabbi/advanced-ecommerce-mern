@@ -30,7 +30,7 @@ export default function VariantManager({
   const addVariant = () => {
     const newVariant = {
       name: '',
-      options: [{ label: '', sku: '', priceModifier: 0, stock: 0, images: [] }],
+      options: [{ label: '', sku: '', priceModifier: 0, regularPrice: 0, salePrice: null, stock: 0, images: [] }],
       defaultOptionIndex: 0,
     };
     setLocalVariants([...localVariants, newVariant]);
@@ -55,6 +55,8 @@ export default function VariantManager({
       label: '',
       sku: '',
       priceModifier: 0,
+      regularPrice: 0,
+      salePrice: null,
       stock: 0,
       images: [],
     });
@@ -200,11 +202,27 @@ export default function VariantManager({
 
                 <div className="option-pricing">
                   <div>
-                    <label>Price Modifier</label>
+                    <label>Sale Price</label>
                     <input
                       type="number"
-                      value={option.priceModifier}
-                      onChange={(e) => updateOption(oIndex, 'priceModifier', parseFloat(e.target.value) || 0)}
+                      value={option.salePrice ?? ''}
+                      placeholder="0.00"
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        updateOption(oIndex, 'salePrice', next === '' ? null : (parseFloat(next) || 0));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label>Regular Price</label>
+                    <input
+                      type="number"
+                      value={option.regularPrice ?? ''}
+                      placeholder="0.00"
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        updateOption(oIndex, 'regularPrice', next === '' ? 0 : (parseFloat(next) || 0));
+                      }}
                     />
                   </div>
                   <div>
@@ -389,6 +407,141 @@ const variantStyles = `
   .variant-content {
     padding: 24px;
     background: white;
+  }
+
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dbe3ee;
+    border-radius: 8px;
+    background: #f8fafc;
+    outline: none;
+  }
+
+  .form-group input:focus {
+    border-color: #1e3a5f;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.08);
+  }
+
+  .remove-tab {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+
+  .remove-tab:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  .option-main {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .option-main input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dbe3ee;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .option-pricing {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .option-pricing label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+
+  .option-pricing input {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #dbe3ee;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .variant-images-section {
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .variant-images-section > label {
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .variant-images-section input[type="file"] {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .image-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .preview {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #dbe3ee;
+    background: white;
+  }
+
+  .preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .preview button {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    cursor: pointer;
+    line-height: 1;
   }
 
   .variant-name-row {

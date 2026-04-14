@@ -27,11 +27,40 @@ const sanitizeVariants = (variants = []) =>
     options: (variant.options || []).map((opt) => ({
       label: opt.label,
       sku: opt.sku || '',
+      regularPrice: opt.regularPrice === '' || opt.regularPrice === null || opt.regularPrice === undefined
+        ? 0
+        : toNum(opt.regularPrice, 0),
+      salePrice: opt.salePrice === '' || opt.salePrice === null || opt.salePrice === undefined
+        ? null
+        : toNum(opt.salePrice, 0),
       priceModifier: toNum(opt.priceModifier, 0),
       stock: toNum(opt.stock, 0),
       images: Array.isArray(opt.images) ? opt.images : [],
     })),
   }));
+const attachVariantImages = (variants = [], files = []) => {
+  if (!files?.length || !variants?.length) return variants;
+  const cloned = variants.map((variant) => ({
+    ...variant,
+    options: (variant.options || []).map((opt) => ({
+      ...opt,
+      images: Array.isArray(opt.images) ? [...opt.images] : [],
+    })),
+  }));
+  files.forEach((file) => {
+    const match = file.fieldname?.match(/^variantImages\[(\d+)-(\d+)\]$/);
+    if (!match) return;
+    const vIdx = Number(match[1]);
+    const oIdx = Number(match[2]);
+    const option = cloned[vIdx]?.options?.[oIdx];
+    if (!option) return;
+    option.images.push({
+      url: file.path,
+      public_id: file.filename,
+    });
+  });
+  return cloned;
+};
 const getTotalVariantStock = (variants = []) =>
   variants.reduce((sum, variant) => (
     sum + (variant.options || []).reduce((optSum, opt) => optSum + toNum(opt.stock, 0), 0)
@@ -58,7 +87,8 @@ export const createProduct = async (data, files = []) => {
   }
 
   const productType = normalizeProductType(data.productType);
-  const variants = sanitizeVariants(parseVariants(data.variants));
+  let variants = sanitizeVariants(parseVariants(data.variants));
+  variants = attachVariantImages(variants, files);
   const productData = { ...data, slug, productType };
 
   if (files?.length) {
@@ -109,6 +139,7 @@ export const updateProduct = async (id, data, files = []) => {
     if (data.variants) {
       product.variants = sanitizeVariants(parseVariants(data.variants));
     }
+    product.variants = attachVariantImages(product.variants || [], files);
     const stockFromVariants = getTotalVariantStock(product.variants || []);
     product.stock = stockFromVariants;
     product.totalStock = stockFromVariants;

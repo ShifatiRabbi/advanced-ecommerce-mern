@@ -11,6 +11,42 @@ const useCardStyle = () =>
     placeholderData: 'style1',
   });
 
+const getDefaultVariantAdj = (product) => {
+  if (!product?.variants?.length) return 0;
+  return product.variants.reduce((sum, variant) => {
+    const options = variant.options || [];
+    const idx = variant.defaultOptionIndex ?? 0;
+    const opt = options[idx] || options[0];
+    if (!opt) return sum;
+    if (opt.salePrice !== null && opt.salePrice !== undefined) {
+      return sum + Number(opt.salePrice || 0);
+    }
+    if (opt.regularPrice !== null && opt.regularPrice !== undefined) {
+      return sum + Number(opt.regularPrice || 0);
+    }
+    return sum + (opt?.priceModifier ?? 0);
+  }, 0);
+};
+
+const getDisplayPricing = (product) => {
+  const baseRegular = product.basePrice ?? product.price ?? 0;
+  const hasPerOptionAbsolutePrice = (product?.variants || []).some((variant) =>
+    (variant.options || []).some((opt) =>
+      opt?.regularPrice !== null && opt?.regularPrice !== undefined
+        || opt?.salePrice !== null && opt?.salePrice !== undefined
+    )
+  );
+  const variantAdj = getDefaultVariantAdj(product);
+  const regular = hasPerOptionAbsolutePrice ? variantAdj : (baseRegular + variantAdj);
+  const sale = product.discountPrice !== null && product.discountPrice !== undefined
+    ? (hasPerOptionAbsolutePrice ? null : (product.discountPrice + variantAdj))
+    : null;
+  return {
+    regularPrice: regular,
+    price: sale ?? regular,
+  };
+};
+
 // Shared add-to-cart button logic
 function AddCartBtn({ product, fullWidth = false }) {
   const addToCart = useAddToCart();
@@ -153,8 +189,14 @@ const STYLES = { style1: Style1, style2: Style2, style3: Style3, style4: Style4 
 export default function ProductCard({ product }) {
   const { data: activeStyle = 'style1' } = useCardStyle();
   const Card     = STYLES[activeStyle] || Style1;
-  const price    = product.discountPrice ?? product.price;
-  const discount = product.discountPrice
-    ? Math.round(((product.price - product.discountPrice) / product.price) * 100) : 0;
-  return <Card product={product} price={price} discount={discount} />;
+  const { price, regularPrice } = getDisplayPricing(product);
+  const discount = regularPrice > 0 && price < regularPrice
+    ? Math.round(((regularPrice - price) / regularPrice) * 100)
+    : 0;
+  const cardProduct = {
+    ...product,
+    price: regularPrice,
+    discountPrice: price < regularPrice ? price : null,
+  };
+  return <Card product={cardProduct} price={price} discount={discount} />;
 }

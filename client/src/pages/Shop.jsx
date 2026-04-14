@@ -10,13 +10,65 @@ const SORTS = [
   { value: 'popular',    label: 'Most Popular' },
 ];
 
+const toNumber = (value, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const getDefaultVariantOption = (product) => {
+  if (!product?.variants?.length) return null;
+  return product.variants.map((variant) => {
+    const options = variant.options || [];
+    const defaultIdx = variant.defaultOptionIndex ?? 0;
+    return options[defaultIdx] || options[0] || null;
+  }).filter(Boolean);
+};
+
+const getDisplayPricing = (product) => {
+  const baseRegular = toNumber(product.basePrice ?? product.price, 0);
+  const baseSale = product.discountPrice !== null && product.discountPrice !== undefined
+    ? toNumber(product.discountPrice, 0)
+    : null;
+
+  const defaultOptions = getDefaultVariantOption(product);
+  if (!defaultOptions?.length) {
+    const regularPrice = baseRegular;
+    const salePrice = baseSale;
+    return { regularPrice, salePrice, displayPrice: salePrice ?? regularPrice };
+  }
+
+  let regularTotal = 0;
+  let saleTotal = 0;
+  let hasAnySale = false;
+
+  defaultOptions.forEach((opt) => {
+    const optRegular = opt?.regularPrice !== null && opt?.regularPrice !== undefined
+      ? toNumber(opt.regularPrice, 0)
+      : baseRegular + toNumber(opt?.priceModifier, 0);
+    const optSale = opt?.salePrice !== null && opt?.salePrice !== undefined
+      ? toNumber(opt.salePrice, 0)
+      : (baseSale !== null ? baseSale + toNumber(opt?.priceModifier, 0) : null);
+
+    regularTotal += optRegular;
+    if (optSale !== null) {
+      saleTotal += optSale;
+      hasAnySale = true;
+    }
+  });
+
+  const regularPrice = regularTotal;
+  const salePrice = hasAnySale ? saleTotal : null;
+  return { regularPrice, salePrice, displayPrice: salePrice ?? regularPrice };
+};
+
 function ProductCard({ product }) {
-  const discount = product.discountPrice
-    ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
+  const { regularPrice, salePrice, displayPrice } = getDisplayPricing(product);
+  const discount = salePrice !== null && regularPrice > 0
+    ? Math.round(((regularPrice - salePrice) / regularPrice) * 100)
     : 0;
 
   return (
-    <Link to={`/product/${product.slug}`} style={styles.card}>
+    <Link to={`/product/${product.slug}`} style={styles.card} className="shop-product-card" id={`shop-product-card-${product._id}`}>
       <div style={styles.imgWrap}>
         {product.images?.[0] ? (
           <img src={product.images[0].url} alt={product.name} style={styles.img} loading="lazy" />
@@ -30,16 +82,16 @@ function ProductCard({ product }) {
         <h3 style={styles.cardTitle}>{product.name}</h3>
         <p style={styles.cardBrand}>{product.brand?.name}</p>
         <div style={styles.priceRow}>
-          {product.discountPrice ? (
+          {salePrice !== null ? (
             <>
-              <span style={styles.discountPrice}>৳{product.discountPrice.toLocaleString()}</span>
-              <span style={styles.originalPrice}>৳{product.price.toLocaleString()}</span>
+              <span style={styles.discountPrice}>৳{salePrice.toLocaleString()}</span>
+              <span style={styles.originalPrice}>৳{regularPrice.toLocaleString()}</span>
             </>
           ) : (
-            <span style={styles.price}>৳{product.price.toLocaleString()}</span>
+            <span style={styles.price}>৳{displayPrice.toLocaleString()}</span>
           )}
         </div>
-        {product.stock === 0 && <p style={styles.outOfStock}>Out of stock</p>}
+        {(product.totalStock ?? product.stock ?? 0) === 0 && <p style={styles.outOfStock}>Out of stock</p>}
       </div>
     </Link>
   );

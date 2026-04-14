@@ -25,6 +25,12 @@ const TAB_KEYS = {
   STATUS: 'status',
 };
 
+const getVisibleTabs = (productType) => {
+  const baseTabs = [TAB_KEYS.INFO, TAB_KEYS.MEDIA];
+  if (productType === 'simple') return [...baseTabs, TAB_KEYS.PRICING, TAB_KEYS.SEO, TAB_KEYS.STATUS];
+  return [...baseTabs, TAB_KEYS.VARIANTS, TAB_KEYS.SEO, TAB_KEYS.STATUS];
+};
+
 export default function AddProduct() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(TAB_KEYS.INFO);
@@ -55,6 +61,10 @@ export default function AddProduct() {
 
   const [images, setImages] = useState([]);
   const [variants, setVariants] = useState([]);
+
+  const visibleTabs = getVisibleTabs(productType);
+  const isPricingTabVisible = visibleTabs.includes(TAB_KEYS.PRICING);
+  const isVariantsTabVisible = visibleTabs.includes(TAB_KEYS.VARIANTS);
 
   // Queries
   const { data: categories } = useQuery({
@@ -146,8 +156,9 @@ export default function AddProduct() {
       payload.append('discountPrice', form.discountPrice || '');
       payload.append('stock', form.stock || 0);
     } else {
-      // For variable products - base price is useful
-      payload.append('basePrice', form.price || 0);   // ← Important
+      // For variable products - base regular/sale price
+      payload.append('basePrice', form.price || 0);
+      payload.append('discountPrice', form.discountPrice || '');
     }
 
     // ==================== ADDITIONAL FIELDS ====================
@@ -195,6 +206,7 @@ export default function AddProduct() {
     { id: TAB_KEYS.SEO, label: 'SEO', icon: '🔍' },
     { id: TAB_KEYS.STATUS, label: 'Status', icon: '⚡' },
   ];
+  const filteredTabs = tabs.filter((tab) => visibleTabs.includes(tab.id));
 
   return (
     <>
@@ -250,6 +262,7 @@ export default function AddProduct() {
                   className={`type-option ${productType === 'simple' ? 'active' : ''}`}
                   onClick={() => {
                     setProductType('simple');
+                    if (activeTab === TAB_KEYS.VARIANTS) setActiveTab(TAB_KEYS.PRICING);
                     setFieldErrors((prev) => {
                       const next = { ...prev };
                       delete next.variants;
@@ -276,7 +289,10 @@ export default function AddProduct() {
                 </button>
                 <button
                   className={`type-option ${productType === 'variable' ? 'active' : ''}`}
-                  onClick={() => setProductType('variable')}
+                  onClick={() => {
+                    setProductType('variable');
+                    if (activeTab === TAB_KEYS.PRICING) setActiveTab(TAB_KEYS.VARIANTS);
+                  }}
                 >
                   <div className="type-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -300,7 +316,7 @@ export default function AddProduct() {
 
             {/* Tab Navigation */}
             <div className="tab-navigation">
-              {tabs.map(tab => (
+              {filteredTabs.map(tab => (
                 <button
                   key={tab.id}
                   className={`tab-nav-item ${activeTab === tab.id ? 'active' : ''}`}
@@ -455,7 +471,7 @@ export default function AddProduct() {
               )}
 
               {/* Pricing Tab */}
-              {activeTab === TAB_KEYS.PRICING && (
+              {activeTab === TAB_KEYS.PRICING && isPricingTabVisible && (
                 <div className="content-card">
                   <div className="card-header-simple">
                     <h3>Pricing & Inventory</h3>
@@ -520,15 +536,52 @@ export default function AddProduct() {
                       </div>
                     </div>
                   ) : (
-                    <div className="variants-pricing-notice">
-                      <div className="notice-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label">
+                          Regular Price <span className="required">*</span>
+                        </label>
+                        <div className="input-with-prefix">
+                          <span className="input-prefix-fixed">৳</span>
+                          <input
+                            type="number"
+                            className={`form-input with-prefix ${fieldErrors.price ? 'error' : ''}`}
+                            placeholder="0.00"
+                            value={form.price}
+                            onChange={(e) => set('price', e.target.value)}
+                          />
+                        </div>
+                        {fieldErrors.price && <span className="field-error">{fieldErrors.price}</span>}
+                        <span className="field-hint">Base price used with variant modifiers</span>
                       </div>
-                      <div className="notice-content">
-                        <h4>Variations handle pricing</h4>
-                        <p>For variable products, pricing is managed through variant options in the Variations tab. Each variant can have its own price modifier.</p>
+
+                      <div className="form-group">
+                        <label className="form-label">Sale Price</label>
+                        <div className="input-with-prefix">
+                          <span className="input-prefix-fixed">৳</span>
+                          <input
+                            type="number"
+                            className="form-input with-prefix"
+                            placeholder="0.00"
+                            value={form.discountPrice}
+                            onChange={(e) => set('discountPrice', e.target.value)}
+                          />
+                        </div>
+                        <span className="field-hint">Optional global sale price for all variant options</span>
+                      </div>
+
+                      <div className="form-group full-width">
+                        <div className="variants-pricing-notice">
+                          <div className="notice-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <div className="notice-content">
+                            <h4>Variant option pricing</h4>
+                            <p>Each option can increase or decrease this base price using price modifiers in the Variations tab.</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -536,7 +589,7 @@ export default function AddProduct() {
               )}
 
               {/* Variants Tab */}
-              {activeTab === TAB_KEYS.VARIANTS && (
+              {activeTab === TAB_KEYS.VARIANTS && isVariantsTabVisible && (
                 <div className="content-card">
                   <div className="card-header-simple">
                     <h3>Product Variations</h3>
@@ -544,33 +597,19 @@ export default function AddProduct() {
                   </div>
                   {fieldErrors.variants && <span className="field-error">{fieldErrors.variants}</span>}
 
-                  {productType === 'simple' ? (
-                    <div className="variants-pricing-notice">
-                      <div className="notice-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div className="notice-content">
-                        <h4>Switch to Variable Product</h4>
-                        <p>Variations are only available for variable products. Switch to Variable Product type to enable variations.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <VariantManager
-                      isNewProduct={true}
-                      variants={variants}
-                      onUpdate={({ variants: updatedVariants, newVariantImages: newImgs }) => {
-                        setVariants(updatedVariants);
-                        setNewVariantImages(newImgs || {});
-                        setFieldErrors((prev) => {
-                          const next = { ...prev };
-                          delete next.variants;
-                          return next;
-                        });
-                      }}
-                    />
-                  )}
+                  <VariantManager
+                    isNewProduct={true}
+                    variants={variants}
+                    onUpdate={({ variants: updatedVariants, newVariantImages: newImgs }) => {
+                      setVariants(updatedVariants);
+                      setNewVariantImages(newImgs || {});
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.variants;
+                        return next;
+                      });
+                    }}
+                  />
                 </div>
               )}
 

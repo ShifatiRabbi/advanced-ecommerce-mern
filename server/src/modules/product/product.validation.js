@@ -30,6 +30,8 @@ export const createProductSchema = Joi.object({
       options: Joi.array().items(Joi.object({
         label: Joi.string().required(),
         sku: Joi.string().allow(null, ''),
+        regularPrice: Joi.number().min(0).optional(),
+        salePrice: Joi.number().min(0).allow(null).optional(),
         priceModifier: Joi.number().default(0),
         stock: Joi.number().min(0).default(0),
         // images handled via files + mapping in controller

@@ -12,6 +12,8 @@ const imageSchema = new mongoose.Schema({
 const variantOptionSchema = new mongoose.Schema({
   label:          { type: String, required: true },
   sku:            { type: String, sparse: true },
+  regularPrice:   { type: Number, min: 0, default: 0 },
+  salePrice:      { type: Number, default: null },
   priceModifier:  { type: Number, default: 0 },     // can be negative
   price:          { type: Number },                 // final calculated price (optional, for quick access)
   stock:          { type: Number, default: 0, min: 0 },
