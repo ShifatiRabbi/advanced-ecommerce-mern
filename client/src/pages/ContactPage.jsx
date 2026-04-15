@@ -4,8 +4,11 @@ import { useState } from 'react';
 import api from '../services/api';
 // import { toast } from 'react-hot-toast';
 import { toast } from '../utils/toast';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
 export default function ContactPage() {
+  const settings = useSiteSettings();
+  const siteName = settings?.siteName || 'ShopBD';
   const { data: page, isLoading: pageLoading } = useQuery({
     queryKey: ['page', 'contact'],
     queryFn: () => api.get('/pages/contact').then(r => r.data.data),
@@ -13,6 +16,11 @@ export default function ContactPage() {
   });
 
   const extra = page?.extra || {};
+  const contactDetails = [
+    { label: 'Phone', value: extra.phone || settings?.phone, icon: '📞' },
+    { label: 'Email', value: extra.email || settings?.email || settings?.adminEmail, icon: '📧' },
+    { label: 'Address', value: extra.address || settings?.siteAddress, icon: '📍' },
+  ].filter((r) => r.value);
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
 
   // 1. Define the Submission Mutation
@@ -41,10 +49,10 @@ export default function ContactPage() {
 
   return (
     <div className="client-page-contact-page" id="client-page-contact-page">
-      <Helmet><title>{page?.title || 'Contact Us'}</title></Helmet>
+      <Helmet><title>{page?.title || `Contact Us - ${siteName}`}</title></Helmet>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
         <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>{page?.title || 'Contact Us'}</h1>
-        {page?.content && <p style={{ color: '#6b7280', marginBottom: 40, fontSize: 16 }}>{page.content}</p>}
+        {page?.content && <p style={{ color: 'var(--color-text-muted, #6b7280)', marginBottom: 40, fontSize: 16 }}>{page.content}</p>}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }}>
           <div>
@@ -58,7 +66,7 @@ export default function ContactPage() {
                 { k: 'message', label: 'Message *', type: 'textarea' },
               ].map(f => (
                 <div key={f.k} style={{ marginBottom: 14 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#374151' }}>{f.label}</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--color-text, #374151)' }}>{f.label}</label>
                   {f.type === 'textarea'
                     ? <textarea 
                         value={form[f.k]} 
@@ -82,7 +90,7 @@ export default function ContactPage() {
                 disabled={submitMutation.isPending}
                 style={{
                   padding: '12px 28px',
-                  background: submitMutation.isPending ? '#9ca3af' : '#111827',
+                  background: submitMutation.isPending ? 'var(--color-text-muted, #9ca3af)' : 'var(--color-primary, #111827)',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
@@ -98,27 +106,28 @@ export default function ContactPage() {
 
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Contact details</h2>
-            {[
-              { label: 'Phone', value: extra.phone, icon: '📞' },
-              { label: 'Email', value: extra.email, icon: '📧' },
-              { label: 'Address', value: extra.address, icon: '📍' },
-            ].filter(r => r.value).map(row => (
+            {contactDetails.map(row => (
               <div key={row.label} style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'flex-start' }}>
                 <span style={{ fontSize: 20 }}>{row.icon}</span>
                 <div>
-                  <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{row.label}</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-text-muted, #9ca3af)', margin: '0 0 2px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{row.label}</p>
                   <p style={{ fontSize: 15, margin: 0, fontWeight: 500 }}>{row.value}</p>
                 </div>
               </div>
             ))}
+            {contactDetails.length === 0 && (
+              <p style={{ color: 'var(--color-text-muted, #9ca3af)', fontSize: 14 }}>
+                Contact information will appear here after adding phone/email/address in admin settings.
+              </p>
+            )}
 
             {extra.socials && Object.entries(extra.socials).filter(([, v]) => v).length > 0 && (
               <div style={{ marginTop: 24 }}>
-                <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: '#374151' }}>Follow us</p>
+                <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, color: 'var(--color-text, #374151)' }}>Follow us</p>
                 <div style={{ display: 'flex', gap: 10 }}>
                   {Object.entries(extra.socials).filter(([, v]) => v).map(([platform, url]) => (
                     <a key={platform} href={url} target="_blank" rel="noreferrer"
-                      style={{ padding: '6px 14px', border: '1px solid #e5e7eb', borderRadius: 20, fontSize: 13, color: '#374151', textDecoration: 'none', textTransform: 'capitalize' }}>
+                      style={{ padding: '6px 14px', border: '1px solid var(--color-border, #e5e7eb)', borderRadius: 20, fontSize: 13, color: 'var(--color-text, #374151)', textDecoration: 'none', textTransform: 'capitalize' }}>
                       {platform}
                     </a>
                   ))}
@@ -127,7 +136,7 @@ export default function ContactPage() {
             )}
 
             {extra.mapEmbed && (
-              <div style={{ marginTop: 24, borderRadius: 10, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+              <div style={{ marginTop: 24, borderRadius: 'var(--card-radius, 10px)', overflow: 'hidden', border: 'var(--card-border, 1px solid #e5e7eb)' }}>
                 <iframe src={extra.mapEmbed} width="100%" height="260" style={{ border: 0, display: 'block' }}
                   allowFullScreen loading="lazy" title="Location map" />
               </div>
@@ -139,4 +148,4 @@ export default function ContactPage() {
   );
 }
 
-const inp = { width: '100%', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' };
+const inp = { width: '100%', padding: '10px 12px', border: '1px solid var(--color-border, #d1d5db)', borderRadius: 'var(--input-radius, 8px)', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', color: 'var(--color-text, #111827)', background: 'var(--color-background, #fff)' };

@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation }       from '@tanstack/react-query';
-import api, { setAccessToken } from '../services/api';
-import { useAuthStore }      from '../store/authStore';
+import api, { setAccessToken } from '../../services/api';
+import { useAuthStore }      from '../../store/authStore';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 export default function Register() {
+  const settings = useSiteSettings();
+  const siteName = settings?.siteName || 'ShopBD';
   const navigate    = useNavigate();
   const { setUser } = useAuthStore();
   const [form, setForm]   = useState({ name:'', email:'', phone:'', password:'', confirm:'' });
@@ -45,7 +48,7 @@ export default function Register() {
   return (
     <div style={s.page} className="client-page-auth-register" id="client-page-auth-register">
       <div style={s.card}>
-        <h1 style={s.title}>Create account</h1>
+        <h1 style={s.title}>Create account on {siteName}</h1>
         <p style={s.sub}>Join us — it's free!</p>
 
         {errors.submit && <div style={s.errorBox}>{errors.submit}</div>}
@@ -61,7 +64,7 @@ export default function Register() {
             <label style={s.label}>{f.label}</label>
             <input type={f.type} value={form[f.k]} onChange={e=>set(f.k,e.target.value)}
               placeholder={f.ph} onKeyDown={e=>e.key==='Enter'&&handleSubmit()}
-              style={{...s.input,...(errors[f.k]&&{borderColor:'#ef4444'})}} />
+              style={{...s.input,...(errors[f.k]&&{borderColor:'var(--color-danger, #ef4444)'})}} />
             {errors[f.k] && <p style={s.err}>{errors[f.k]}</p>}
           </div>
         ))}
@@ -79,16 +82,16 @@ export default function Register() {
 }
 
 const s = {
-  page:       {minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,background:'#f9fafb'},
-  card:       {background:'#fff',borderRadius:12,padding:'40px 36px',width:400,border:'1px solid #e5e7eb'},
-  title:      {fontSize:24,fontWeight:800,margin:'0 0 4px'},
-  sub:        {fontSize:14,color:'#6b7280',margin:'0 0 24px'},
-  errorBox:   {background:'#fef2f2',color:'#dc2626',padding:'10px 14px',borderRadius:8,fontSize:14,marginBottom:16,border:'1px solid #fecaca'},
+  page:       {minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,background:'var(--color-background, #f9fafb)'},
+  card:       {background:'var(--color-surface, #fff)',borderRadius:'var(--card-radius, 12px)',padding:'40px 36px',width:400,border:'var(--card-border, 1px solid #e5e7eb)'},
+  title:      {fontSize:24,fontWeight:800,margin:'0 0 4px',color:'var(--color-text, #111827)'},
+  sub:        {fontSize:14,color:'var(--color-text-muted, #6b7280)',margin:'0 0 24px'},
+  errorBox:   {background:'#fef2f2',color:'var(--color-danger, #dc2626)',padding:'10px 14px',borderRadius:'var(--input-radius, 8px)',fontSize:14,marginBottom:16,border:'1px solid #fecaca'},
   field:      {marginBottom:14},
-  label:      {display:'block',fontSize:13,fontWeight:600,marginBottom:5,color:'#374151'},
-  input:      {width:'100%',padding:'10px 12px',border:'1px solid #d1d5db',borderRadius:8,fontSize:14,outline:'none',boxSizing:'border-box',fontFamily:'inherit'},
-  err:        {fontSize:12,color:'#dc2626',marginTop:4},
-  btn:        {width:'100%',padding:12,background:'#111827',color:'#fff',border:'none',borderRadius:8,fontSize:15,fontWeight:600,cursor:'pointer',marginTop:4},
-  switchLine: {fontSize:14,color:'#6b7280',textAlign:'center',marginTop:16},
-  link:       {color:'#111827',fontWeight:600,textDecoration:'none'},
+  label:      {display:'block',fontSize:13,fontWeight:600,marginBottom:5,color:'var(--color-text, #374151)'},
+  input:      {width:'100%',padding:'10px 12px',border:'1px solid var(--color-border, #d1d5db)',borderRadius:'var(--input-radius, 8px)',fontSize:14,outline:'none',boxSizing:'border-box',fontFamily:'inherit',color:'var(--color-text, #111827)',background:'var(--color-background, #fff)'},
+  err:        {fontSize:12,color:'var(--color-danger, #dc2626)',marginTop:4},
+  btn:        {width:'100%',padding:12,background:'var(--color-primary, #111827)',color:'#fff',border:'none',borderRadius:'var(--btn-radius, 8px)',fontSize:15,fontWeight:600,cursor:'pointer',marginTop:4},
+  switchLine: {fontSize:14,color:'var(--color-text-muted, #6b7280)',textAlign:'center',marginTop:16},
+  link:       {color:'var(--color-primary, #111827)',fontWeight:600,textDecoration:'none'},
 };

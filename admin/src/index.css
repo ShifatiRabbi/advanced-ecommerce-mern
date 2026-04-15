@@ -14,6 +14,32 @@
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
+  --color-primary: #111827;
+  --color-secondary: #6b7280;
+  --color-accent: #3b82f6;
+  --color-hover: #374151;
+  --color-success: #059669;
+  --color-danger: #dc2626;
+  --color-background: #ffffff;
+  --color-surface: #f9fafb;
+  --color-text: #111827;
+  --color-text-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --font-family: system-ui, -apple-system, sans-serif;
+  --font-size-base: 16px;
+  --btn-radius: 8px;
+  --btn-padding-x: 20px;
+  --btn-padding-y: 10px;
+  --btn-font-weight: 600;
+  --btn-font-size: 14px;
+  --card-radius: 12px;
+  --card-border: 1px solid #e5e7eb;
+  --card-shadow: none;
+  --input-radius: 8px;
+  --header-bg: #111827;
+  --header-text-color: #ffffff;
+  --footer-bg: #111827;
+  --footer-text-color: #9ca3af;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
@@ -53,6 +79,10 @@
 body {
   margin: 0 !important;
   padding: 0 !important;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  background: var(--color-background);
+  color: var(--color-text);
 }
 
 /* Debug section hooks */

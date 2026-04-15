@@ -3,8 +3,11 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import api, { setAccessToken } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 export default function Login() {
+  const settings = useSiteSettings();
+  const siteName = settings?.siteName || 'ShopBD';
   const navigate    = useNavigate();
   const [params]    = useSearchParams();
   const { setUser } = useAuthStore();
@@ -31,11 +34,11 @@ export default function Login() {
   return (
     <div style={s.page} className="client-page-auth-login" id="client-page-auth-login">
       <div style={s.card}>
-        <h1 style={s.title}>Welcome back</h1>
+        <h1 style={s.title}>Welcome back to {siteName}</h1>
         <p style={s.sub}>Sign in to your account</p>
 
         {params.get('registered') && (
-          <div style={{...s.errorBox, background:'#d1fae5', color:'#065f46', border:'1px solid #a7f3d0'}}>
+          <div style={{...s.errorBox, background:'var(--color-surface, #d1fae5)', color:'var(--color-success, #065f46)', border:'1px solid var(--color-success, #a7f3d0)'}}>
             Account created! Please sign in.
           </div>
         )}
@@ -54,7 +57,7 @@ export default function Login() {
         ))}
 
         <div style={{textAlign:'right',marginBottom:16}}>
-          <Link to="/forgot-password" style={{fontSize:13,color:'#6b7280',textDecoration:'none'}}>Forgot password?</Link>
+          <Link to="/forgot-password" style={{fontSize:13,color:'var(--color-text-muted, #6b7280)',textDecoration:'none'}}>Forgot password?</Link>
         </div>
 
         <button onClick={()=>mutation.mutate(form)} disabled={mutation.isPending} style={s.btn}>
@@ -70,15 +73,15 @@ export default function Login() {
 }
 
 const s = {
-  page:       {minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,background:'#f9fafb'},
-  card:       {background:'#fff',borderRadius:12,padding:'40px 36px',width:400,border:'1px solid #e5e7eb'},
-  title:      {fontSize:24,fontWeight:800,margin:'0 0 4px'},
-  sub:        {fontSize:14,color:'#6b7280',margin:'0 0 24px'},
-  errorBox:   {background:'#fef2f2',color:'#dc2626',padding:'10px 14px',borderRadius:8,fontSize:14,marginBottom:16,border:'1px solid #fecaca'},
+  page:       {minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:24,background:'var(--color-background, #f9fafb)'},
+  card:       {background:'var(--color-surface, #fff)',borderRadius:'var(--card-radius, 12px)',padding:'40px 36px',width:400,border:'var(--card-border, 1px solid #e5e7eb)'},
+  title:      {fontSize:24,fontWeight:800,margin:'0 0 4px',color:'var(--color-text, #111827)'},
+  sub:        {fontSize:14,color:'var(--color-text-muted, #6b7280)',margin:'0 0 24px'},
+  errorBox:   {background:'#fef2f2',color:'var(--color-danger, #dc2626)',padding:'10px 14px',borderRadius:'var(--input-radius, 8px)',fontSize:14,marginBottom:16,border:'1px solid #fecaca'},
   field:      {marginBottom:14},
-  label:      {display:'block',fontSize:13,fontWeight:600,marginBottom:5,color:'#374151'},
-  input:      {width:'100%',padding:'10px 12px',border:'1px solid #d1d5db',borderRadius:8,fontSize:14,outline:'none',boxSizing:'border-box',fontFamily:'inherit'},
-  btn:        {width:'100%',padding:12,background:'#111827',color:'#fff',border:'none',borderRadius:8,fontSize:15,fontWeight:600,cursor:'pointer'},
-  switchLine: {fontSize:14,color:'#6b7280',textAlign:'center',marginTop:16},
-  link:       {color:'#111827',fontWeight:600,textDecoration:'none'},
+  label:      {display:'block',fontSize:13,fontWeight:600,marginBottom:5,color:'var(--color-text, #374151)'},
+  input:      {width:'100%',padding:'10px 12px',border:'1px solid var(--color-border, #d1d5db)',borderRadius:'var(--input-radius, 8px)',fontSize:14,outline:'none',boxSizing:'border-box',fontFamily:'inherit',color:'var(--color-text, #111827)',background:'var(--color-background, #fff)'},
+  btn:        {width:'100%',padding:12,background:'var(--color-primary, #111827)',color:'#fff',border:'none',borderRadius:'var(--btn-radius, 8px)',fontSize:15,fontWeight:600,cursor:'pointer'},
+  switchLine: {fontSize:14,color:'var(--color-text-muted, #6b7280)',textAlign:'center',marginTop:16},
+  link:       {color:'var(--color-primary, #111827)',fontWeight:600,textDecoration:'none'},
 };

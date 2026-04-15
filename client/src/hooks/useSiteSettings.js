@@ -5,7 +5,18 @@ import api from '../services/api';
 export const useSiteSettings = () => {
   const { data: settings } = useQuery({
     queryKey: ['site-settings'],
-    queryFn:  () => api.get('/settings/all').then(r => r.data.data),
+    queryFn: async () => {
+      const [allRes, themeRes] = await Promise.all([
+        api.get('/settings/all'),
+        api.get('/settings/theme'),
+      ]);
+      const allSettings = allRes.data.data || {};
+      const theme = themeRes.data.data || {};
+      return {
+        ...allSettings,
+        theme: { ...theme, ...(allSettings.theme || {}) },
+      };
+    },
     staleTime: 1000 * 60 * 5,
   });
 

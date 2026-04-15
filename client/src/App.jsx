@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import { useAnalytics } from './hooks/useAnalytics';
 import {  useCustomCode } from './hooks/useCustomCode';
-import {  useTheme } from './hooks/useTheme';
 import { useSiteSettings } from './hooks/useSiteSettings';
 import GlobalLoader from './components/GlobalLoader';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -38,7 +37,6 @@ const withBoundary = (Component) => (
 );
 
 export default function App() {
-  useTheme();
   useCustomCode();
   useAnalytics();
   useSiteSettings();
@@ -75,7 +73,7 @@ export default function App() {
             <Route path="/blog"        element={withBoundary(BlogList)} />
             <Route path="/blog/:slug"  element={withBoundary(BlogDetail)} />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={withBoundary(NotFound)} />
         </Routes>
     </div>
   );

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useProducts, useCategories, useBrands } from '../hooks/useProducts';
 import { useTranslation } from 'react-i18next';
 import { ProductCardSkeleton } from '../components/Skeleton';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 const SORTS = [
   { value: 'newest',     label: 'Newest' },
   { value: 'price_asc',  label: 'Price: Low to High' },
@@ -98,6 +99,7 @@ function ProductCard({ product }) {
 }
 
 export default function Shop() {
+  const settings = useSiteSettings();
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -179,7 +181,7 @@ export default function Shop() {
         ) : (
           data && (
             <>
-              <p style={styles.resultCount} className="shop-result-count" id="shop-result-count">{data.pagination.total} products found</p>
+              <p style={styles.resultCount} className="shop-result-count" id="shop-result-count">{data.pagination.total} products found on {settings?.siteName || 'ShopBD'}</p>
               <div style={styles.grid} className="shop-product-grid" id="shop-product-grid">
                 {data.products.map((p) => (
                   <ProductCard key={p._id} product={p} />
@@ -212,32 +214,32 @@ const styles = {
   page:           { display: 'flex', gap: 24, padding: '24px 40px', maxWidth: 1400, margin: '0 auto' },
   sidebar:        { width: 220, flexShrink: 0 },
   sidebarTitle:   { fontSize: 14, fontWeight: 600, marginBottom: 8, marginTop: 0 },
-  filterBtn:      { display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: '1px solid #e2e2e2', borderRadius: 6, background: 'none', cursor: 'pointer', marginBottom: 4, fontSize: 14 },
-  filterBtnActive:{ background: '#1a1a1a', color: '#fff', borderColor: '#1a1a1a' },
-  priceInput:     { width: '50%', padding: '6px 8px', border: '1px solid #e2e2e2', borderRadius: 6, fontSize: 13 },
+  filterBtn:      { display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', border: '1px solid var(--color-border, #e2e2e2)', borderRadius: 'var(--input-radius, 6px)', background: 'var(--color-background, #fff)', color: 'var(--color-text, #111827)', cursor: 'pointer', marginBottom: 4, fontSize: 14 },
+  filterBtnActive:{ background: 'var(--color-primary, #1a1a1a)', color: '#fff', borderColor: 'var(--color-primary, #1a1a1a)' },
+  priceInput:     { width: '50%', padding: '6px 8px', border: '1px solid var(--color-border, #e2e2e2)', borderRadius: 'var(--input-radius, 6px)', fontSize: 13, color: 'var(--color-text, #111827)', background: 'var(--color-background, #fff)' },
   main:           { flex: 1 },
   topBar:         { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, gap: 12 },
   searchForm:     { display: 'flex', gap: 8, flex: 1 },
-  searchInput:    { flex: 1, padding: '8px 12px', border: '1px solid #e2e2e2', borderRadius: 8, fontSize: 14 },
-  searchBtn:      { padding: '8px 16px', background: '#1a1a1a', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14 },
-  sortSelect:     { padding: '8px 12px', border: '1px solid #e2e2e2', borderRadius: 8, fontSize: 14 },
-  resultCount:    { fontSize: 13, color: '#666', marginBottom: 16 },
+  searchInput:    { flex: 1, padding: '8px 12px', border: '1px solid var(--color-border, #e2e2e2)', borderRadius: 'var(--input-radius, 8px)', fontSize: 14, color: 'var(--color-text, #111827)', background: 'var(--color-background, #fff)' },
+  searchBtn:      { padding: '8px 16px', background: 'var(--color-primary, #1a1a1a)', color: '#fff', border: 'none', borderRadius: 'var(--btn-radius, 8px)', cursor: 'pointer', fontSize: 14 },
+  sortSelect:     { padding: '8px 12px', border: '1px solid var(--color-border, #e2e2e2)', borderRadius: 'var(--input-radius, 8px)', fontSize: 14, color: 'var(--color-text, #111827)', background: 'var(--color-background, #fff)' },
+  resultCount:    { fontSize: 13, color: 'var(--color-text-muted, #666)', marginBottom: 16 },
   grid:           { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 },
-  card:           { textDecoration: 'none', color: 'inherit', border: '1px solid #eee', borderRadius: 12, overflow: 'hidden', transition: 'box-shadow .2s', display: 'block' },
-  imgWrap:        { position: 'relative', aspectRatio: '1', overflow: 'hidden', background: '#f5f5f5' },
+  card:           { textDecoration: 'none', color: 'inherit', border: 'var(--card-border, 1px solid #eee)', borderRadius: 'var(--card-radius, 12px)', overflow: 'hidden', transition: 'box-shadow .2s', display: 'block', background: 'var(--color-surface, #fff)' },
+  imgWrap:        { position: 'relative', aspectRatio: '1', overflow: 'hidden', background: 'var(--color-surface, #f5f5f5)' },
   img:            { width: '100%', height: '100%', objectFit: 'cover' },
-  imgPlaceholder: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#aaa', fontSize: 13 },
-  badge:          { position: 'absolute', top: 8, left: 8, background: '#e53e3e', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 7px', borderRadius: 4 },
+  imgPlaceholder: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--color-text-muted, #aaa)', fontSize: 13 },
+  badge:          { position: 'absolute', top: 8, left: 8, background: 'var(--color-danger, #e53e3e)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '3px 7px', borderRadius: 4 },
   cardBody:       { padding: '12px 14px' },
-  cardCat:        { fontSize: 11, color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' },
-  cardTitle:      { fontSize: 15, fontWeight: 600, margin: '0 0 4px', lineHeight: 1.3 },
-  cardBrand:      { fontSize: 12, color: '#888', margin: '0 0 8px' },
+  cardCat:        { fontSize: 11, color: 'var(--color-text-muted, #888)', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+  cardTitle:      { fontSize: 15, fontWeight: 600, margin: '0 0 4px', lineHeight: 1.3, color: 'var(--color-text, #111827)' },
+  cardBrand:      { fontSize: 12, color: 'var(--color-text-muted, #888)', margin: '0 0 8px' },
   priceRow:       { display: 'flex', alignItems: 'center', gap: 8 },
   price:          { fontSize: 16, fontWeight: 700 },
-  discountPrice:  { fontSize: 16, fontWeight: 700, color: '#e53e3e' },
-  originalPrice:  { fontSize: 13, color: '#aaa', textDecoration: 'line-through' },
-  outOfStock:     { fontSize: 12, color: '#e53e3e', marginTop: 4 },
+  discountPrice:  { fontSize: 16, fontWeight: 700, color: 'var(--color-danger, #e53e3e)' },
+  originalPrice:  { fontSize: 13, color: 'var(--color-text-muted, #aaa)', textDecoration: 'line-through' },
+  outOfStock:     { fontSize: 12, color: 'var(--color-danger, #e53e3e)', marginTop: 4 },
   pagination:     { display: 'flex', gap: 8, marginTop: 32, justifyContent: 'center' },
-  pageBtn:        { padding: '8px 14px', border: '1px solid #e2e2e2', borderRadius: 8, background: 'none', cursor: 'pointer', fontSize: 14 },
-  pageBtnActive:  { background: '#1a1a1a', color: '#fff', borderColor: '#1a1a1a' },
+  pageBtn:        { padding: '8px 14px', border: '1px solid var(--color-border, #e2e2e2)', borderRadius: 'var(--btn-radius, 8px)', background: 'var(--color-background, #fff)', color: 'var(--color-text, #111827)', cursor: 'pointer', fontSize: 14 },
+  pageBtnActive:  { background: 'var(--color-primary, #1a1a1a)', color: '#fff', borderColor: 'var(--color-primary, #1a1a1a)' },
 };

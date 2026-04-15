@@ -1,6 +1,51 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const CART_STORAGE_KEY = 'shopbd-cart-v3';
+const CART_TTL_MS = 3 * 24 * 60 * 60 * 1000;
+
+const cartStorage = {
+  getItem: (name) => {
+    const raw = localStorage.getItem(name);
+    if (!raw) return null;
+
+    try {
+      const parsed = JSON.parse(raw);
+
+      // Backward compatibility with old persist payload format.
+      if (parsed?.state && parsed?.version !== undefined) {
+        return raw;
+      }
+
+      // New payload format with explicit TTL metadata.
+      if (parsed?.value && parsed?.persistedAt) {
+        const isExpired = Date.now() - parsed.persistedAt > CART_TTL_MS;
+        if (isExpired) {
+          localStorage.removeItem(name);
+          return null;
+        }
+        return parsed.value;
+      }
+    } catch {
+      localStorage.removeItem(name);
+      return null;
+    }
+
+    localStorage.removeItem(name);
+    return null;
+  },
+
+  setItem: (name, value) => {
+    const payload = JSON.stringify({
+      persistedAt: Date.now(),
+      value,
+    });
+    localStorage.setItem(name, payload);
+  },
+
+  removeItem: (name) => localStorage.removeItem(name),
+};
+
 // Build a stable cart key from productId + selected variant labels
 const makeCartKey = (productId, selectedVariants = {}) => {
   const varStr = Object.entries(selectedVariants)
@@ -22,6 +67,7 @@ export const useCartStore = create(
   persist(
     (set, get) => ({
       items: [],
+      lastUpdated: null,
 
       // ── addItem ──────────────────────────────────────────────────────────
       // product: full product object from API
@@ -61,6 +107,7 @@ export const useCartStore = create(
                 ? { ...i, qty: i.qty + qty, lineTotal: (i.qty + qty) * i.unitPrice }
                 : i
             ),
+            lastUpdated: Date.now(),
           });
         } else {
           const newItem = {
@@ -83,14 +130,14 @@ export const useCartStore = create(
                 .map(([k, v]) => `${k}: ${v?.label ?? v}`)
                 .join(', '),
           };
-          set({ items: [...items, newItem] });
+          set({ items: [...items, newItem], lastUpdated: Date.now() });
         }
         return { ok: true };
       },
 
       // ── removeItem ───────────────────────────────────────────────────────
       removeItem: (cartKey) =>
-        set({ items: get().items.filter(i => i.cartKey !== cartKey) }),
+        set({ items: get().items.filter(i => i.cartKey !== cartKey), lastUpdated: Date.now() }),
 
       // ── updateQty ────────────────────────────────────────────────────────
       updateQty: (cartKey, newQty) => {
@@ -101,10 +148,11 @@ export const useCartStore = create(
             const safeQty = Math.min(newQty, i.stock);
             return { ...i, qty: safeQty, lineTotal: safeQty * i.unitPrice };
           }),
+          lastUpdated: Date.now(),
         });
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], lastUpdated: Date.now() }),
 
       // ── Derived values (computed on read, not stored) ─────────────────
       get itemCount() {
@@ -115,10 +163,12 @@ export const useCartStore = create(
       },
     }),
     {
-      name:    'shopbd-cart-v3',
+      name: CART_STORAGE_KEY,
       version: 3,
+      storage: cartStorage,
+      partialize: (state) => ({ items: state.items, lastUpdated: state.lastUpdated }),
       // Wipe old cart on version bump to avoid shape mismatch crashes
-      migrate: (_old, version) => (version < 3 ? { items: [] } : _old),
+      migrate: (_old, version) => (version < 3 ? { items: [], lastUpdated: null } : _old),
     }
   )
 );

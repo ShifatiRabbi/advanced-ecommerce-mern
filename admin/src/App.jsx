@@ -4,6 +4,7 @@ import AdminLayout from './layout/AdminLayout';
 import AuthGuard   from './components/AuthGuard';
 import GlobalLoader from './components/GlobalLoader';
 import SuspenseFallback from './components/SuspenseFallback';
+import { useAdminThemeSettings } from './hooks/useAdminThemeSettings';
 
 const Login         = lazy(() => import('./pages/Auth/Login'));
 const Dashboard     = lazy(() => import('./pages/Dashboard/Dashboard'));
@@ -43,6 +44,8 @@ const Loader = () => (
 );
 
 export default function App() {
+  useAdminThemeSettings();
+
   return (
     <div className="admin-app-shell" id="admin-app-shell">
       <GlobalLoader />

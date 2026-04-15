@@ -5,8 +5,11 @@ import { Helmet }         from 'react-helmet-async';
 import { useFeaturedProducts } from '../hooks/useProducts';
 import api from '../services/api';
 import SliderRenderer from '../components/SliderRenderer';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
 export default function Home() {
+  const settings = useSiteSettings();
+  const siteName = settings?.siteName || 'ShopBD';
   const { data: featured } = useFeaturedProducts(8);
   const { data: flashSale } = useQuery({ queryKey: ['flash-sale'], queryFn: () => api.get('/flash-sales/active').then(r => r.data.data) });
   const { data: heroBanners } = useQuery({ queryKey: ['banners-hero'], queryFn: () => api.get('/banners?position=hero').then(r => r.data.data) });
@@ -17,7 +20,7 @@ export default function Home() {
   return (
     <div className="client-page-home" id="client-page-home">
       <Helmet>
-        <title>{seo?.siteName || 'ShopBD'}</title>
+        <title>{seo?.siteName || siteName}</title>
         <meta name="description" content={seo?.siteDesc} />
         <meta name="keywords"    content={seo?.siteKeywords} />
         <meta property="og:title"       content={seo?.siteName} />
@@ -33,7 +36,7 @@ export default function Home() {
           </a>
         ) : (
           <div style={s.heroFallback}>
-            <h1 style={s.heroTitle}>Welcome to ShopBD</h1>
+            <h1 style={s.heroTitle}>Welcome to {siteName}</h1>
             <p style={s.heroSub}>Discover amazing products at the best prices</p>
             <Link to="/shop" style={s.heroBtn}>Shop Now</Link>
           </div>
@@ -56,8 +59,8 @@ export default function Home() {
                 <div style={s.cardBody}>
                   <p style={s.cardName}>{item.product?.name}</p>
                   <div style={s.priceRow}>
-                    <span style={{ fontWeight: 700, color: '#e53e3e' }}>৳{item.salePrice.toLocaleString()}</span>
-                    <span style={{ textDecoration: 'line-through', color: '#aaa', fontSize: 13, marginLeft: 8 }}>৳{item.originalPrice.toLocaleString()}</span>
+                    <span style={{ fontWeight: 700, color: 'var(--color-danger, #e53e3e)' }}>৳{item.salePrice.toLocaleString()}</span>
+                    <span style={{ textDecoration: 'line-through', color: 'var(--color-text-muted, #aaa)', fontSize: 13, marginLeft: 8 }}>৳{item.originalPrice.toLocaleString()}</span>
                   </div>
                 </div>
               </Link>
@@ -82,7 +85,7 @@ export default function Home() {
                   <p style={s.cardName}>{p.name}</p>
                   <div style={s.priceRow}>
                     <span style={{ fontWeight: 700 }}>৳{(p.discountPrice || p.price).toLocaleString()}</span>
-                    {p.discountPrice && <span style={{ textDecoration: 'line-through', color: '#aaa', fontSize: 13, marginLeft: 8 }}>৳{p.price.toLocaleString()}</span>}
+                    {p.discountPrice && <span style={{ textDecoration: 'line-through', color: 'var(--color-text-muted, #aaa)', fontSize: 13, marginLeft: 8 }}>৳{p.price.toLocaleString()}</span>}
                   </div>
                 </div>
               </Link>
@@ -111,26 +114,26 @@ function FlashCountdown({ endTime }) {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [endTime]);
-  return <span style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 700, color: '#e53e3e', background: '#fff5f5', padding: '4px 12px', borderRadius: 6 }}>{remaining}</span>;
+  return <span style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 700, color: 'var(--color-danger, #e53e3e)', background: 'var(--color-surface, #fff5f5)', padding: '4px 12px', borderRadius: 6 }}>{remaining}</span>;
 }
 
 import React from 'react';
 
 const s = {
   hero:        { marginBottom: 40 },
-  heroFallback:{ background: '#111', color: '#fff', textAlign: 'center', padding: '80px 24px' },
+  heroFallback:{ background: 'var(--color-primary, #111)', color: '#fff', textAlign: 'center', padding: '80px 24px' },
   heroTitle:   { fontSize: 42, fontWeight: 800, margin: '0 0 12px' },
-  heroSub:     { fontSize: 18, color: '#aaa', margin: '0 0 28px' },
-  heroBtn:     { display: 'inline-block', padding: '14px 36px', background: '#fff', color: '#111', borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 16 },
+  heroSub:     { fontSize: 18, color: 'var(--color-text-muted, #aaa)', margin: '0 0 28px' },
+  heroBtn:     { display: 'inline-block', padding: '14px 36px', background: '#fff', color: 'var(--color-primary, #111)', borderRadius: 'var(--btn-radius, 8px)', textDecoration: 'none', fontWeight: 700, fontSize: 16 },
   section:     { maxWidth: 1200, margin: '0 auto 48px', padding: '0 24px' },
   sectionHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  sectionTitle:{ fontSize: 22, fontWeight: 700, margin: 0 },
-  viewAll:     { fontSize: 14, color: '#555', textDecoration: 'none' },
+  sectionTitle:{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--color-text, #111827)' },
+  viewAll:     { fontSize: 14, color: 'var(--color-text-muted, #555)', textDecoration: 'none' },
   grid:        { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 20 },
-  card:        { textDecoration: 'none', color: 'inherit', border: '1px solid #eee', borderRadius: 10, overflow: 'hidden' },
-  cardImg:     { width: '100%', aspectRatio: '1', objectFit: 'cover', background: '#f5f5f5' },
+  card:        { textDecoration: 'none', color: 'inherit', border: 'var(--card-border, 1px solid #eee)', borderRadius: 'var(--card-radius, 10px)', overflow: 'hidden', background: 'var(--color-surface, #fff)' },
+  cardImg:     { width: '100%', aspectRatio: '1', objectFit: 'cover', background: 'var(--color-surface, #f5f5f5)' },
   cardBody:    { padding: '12px 14px' },
-  cardCat:     { fontSize: 11, color: '#aaa', margin: '0 0 4px', textTransform: 'uppercase' },
-  cardName:    { fontSize: 14, fontWeight: 600, margin: '0 0 8px', lineHeight: 1.3 },
+  cardCat:     { fontSize: 11, color: 'var(--color-text-muted, #aaa)', margin: '0 0 4px', textTransform: 'uppercase' },
+  cardName:    { fontSize: 14, fontWeight: 600, margin: '0 0 8px', lineHeight: 1.3, color: 'var(--color-text, #111827)' },
   priceRow:    { display: 'flex', alignItems: 'center' },
 };

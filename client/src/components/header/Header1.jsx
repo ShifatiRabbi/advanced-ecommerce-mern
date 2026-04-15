@@ -31,7 +31,7 @@ export default function Header1() {
       <Link to="/" style={{ color: 'var(--header-text-color,#fff)', textDecoration: 'none', fontWeight: 700, fontSize: 20 }}>
         {logo
           ? <img src={logo} alt={siteName} style={{ height: 44, objectFit: 'contain' }} />
-          : <span style={{ color: '#fff', fontWeight: 700, fontSize: 20 }}>{siteName}</span>}
+          : <span style={{ color: 'var(--header-text-color,#fff)', fontWeight: 700, fontSize: 20 }}>{siteName}</span>}
       </Link>
       <nav style={{ display: 'flex', gap: 24, fontSize: 14 }}>
         {menuItems.map(item => (
@@ -42,15 +42,15 @@ export default function Header1() {
         ))}
       </nav>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <button onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'bn' : 'en')} style={{ background: 'none', border: '1px solid #444', color: '#ccc', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>
+        <button onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'bn' : 'en')} style={{ background: 'none', border: '1px solid var(--color-border, #444)', color: 'var(--header-text-color,#ccc)', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>
           {i18n.language === 'en' ? 'বাং' : 'EN'}
         </button>
-        <Link to="/cart" style={{ color: '#fff', textDecoration: 'none', position: 'relative' }}>
-          Cart {itemCount > 0 && <span style={{ background: '#e53e3e', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, marginLeft: 4 }}>{itemCount}</span>}
+        <Link to="/cart" style={{ color: 'var(--header-text-color,#fff)', textDecoration: 'none', position: 'relative' }}>
+          Cart {itemCount > 0 && <span style={{ background: 'var(--color-danger, #e53e3e)', color: '#fff', borderRadius: '50%', width: 18, height: 18, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, marginLeft: 4 }}>{itemCount}</span>}
         </Link>
         {user
-          ? <Link to="/dashboard" style={{ color: '#ccc', textDecoration: 'none', fontSize: 13 }}>{user.name.split(' ')[0]}</Link>
-          : <button onClick={() => navigate('/login')} style={{ background: '#fff', color: '#111', border: 'none', padding: '6px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Login</button>}
+          ? <Link to="/dashboard" style={{ color: 'var(--header-text-color,#ccc)', textDecoration: 'none', fontSize: 13 }}>{user.name.split(' ')[0]}</Link>
+          : <button onClick={() => navigate('/login')} style={{ background: '#fff', color: 'var(--color-primary, #111)', border: 'none', padding: '6px 14px', borderRadius: 'var(--btn-radius, 6px)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>Login</button>}
       </div>
     </header>
   );
