@@ -238,7 +238,7 @@ export default function AddProduct() {
                 <>
                   <span className="btn-spinner" />
                   Creating...
-                </div>
+                </>
               ) : (
                 <>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -819,7 +819,7 @@ export default function AddProduct() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -1277,6 +1277,7 @@ const styles = `
     border: none;
     border-radius: 0;
     min-height: 200px;
+    width: 96%;
   }
 
   .rich-editor .form-textarea:focus {

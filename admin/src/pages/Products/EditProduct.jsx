@@ -258,7 +258,7 @@ export default function EditProduct() {
                 <>
                   <span className="btn-spinner" />
                   Saving...
-                </div>
+                </>
               ) : (
                 <>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -868,7 +868,7 @@ export default function EditProduct() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

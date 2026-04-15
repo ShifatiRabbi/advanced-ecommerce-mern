@@ -454,7 +454,7 @@ const variantStyles = `
   .option-main {
     display: grid;
     grid-template-columns: 1fr 220px;
-    gap: 10px;
+    gap: 40px;
     margin-bottom: 10px;
   }
 
@@ -469,7 +469,7 @@ const variantStyles = `
   .option-pricing {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
+    gap: 40px;
     margin-bottom: 10px;
   }
 
@@ -627,7 +627,7 @@ const variantStyles = `
 
   .option-row {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    
     gap: 16px;
     align-items: center;
     padding: 16px 20px;
