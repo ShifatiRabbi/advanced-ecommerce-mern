@@ -196,7 +196,7 @@ export default function Checkout() {
       shippingCharge: shipping,
       discount,
       total,
-      couponCode:     couponData?.code || null,
+      couponCode:     couponData?.code || '',
     };
 
     orderMutation.mutate(payload);

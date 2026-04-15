@@ -12,15 +12,15 @@ const addressSchema = new mongoose.Schema({
 }, { _id: false });
 
 const orderItemSchema = new mongoose.Schema({
-  product:   { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-  name:      { type: String, required: true },
-  image:     { type: String },
-  price:     { type: Number, required: true },
-  qty:       { type: Number, required: true, min: 1 },
-  total:     { type: Number, required: true },
-  variant:       { type: String,  default: null },   // human-readable string
-  variantDetails:{ type: mongoose.Schema.Types.Mixed, default: null }, // object
-
+  product:        { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  name:           { type: String, required: true },
+  slug:           { type: String },
+  image:          { type: String },
+  unitPrice:      { type: Number, required: true },     // ← Use unitPrice (consistent with frontend)
+  qty:            { type: Number, required: true, min: 1 },
+  total:          { type: Number, required: true },
+  variant:        { type: String, default: null },
+  variantDetails: { type: mongoose.Schema.Types.Mixed, default: null },
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema(
@@ -58,12 +58,11 @@ orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ user: 1 });
 orderSchema.index({ isFake: 1 });
 
-orderSchema.pre('save', async function (next) {
+orderSchema.pre('save', async function () {
   if (!this.orderNumber) {
     const count = await mongoose.model('Order').countDocuments();
     this.orderNumber = `ORD-${Date.now()}-${String(count + 1).padStart(4, '0')}`;
   }
-  next();
 });
 
 export const Order = mongoose.model('Order', orderSchema);

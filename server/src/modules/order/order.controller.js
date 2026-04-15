@@ -13,15 +13,20 @@ export const trackIncomplete = asyncHandler(async (req, res) => {
 
 export const placeOrder = asyncHandler(async (req, res) => {
   const order = await svc.createOrder({
-    userId:          req.user?.id || null,
+    userId:     req.user?.id || null,
     ...req.body,
-    ip:              req.ip,
-    userAgent:       req.headers['user-agent'],
+    ip:         req.ip,
+    userAgent:  req.headers['user-agent'],
   });
+
   sendSuccess(res, {
     status: 201,
-    message: order.isFake ? 'Order received (under review)' : 'Order placed successfully',
-    data: { orderNumber: order.orderNumber, status: order.status, total: order.total },
+    message: 'Order placed successfully',
+    data: { 
+      orderNumber: order.orderNumber, 
+      status: order.status, 
+      total: order.total 
+    },
   });
 });
 

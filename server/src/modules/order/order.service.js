@@ -3,6 +3,7 @@ import { Product } from '../product/product.model.js';
 import { detectFakeOrder } from '../../utils/fakeOrderDetector.js';
 import { sendOrderSms } from '../marketing/marketing.service.js';
 import { sendEmailByType } from '../email/emailTemplate.service.js';
+import { Coupon } from '../offer/offer.model.js';
 
 // --- CONFIG ---
 const STATUS_EMAIL_MAP = {
@@ -38,18 +39,34 @@ export const saveIncompleteOrder = async ({ phone, email, sessionId, items, ip, 
   });
 };
 
-// server/src/modules/order/order.service.js — createOrder:
-export const createOrder = async (userId, body) => {
+export const createOrder = async (data) => {
   const {
-    items, shippingAddress, paymentMethod,
-    subtotal, shippingCharge, discount = 0, total,
+    userId,
+    items,
+    shippingAddress,
+    paymentMethod,
+    subtotal,
+    shippingCharge = 60,
+    discount = 0,
+    total,
     couponCode,
-  } = body;
+    ip,
+    userAgent,
+  } = data;
 
-  // Validate items exist + are still in stock
+  if (!items || !items.length) {
+    throw Object.assign(new Error('Items are required'), { status: 400 });
+  }
+
+  // === Stock Validation ===
   for (const item of items) {
-    const product = await Product.findById(item.product).select('stock name price discountPrice').lean();
-    if (!product) throw Object.assign(new Error(`Product not found: ${item.product}`), { status: 400 });
+    const product = await Product.findById(item.product)
+      .select('stock name')
+      .lean();
+
+    if (!product) {
+      throw Object.assign(new Error(`Product not found: ${item.product}`), { status: 400 });
+    }
     if (product.stock < item.qty) {
       throw Object.assign(
         new Error(`"${product.name}" only has ${product.stock} in stock, but ${item.qty} requested`),
@@ -58,69 +75,75 @@ export const createOrder = async (userId, body) => {
     }
   }
 
-  // Decrement stock
+  // === Decrement Stock (Only once) ===
   await Promise.all(items.map(item =>
     Product.findByIdAndUpdate(item.product, { $inc: { stock: -item.qty } })
   ));
 
-  const orderNumber = await generateOrderNumber();
-
+  // === Create Order ===
   const order = await Order.create({
-    orderNumber,
-    user:            userId || null,
-    items:           items.map(item => ({
-      product:       item.product,
-      name:          item.name,
-      slug:          item.slug,
-      image:         item.image,
-      qty:           item.qty,
-      unitPrice:     item.unitPrice,
-      total:         item.total,
-      variant:       item.variant || null,          // "Size: XL, Color: Red"
-      variantDetails:item.variantDetails || null,   // { Size: 'XL', Color: 'Red' }
+    user:           userId || null,
+    items: items.map(item => ({
+      product:        item.product,
+      name:           item.name,
+      slug:           item.slug || null,
+      image:          item.image || null,
+      unitPrice:      item.unitPrice,
+      qty:            item.qty,
+      total:          item.total,
+      variant:        item.variant || null,
+      variantDetails: item.variantDetails || null,
     })),
     shippingAddress,
-    paymentMethod,
-    paymentStatus: paymentMethod === 'cod' ? 'pending' : 'pending',
-    status:        'pending',
-    subtotal:      subtotal  || items.reduce((s, i) => s + i.total, 0),
-    shippingCharge:shippingCharge || 60,
-    discount:      discount || 0,
-    total:         total || (subtotal + (shippingCharge || 60) - (discount || 0)),
-    couponCode:    couponCode || null,
+    paymentMethod:  paymentMethod || 'cod',
+    subtotal,
+    shippingCharge,
+    discount,
+    total,
+    couponCode:     couponCode || null,
+    ip,
+    userAgent,
+    status:         'pending',
+    paymentStatus:  paymentMethod === 'cod' ? 'pending' : 'pending',
   });
-  if (!fakeCheck.isFake) {
-    // 1. Send SMS (Existing)
-    sendOrderSms(order).catch(() => {});
 
-    // 2. Send New Email Template (Replaces sendOrderConfirmation)
-    if (order.shippingAddress?.email) {
-      sendEmailByType('order_placed', {
-        to:            order.shippingAddress.email,
-        customerName:  order.shippingAddress.fullName,
-        orderNumber:   order.orderNumber,
-        itemsHtml:     order.items.map(i => `<tr><td>${i.name} ×${i.qty}</td><td>৳${i.total}</td></tr>`).join(''),
-        total:         order.total.toLocaleString(),
-        paymentMethod: order.paymentMethod.toUpperCase(),
-        city:          order.shippingAddress.city,
-        trackUrl:      `${process.env.CLIENT_URL}/order-success/${order.orderNumber}`,
-      }).catch(() => {});
-    }
-
-    // 3. Update Inventory
-    for (const item of orderItems) {
-      await Product.findByIdAndUpdate(item.product, { $inc: { stock: -item.qty } });
-    }
-  }
-
+  // Clean up incomplete orders
   await Order.deleteMany({
     'shippingAddress.phone': shippingAddress.phone,
     status: 'incomplete',
   });
 
-  // Apply coupon usage
+  // Increment coupon usage
   if (couponCode) {
-    await Offer.findOneAndUpdate({ code: couponCode }, { $inc: { usedCount: 1 } });
+    await Offer.findOneAndUpdate({ code: couponCode }, { $inc: { usedCount: 1 } })
+      .catch(() => {});
+  }
+
+  // === Optional: Fake Order Detection ===
+  // Uncomment and use only if you have fakeOrderDetector implemented
+  /*
+  const fakeCheck = detectFakeOrder(order);
+  if (fakeCheck.isFake) {
+    order.isFake = true;
+    order.fakeReason = fakeCheck.reason;
+    await order.save();
+  } else {
+  */
+
+  // Send SMS & Email (only for real orders)
+  sendOrderSms(order).catch(() => {});
+
+  if (order.shippingAddress?.email) {
+    sendEmailByType('order_placed', {
+      to:            order.shippingAddress.email,
+      customerName:  order.shippingAddress.fullName,
+      orderNumber:   order.orderNumber,
+      itemsHtml:     order.items.map(i => `<tr><td>${i.name} ×${i.qty}</td><td>৳${i.total}</td></tr>`).join(''),
+      total:         order.total.toLocaleString(),
+      paymentMethod: order.paymentMethod.toUpperCase(),
+      city:          order.shippingAddress.city,
+      trackUrl:      `${process.env.CLIENT_URL}/order-success/${order.orderNumber}`,
+    }).catch(() => {});
   }
 
   return order;
