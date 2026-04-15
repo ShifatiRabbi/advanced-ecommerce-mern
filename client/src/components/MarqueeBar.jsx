@@ -20,8 +20,8 @@ export default function MarqueeBar({ position = 'below-header', productId, categ
   return (
     <div className="client-component-marquee-bar" id="client-component-marquee-bar">
       {marquees.map(m => {
-        // Calculate speed (minimum 5s to prevent seizure-inducing speeds)
-        const animDuration = `${Math.max(5, Math.round(200 / (m.speed || 10)))}s`;
+        // Calculate speed (minimum 20s to prevent seizure-inducing speeds)
+        const animDuration = `${Math.max(20, Math.round(200 / (m.speed || 10)))}s`;
         const animName     = `mq${m._id.slice(-8)}`;
 
         return (

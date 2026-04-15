@@ -2,7 +2,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
 import api from '../services/api';
-import { toast } from 'react-hot-toast'; // or your preferred toast library
+// import { toast } from 'react-hot-toast';
+import { toast } from '../utils/toast';
 
 export default function ContactPage() {
   const { data: page, isLoading: pageLoading } = useQuery({

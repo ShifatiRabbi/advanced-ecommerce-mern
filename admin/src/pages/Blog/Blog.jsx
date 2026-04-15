@@ -1,4 +1,4 @@
-import { useState } from 'react';
+// import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate from react-router-dom
 import api from '../../services/api';
@@ -6,52 +6,52 @@ import api from '../../services/api';
 export default function Blog() {
   const qc = useQueryClient();
   const navigate = useNavigate();  // Initialize navigate
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ title: '', content: '', excerpt: '', category: 'General', isPublished: false });
+  // const [showForm, setShowForm] = useState(false);
+  // const [editing, setEditing] = useState(null);
+  // const [form, setForm] = useState({ title: '', content: '', excerpt: '', category: 'General', isPublished: false });
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-blogs'],
     queryFn:  () => api.get('/blog/admin/all').then(r => r.data.data),
   });
 
-  const reset = () => { 
-    setForm({ title: '', content: '', excerpt: '', category: 'General', isPublished: false }); 
-    setEditing(null); 
-    setShowForm(false); 
-  };
+  // const reset = () => { 
+  //   setForm({ title: '', content: '', excerpt: '', category: 'General', isPublished: false }); 
+  //   setEditing(null); 
+  //   setShowForm(false); 
+  // };
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  // const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const saveMutation = useMutation({
-    mutationFn: (data) => editing ? api.put(`/blog/${editing._id}`, data) : api.post('/blog', data),
-    onSuccess:  () => { qc.invalidateQueries({ queryKey: ['admin-blogs'] }); reset(); },
-    onError:    (err) => alert(err.response?.data?.message || 'Save failed'),
-  });
+  // const saveMutation = useMutation({
+  //   mutationFn: (data) => editing ? api.put(`/blog/${editing._id}`, data) : api.post('/blog', data),
+  //   onSuccess:  () => { qc.invalidateQueries({ queryKey: ['admin-blogs'] }); reset(); },
+  //   onError:    (err) => alert(err.response?.data?.message || 'Save failed'),
+  // });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/blog/${id}`),
     onSuccess:  () => qc.invalidateQueries({ queryKey: ['admin-blogs'] }),
   });
 
-  const startEdit = (post) => {
-    setEditing(post);
-    setForm({ title: post.title, content: post.content, excerpt: post.excerpt || '', category: post.category || 'General', isPublished: post.isPublished });
-    setShowForm(true);
-  };
+  // const startEdit = (post) => {
+  //   setEditing(post);
+  //   setForm({ title: post.title, content: post.content, excerpt: post.excerpt || '', category: post.category || 'General', isPublished: post.isPublished });
+  //   setShowForm(true);
+  // };
 
   return (
     <div className="admin-page-blog-blog" id="admin-page-blog-blog">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>Blog Posts ({data?.pagination?.total ?? 0})</h2>
-        <button onClick={() => { reset(); setShowForm(s => !s); }}
+        {/* <button onClick={() => { reset(); setShowForm(s => !s); }}
           style={{ padding: '8px 16px', background: '#111827', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>
           {showForm ? 'Cancel' : '+ New Post'}
-        </button>
+        </button> */}
         <button onClick={() => navigate('/blog/new')} style={{ padding: '8px 16px', background: '#111827', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 14 }}>+ New Post</button>
       </div>
 
-      {showForm && (
+      {/* {showForm && (
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: 24, marginBottom: 20 }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 15 }}>{editing ? 'Edit Post' : 'New Blog Post'}</h3>
 
@@ -94,7 +94,7 @@ export default function Blog() {
             <button onClick={reset} style={{ padding: '9px 20px', border: '1px solid #d1d5db', borderRadius: 8, background: '#fff', cursor: 'pointer', fontSize: 14 }}>Cancel</button>
           </div>
         </div>
-      )}
+      )} */}
 
       {isLoading ? <p>Loading...</p> : (
         <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
@@ -137,8 +137,3 @@ export default function Blog() {
     </div>
   );
 }
-
-const s = {
-  label: { display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#374151' },
-  input: { width: '100%', padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' },
-};
