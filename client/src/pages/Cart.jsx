@@ -23,7 +23,7 @@ export default function Cart() {
   );
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 60px' }}>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px 60px' }} className="client-page-cart" id="client-page-cart">
       <h1 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 24px' }}>
         Shopping Cart ({itemCount} item{itemCount !== 1 ? 's' : ''})
       </h1>

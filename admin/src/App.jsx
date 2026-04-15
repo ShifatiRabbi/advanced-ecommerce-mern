@@ -44,7 +44,7 @@ const Loader = () => (
 
 export default function App() {
   return (
-    <>
+    <div className="admin-app-shell" id="admin-app-shell">
       <GlobalLoader />
       <Suspense fallback={<SuspenseFallback />}>
         <Routes>
@@ -87,6 +87,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Suspense>
-    </>
+    </div>
   );
 }

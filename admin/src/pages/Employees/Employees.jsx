@@ -45,7 +45,7 @@ export default function Employees() {
   };
 
   return (
-    <div>
+    <div className="admin-page-employees-employees" id="admin-page-employees-employees">
       <div style={s.topRow}>
         <h2 style={s.h2}>Employees ({employees?.length ?? 0})</h2>
         <button onClick={() => setShowForm(v=>!v)} style={s.addBtn}>

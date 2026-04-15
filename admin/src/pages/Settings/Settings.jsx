@@ -42,7 +42,7 @@ export default function Settings() {
   });
 
   return (
-    <div>
+    <div className="admin-page-settings-settings" id="admin-page-settings-settings">
       <h2 style={s.h2}>Site Settings</h2>
 
       <div style={s.tabRow}>

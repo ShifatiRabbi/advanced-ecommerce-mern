@@ -30,7 +30,7 @@ export default function Offers() {
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   return (
-    <div>
+    <div className="admin-page-offers-offers" id="admin-page-offers-offers">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>Coupons & Offers</h2>
         <button onClick={() => setShowForm(s => !s)}

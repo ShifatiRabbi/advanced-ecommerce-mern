@@ -64,7 +64,7 @@ export default function MarqueeManager() {
   const startEdit = (m) => { setEditing(m._id); setForm({ ...m, productIds: m.productIds?.map(p => p._id || p) || [], categoryIds: m.categoryIds?.map(c => c._id || c) || [] }); };
 
   return (
-    <div>
+    <div className="admin-page-marquee-manager-marquee-manager" id="admin-page-marquee-manager-marquee-manager">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Marquee / Offer Text</h2>
         <button onClick={() => { setEditing(null); setForm(emptyMarquee()); }} style={s.addBtn}>+ New Marquee</button>

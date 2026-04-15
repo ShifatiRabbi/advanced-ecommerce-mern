@@ -15,7 +15,7 @@ export default function Home() {
   const hero = heroBanners?.[0];
 
   return (
-    <>
+    <div className="client-page-home" id="client-page-home">
       <Helmet>
         <title>{seo?.siteName || 'ShopBD'}</title>
         <meta name="description" content={seo?.siteDesc} />
@@ -92,7 +92,7 @@ export default function Home() {
       )}
 
       <SliderRenderer position="before-footer" page="/" />
-    </>
+    </div>
   );
 }
 

@@ -6,7 +6,7 @@ export default function PaymentSuccess() {
   const trx    = params.get('trx');
 
   return (
-    <div style={s.page}>
+    <div style={s.page} className="client-page-payment-payment-success" id="client-page-payment-payment-success">
       <div style={s.card}>
         <div style={s.icon}>
           <svg width="56" height="56" viewBox="0 0 56 56" fill="none">

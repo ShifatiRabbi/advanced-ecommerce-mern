@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import { toast } from '../utils/toast';
 
 export default function VariantManager({
   productId,
@@ -11,6 +12,9 @@ export default function VariantManager({
   const qc = useQueryClient();
   const [localVariants, setLocalVariants] = useState(variants);
   const [activeVariant, setActiveVariant] = useState(0);
+  useEffect(() => {
+    setLocalVariants(variants || []);
+  }, [variants]);
 
   // For new images (File objects) - only used in new product flow
   const [newVariantImages, setNewVariantImages] = useState({}); // e.g. "0-1": [File, File]
@@ -26,7 +30,7 @@ export default function VariantManager({
   const addVariant = () => {
     const newVariant = {
       name: '',
-      options: [{ label: '', sku: '', priceModifier: 0, stock: 0, images: [] }],
+      options: [{ label: '', sku: '', priceModifier: 0, regularPrice: 0, salePrice: null, stock: 0, images: [] }],
       defaultOptionIndex: 0,
     };
     setLocalVariants([...localVariants, newVariant]);
@@ -51,6 +55,8 @@ export default function VariantManager({
       label: '',
       sku: '',
       priceModifier: 0,
+      regularPrice: 0,
+      salePrice: null,
       stock: 0,
       images: [],
     });
@@ -115,10 +121,12 @@ export default function VariantManager({
     if (isNewProduct) {
       // Pass both variants and new images to parent
       onUpdate?.({ variants: localVariants, newVariantImages });
+      toast.success('Variants saved to form');
       return;
     }
 
     // For existing product
+    onUpdate?.({ variants: localVariants });
     updateVariantMutation.mutate({ variants: localVariants });
   };
 
@@ -128,18 +136,18 @@ export default function VariantManager({
   );
 
   return (
-    <>
+    <div className="admin-component-variant-manager" id="admin-component-variant-manager" style={{ display: 'contents' }}>
     <style>{variantStyles}</style>
-      <div className="variant-manager">
-        <div className="variant-header">
+      <div className="variant-manager admin-variant-manager" id="admin-variant-manager">
+        <div className="variant-header admin-variant-manager-header" id="admin-variant-manager-header">
           <h3>Product Variants</h3>
-          <button className="add-variant-btn" onClick={addVariant}>
+          <button type="button" className="add-variant-btn" onClick={addVariant}>
             + Add Variant (e.g. Size, Color)
           </button>
         </div>
 
         {localVariants.length > 0 && (
-          <div className="variant-tabs">
+          <div className="variant-tabs admin-variant-tabs" id="admin-variant-tabs">
             {localVariants.map((variant, vIndex) => (
               <div
                 key={vIndex}
@@ -148,6 +156,7 @@ export default function VariantManager({
               >
                 {variant.name || `Variant ${vIndex + 1}`}
                 <button
+                  type="button"
                   className="remove-tab"
                   onClick={(e) => { e.stopPropagation(); removeVariant(vIndex); }}
                 >
@@ -159,7 +168,7 @@ export default function VariantManager({
         )}
 
         {localVariants.length > 0 && localVariants[activeVariant] && (
-          <div className="variant-content">
+          <div className="variant-content admin-variant-content" id="admin-variant-content">
             {/* Variant Name */}
             <div className="form-group">
               <label>Variant Name (e.g., Size, Color)</label>
@@ -193,11 +202,27 @@ export default function VariantManager({
 
                 <div className="option-pricing">
                   <div>
-                    <label>Price Modifier</label>
+                    <label>Sale Price</label>
                     <input
                       type="number"
-                      value={option.priceModifier}
-                      onChange={(e) => updateOption(oIndex, 'priceModifier', parseFloat(e.target.value) || 0)}
+                      value={option.salePrice ?? ''}
+                      placeholder="0.00"
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        updateOption(oIndex, 'salePrice', next === '' ? null : (parseFloat(next) || 0));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label>Regular Price</label>
+                    <input
+                      type="number"
+                      value={option.regularPrice ?? ''}
+                      placeholder="0.00"
+                      onChange={(e) => {
+                        const next = e.target.value;
+                        updateOption(oIndex, 'regularPrice', next === '' ? 0 : (parseFloat(next) || 0));
+                      }}
                     />
                   </div>
                   <div>
@@ -227,7 +252,7 @@ export default function VariantManager({
                     {option.images?.map((img, idx) => (
                       <div key={idx} className="preview">
                         <img src={img.url} alt="" />
-                        <button onClick={() => {/* remove existing image logic */}}>
+                        <button type="button" onClick={() => {/* remove existing image logic */}}>
                           ✕
                         </button>
                       </div>
@@ -237,7 +262,7 @@ export default function VariantManager({
                     {newVariantImages[`${activeVariant}-${oIndex}`]?.map((file, idx) => (
                       <div key={idx} className="preview">
                         <img src={URL.createObjectURL(file)} alt="" />
-                        <button onClick={() => removeNewImage(activeVariant, oIndex, idx)}>
+                        <button type="button" onClick={() => removeNewImage(activeVariant, oIndex, idx)}>
                           ✕
                         </button>
                       </div>
@@ -255,27 +280,27 @@ export default function VariantManager({
                     />
                     Default
                   </label>
-                  <button onClick={() => removeOption(oIndex)} disabled={localVariants[activeVariant].options.length === 1}>
+                  <button type="button" onClick={() => removeOption(oIndex)} disabled={localVariants[activeVariant].options.length === 1}>
                     Delete Option
                   </button>
                 </div>
               </div>
             ))}
 
-            <button className="add-option-btn" onClick={addOption}>
+            <button type="button" className="add-option-btn" onClick={addOption}>
               + Add Option
             </button>
 
             <div className="variant-footer">
               <p><strong>{combinationCount}</strong> possible combinations</p>
-              <button className="save-btn" onClick={saveVariants}>
+              <button type="button" className="save-btn" onClick={saveVariants}>
                 {isNewProduct ? 'Save to Form' : 'Save Variants'}
               </button>
             </div>
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -384,6 +409,141 @@ const variantStyles = `
     background: white;
   }
 
+  .form-group {
+    margin-bottom: 18px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dbe3ee;
+    border-radius: 8px;
+    background: #f8fafc;
+    outline: none;
+  }
+
+  .form-group input:focus {
+    border-color: #1e3a5f;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.08);
+  }
+
+  .remove-tab {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+
+  .remove-tab:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  .option-main {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 40px;
+    margin-bottom: 10px;
+  }
+
+  .option-main input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dbe3ee;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .option-pricing {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 10px;
+  }
+
+  .option-pricing label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+
+  .option-pricing input {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #dbe3ee;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .variant-images-section {
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .variant-images-section > label {
+    font-size: 12px;
+    color: #475569;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .variant-images-section input[type="file"] {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .image-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .preview {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #dbe3ee;
+    background: white;
+  }
+
+  .preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .preview button {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    cursor: pointer;
+    line-height: 1;
+  }
+
   .variant-name-row {
     margin-bottom: 24px;
   }
@@ -467,7 +627,7 @@ const variantStyles = `
 
   .option-row {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    
     gap: 16px;
     align-items: center;
     padding: 16px 20px;

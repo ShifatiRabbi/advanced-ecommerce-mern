@@ -3,6 +3,25 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 
+const getDefaultVariantAdj = (product) => {
+  if (!product?.variants?.length) return 0;
+  return product.variants.reduce((sum, variant) => {
+    const options = variant.options || [];
+    const idx = variant.defaultOptionIndex ?? 0;
+    const opt = options[idx] || options[0];
+    return sum + (opt?.priceModifier ?? 0);
+  }, 0);
+};
+
+const getDisplayPrice = (product) => {
+  const variantAdj = getDefaultVariantAdj(product);
+  const regularPrice = (product.basePrice ?? product.price ?? 0) + variantAdj;
+  const salePrice = (product.discountPrice !== null && product.discountPrice !== undefined)
+    ? (product.discountPrice + variantAdj)
+    : null;
+  return { regularPrice, salePrice };
+};
+
 export default function ProductList() {
   const qc       = useQueryClient();
   const navigate = useNavigate();
@@ -26,7 +45,7 @@ export default function ProductList() {
   });
 
   return (
-    <div>
+    <div className="admin-page-products-product-list" id="admin-page-products-product-list">
       <div style={s.topRow}>
         <h2 style={s.heading}>Products {data?.pagination?.total ? `(${data.pagination.total})` : ''}</h2>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -48,6 +67,9 @@ export default function ProductList() {
             </thead>
             <tbody>
               {data?.products?.map(p => (
+                (() => {
+                  const { regularPrice, salePrice } = getDisplayPrice(p);
+                  return (
                 <tr key={p._id} style={s.tr}>
                   <td style={{ ...s.td, width: 60 }}>
                     {p.images?.[0]
@@ -60,10 +82,10 @@ export default function ProductList() {
                   </td>
                   <td style={{ ...s.td, color: '#6b7280' }}>{p.category?.name || '—'}</td>
                   <td style={s.td}>
-                    {p.discountPrice
-                      ? <><span style={{ fontWeight: 700 }}>৳{p.discountPrice.toLocaleString()}</span>{' '}
-                          <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: 12 }}>৳{p.price.toLocaleString()}</span></>
-                      : <span style={{ fontWeight: 700 }}>৳{p.price.toLocaleString()}</span>}
+                    {salePrice !== null
+                      ? <><span style={{ fontWeight: 700 }}>৳{salePrice.toLocaleString()}</span>{' '}
+                          <span style={{ textDecoration: 'line-through', color: '#9ca3af', fontSize: 12 }}>৳{regularPrice.toLocaleString()}</span></>
+                      : <span style={{ fontWeight: 700 }}>৳{regularPrice.toLocaleString()}</span>}
                   </td>
                   <td style={s.td}>
                     <span style={{ fontWeight: 700, color: p.stock === 0 ? '#dc2626' : p.stock < 10 ? '#d97706' : '#059669' }}>
@@ -87,6 +109,8 @@ export default function ProductList() {
                     </div>
                   </td>
                 </tr>
+                  );
+                })()
               ))}
             </tbody>
           </table>

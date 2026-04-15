@@ -10,13 +10,65 @@ const SORTS = [
   { value: 'popular',    label: 'Most Popular' },
 ];
 
+const toNumber = (value, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const getDefaultVariantOption = (product) => {
+  if (!product?.variants?.length) return null;
+  return product.variants.map((variant) => {
+    const options = variant.options || [];
+    const defaultIdx = variant.defaultOptionIndex ?? 0;
+    return options[defaultIdx] || options[0] || null;
+  }).filter(Boolean);
+};
+
+const getDisplayPricing = (product) => {
+  const baseRegular = toNumber(product.basePrice ?? product.price, 0);
+  const baseSale = product.discountPrice !== null && product.discountPrice !== undefined
+    ? toNumber(product.discountPrice, 0)
+    : null;
+
+  const defaultOptions = getDefaultVariantOption(product);
+  if (!defaultOptions?.length) {
+    const regularPrice = baseRegular;
+    const salePrice = baseSale;
+    return { regularPrice, salePrice, displayPrice: salePrice ?? regularPrice };
+  }
+
+  let regularTotal = 0;
+  let saleTotal = 0;
+  let hasAnySale = false;
+
+  defaultOptions.forEach((opt) => {
+    const optRegular = opt?.regularPrice !== null && opt?.regularPrice !== undefined
+      ? toNumber(opt.regularPrice, 0)
+      : baseRegular + toNumber(opt?.priceModifier, 0);
+    const optSale = opt?.salePrice !== null && opt?.salePrice !== undefined
+      ? toNumber(opt.salePrice, 0)
+      : (baseSale !== null ? baseSale + toNumber(opt?.priceModifier, 0) : null);
+
+    regularTotal += optRegular;
+    if (optSale !== null) {
+      saleTotal += optSale;
+      hasAnySale = true;
+    }
+  });
+
+  const regularPrice = regularTotal;
+  const salePrice = hasAnySale ? saleTotal : null;
+  return { regularPrice, salePrice, displayPrice: salePrice ?? regularPrice };
+};
+
 function ProductCard({ product }) {
-  const discount = product.discountPrice
-    ? Math.round(((product.price - product.discountPrice) / product.price) * 100)
+  const { regularPrice, salePrice, displayPrice } = getDisplayPricing(product);
+  const discount = salePrice !== null && regularPrice > 0
+    ? Math.round(((regularPrice - salePrice) / regularPrice) * 100)
     : 0;
 
   return (
-    <Link to={`/product/${product.slug}`} style={styles.card}>
+    <Link to={`/product/${product.slug}`} style={styles.card} className="shop-product-card" id={`shop-product-card-${product._id}`}>
       <div style={styles.imgWrap}>
         {product.images?.[0] ? (
           <img src={product.images[0].url} alt={product.name} style={styles.img} loading="lazy" />
@@ -30,16 +82,16 @@ function ProductCard({ product }) {
         <h3 style={styles.cardTitle}>{product.name}</h3>
         <p style={styles.cardBrand}>{product.brand?.name}</p>
         <div style={styles.priceRow}>
-          {product.discountPrice ? (
+          {salePrice !== null ? (
             <>
-              <span style={styles.discountPrice}>৳{product.discountPrice.toLocaleString()}</span>
-              <span style={styles.originalPrice}>৳{product.price.toLocaleString()}</span>
+              <span style={styles.discountPrice}>৳{salePrice.toLocaleString()}</span>
+              <span style={styles.originalPrice}>৳{regularPrice.toLocaleString()}</span>
             </>
           ) : (
-            <span style={styles.price}>৳{product.price.toLocaleString()}</span>
+            <span style={styles.price}>৳{displayPrice.toLocaleString()}</span>
           )}
         </div>
-        {product.stock === 0 && <p style={styles.outOfStock}>Out of stock</p>}
+        {(product.totalStock ?? product.stock ?? 0) === 0 && <p style={styles.outOfStock}>Out of stock</p>}
       </div>
     </Link>
   );
@@ -77,8 +129,8 @@ export default function Shop() {
   };
 
   return (
-    <div style={styles.page}>
-      <aside style={styles.sidebar}>
+    <div style={styles.page} className="shop-page client-page-shop" id="client-page-shop">
+      <aside style={styles.sidebar} className="shop-sidebar" id="shop-sidebar">
         <h3 style={styles.sidebarTitle}>Categories</h3>
         <button style={{ ...styles.filterBtn, ...(! params.category && styles.filterBtnActive) }} onClick={() => set('category', '')}>All</button>
         {categories.map((c) => (
@@ -102,9 +154,9 @@ export default function Shop() {
         </div>
       </aside>
 
-      <main style={styles.main}>
-        <div style={styles.topBar}>
-          <form onSubmit={handleSearch} style={styles.searchForm}>
+      <main style={styles.main} className="shop-main" id="shop-main">
+        <div style={styles.topBar} className="shop-topbar" id="shop-topbar">
+          <form onSubmit={handleSearch} style={styles.searchForm} className="shop-search-form" id="shop-search-form">
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products..." style={styles.searchInput} />
             <button type="submit" style={styles.searchBtn}>Search</button>
           </form>
@@ -115,7 +167,7 @@ export default function Shop() {
 
         {/* 1. Remove the old isLoading text and replace with this: */}
         {isLoading ? (
-          <div style={styles.grid}>
+          <div style={styles.grid} className="shop-product-grid is-loading" id="shop-product-grid-loading">
             {Array.from({ length: 8 }, (_, i) => (
               <ProductCardSkeleton key={i} />
             ))}
@@ -127,14 +179,14 @@ export default function Shop() {
         ) : (
           data && (
             <>
-              <p style={styles.resultCount}>{data.pagination.total} products found</p>
-              <div style={styles.grid}>
+              <p style={styles.resultCount} className="shop-result-count" id="shop-result-count">{data.pagination.total} products found</p>
+              <div style={styles.grid} className="shop-product-grid" id="shop-product-grid">
                 {data.products.map((p) => (
                   <ProductCard key={p._id} product={p} />
                 ))}
               </div>
 
-              <div style={styles.pagination}>
+              <div style={styles.pagination} className="shop-pagination" id="shop-pagination">
                 {Array.from({ length: data.pagination.pages }, (_, i) => i + 1).map((pg) => (
                   <button
                     key={pg}

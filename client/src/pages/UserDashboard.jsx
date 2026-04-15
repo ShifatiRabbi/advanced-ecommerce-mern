@@ -55,7 +55,7 @@ export default function UserDashboard() {
   };
 
   return (
-    <div style={{maxWidth:1000,margin:'0 auto',padding:'32px 24px'}}>
+    <div style={{maxWidth:1000,margin:'0 auto',padding:'32px 24px'}} className="client-page-user-dashboard" id="client-page-user-dashboard">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:28}}>
         <div>
           <h1 style={{fontSize:24,fontWeight:700,margin:'0 0 4px'}}>My Account</h1>

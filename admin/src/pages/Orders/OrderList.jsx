@@ -189,7 +189,7 @@ export default function OrderList() {
   };
 
   return (
-    <div>
+    <div className="admin-page-orders-order-list" id="admin-page-orders-order-list">
       {/* Header & Main Actions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Orders</h2>

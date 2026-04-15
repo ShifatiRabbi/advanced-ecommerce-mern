@@ -43,7 +43,7 @@ export default function App() {
   useAnalytics();
   useSiteSettings();
   return (
-    <>
+    <div className="client-app-shell" id="client-app-shell">
       <GlobalLoader />
       <Routes>
         <Route path="/login"    element={withBoundary(Login)} />
@@ -77,6 +77,6 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-    </>
+    </div>
   );
 }

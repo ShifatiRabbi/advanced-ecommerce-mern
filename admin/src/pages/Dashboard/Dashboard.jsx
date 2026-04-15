@@ -23,7 +23,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div>
+    <div className="admin-page-dashboard-dashboard" id="admin-page-dashboard-dashboard">
       <h1 style={s.heading}>Dashboard</h1>
 
       <div style={s.statsGrid}>

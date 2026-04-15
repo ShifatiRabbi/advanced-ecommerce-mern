@@ -3,7 +3,7 @@
 import { Link } from 'react-router-dom';
 export default function Footer4() {
   return (
-    <footer style={{ background: '#1a1a2e', color: '#aaa', padding: '48px 40px 24px' }}>
+    <footer className="client-component-footer4" id="client-component-footer4" style={{ background: '#1a1a2e', color: '#aaa', padding: '48px 40px 24px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 32, marginBottom: 36 }}>
         <div>
           <h3 style={{ color: '#fff', marginBottom: 12 }}>ShopBD</h3>

@@ -14,6 +14,12 @@ const TAB_KEYS = {
   STATUS: 'status',
 };
 
+const getVisibleTabs = (productType) => {
+  const baseTabs = [TAB_KEYS.INFO, TAB_KEYS.MEDIA];
+  if (productType === 'simple') return [...baseTabs, TAB_KEYS.PRICING, TAB_KEYS.SEO, TAB_KEYS.STATUS];
+  return [...baseTabs, TAB_KEYS.VARIANTS, TAB_KEYS.SEO, TAB_KEYS.STATUS];
+};
+
 export default function EditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -46,6 +52,9 @@ export default function EditProduct() {
   const [newImages, setNewImages] = useState([]);
   const [variants, setVariants] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const visibleTabs = getVisibleTabs(productType);
+  const isPricingTabVisible = visibleTabs.includes(TAB_KEYS.PRICING);
+  const isVariantsTabVisible = visibleTabs.includes(TAB_KEYS.VARIANTS);
 
   // Queries
   const { data: product, isLoading } = useQuery({
@@ -86,7 +95,7 @@ export default function EditProduct() {
       });
       setExistingImages(product.images || []);
       setVariants(product.variants || []);
-      setProductType(product.variants?.length > 0 ? 'variation' : 'simple');
+      setProductType(product.productType === 'variable' || product.variants?.length > 0 ? 'variable' : 'simple');
       setIsLoaded(true);
     }
   }, [product, isLoaded]);
@@ -164,6 +173,9 @@ export default function EditProduct() {
       payload.append('price', form.price);
       payload.append('discountPrice', form.discountPrice || '');
       payload.append('stock', form.stock || 0);
+    } else {
+      payload.append('basePrice', form.price || 0);
+      payload.append('discountPrice', form.discountPrice || '');
     }
 
     // Additional
@@ -181,7 +193,7 @@ export default function EditProduct() {
     payload.append('productType', productType);
 
     // Variants
-    if (productType === 'variation' && variants.length > 0) {
+    if (productType === 'variable' && variants.length > 0) {
       payload.append('variants', JSON.stringify(variants));
     }
 
@@ -197,7 +209,7 @@ export default function EditProduct() {
 
   if (isLoading) {
     return (
-      <div className="product-page">
+      <div className="product-page admin-edit-product-page" id="admin-edit-product-page">
         <div className="loading-container">
           <div className="loading-spinner" />
           <p>Loading product...</p>
@@ -214,14 +226,15 @@ export default function EditProduct() {
     { id: TAB_KEYS.SEO, label: 'SEO', icon: '🔍' },
     { id: TAB_KEYS.STATUS, label: 'Status', icon: '⚡' },
   ];
+  const filteredTabs = tabs.filter((tab) => visibleTabs.includes(tab.id));
 
   return (
-    <>
+    <div className="admin-page-products-edit-product" id="admin-page-products-edit-product">
       <style>{styles}</style>
 
       <div className="product-page">
         {/* Header */}
-        <div className="page-header">
+        <div className="page-header admin-edit-product-header" id="admin-edit-product-header">
           <div className="header-left">
             <button className="back-btn" onClick={() => navigate('/products')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -258,16 +271,19 @@ export default function EditProduct() {
           </div>
         </div>
 
-        <div className="product-layout">
+        <div className="product-layout admin-edit-product-layout" id="admin-edit-product-layout">
           {/* Main Content */}
-          <div className="product-main">
+          <div className="product-main admin-edit-product-main" id="admin-edit-product-main">
             {/* Product Type Selector */}
             <div className="product-type-selector">
               <label className="section-label">Product Type</label>
               <div className="type-options">
                 <button
                   className={`type-option ${productType === 'simple' ? 'active' : ''}`}
-                  onClick={() => setProductType('simple')}
+                  onClick={() => {
+                    setProductType('simple');
+                    if (activeTab === TAB_KEYS.VARIANTS) setActiveTab(TAB_KEYS.PRICING);
+                  }}
                 >
                   <div className="type-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -287,8 +303,11 @@ export default function EditProduct() {
                   </div>
                 </button>
                 <button
-                  className={`type-option ${productType === 'variation' ? 'active' : ''}`}
-                  onClick={() => setProductType('variation')}
+                  className={`type-option ${productType === 'variable' ? 'active' : ''}`}
+                  onClick={() => {
+                    setProductType('variable');
+                    if (activeTab === TAB_KEYS.PRICING) setActiveTab(TAB_KEYS.VARIANTS);
+                  }}
                 >
                   <div className="type-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -300,7 +319,7 @@ export default function EditProduct() {
                     <span className="type-desc">Multiple variants with different options</span>
                   </div>
                   <div className="type-check">
-                    {productType === 'variation' && (
+                    {productType === 'variable' && (
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                       </svg>
@@ -312,7 +331,7 @@ export default function EditProduct() {
 
             {/* Tab Navigation */}
             <div className="tab-navigation">
-              {tabs.map(tab => (
+              {filteredTabs.map(tab => (
                 <button
                   key={tab.id}
                   className={`tab-nav-item ${activeTab === tab.id ? 'active' : ''}`}
@@ -326,7 +345,7 @@ export default function EditProduct() {
             </div>
 
             {/* Tab Content */}
-            <div className="tab-content">
+            <div className="tab-content admin-edit-product-tab-content" id="admin-edit-product-tab-content">
               {/* Basic Info Tab */}
               {activeTab === TAB_KEYS.INFO && (
                 <div className="content-card">
@@ -476,7 +495,7 @@ export default function EditProduct() {
               )}
 
               {/* Pricing Tab */}
-              {activeTab === TAB_KEYS.PRICING && (
+              {activeTab === TAB_KEYS.PRICING && isPricingTabVisible && (
                 <div className="content-card">
                   <div className="card-header-simple">
                     <h3>Pricing & Inventory</h3>
@@ -540,15 +559,52 @@ export default function EditProduct() {
                       </div>
                     </div>
                   ) : (
-                    <div className="variants-pricing-notice">
-                      <div className="notice-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label className="form-label">
+                          Regular Price <span className="required">*</span>
+                        </label>
+                        <div className="input-with-prefix">
+                          <span className="input-prefix-fixed">৳</span>
+                          <input
+                            type="number"
+                            className={`form-input with-prefix ${fieldErrors.price ? 'error' : ''}`}
+                            placeholder="0.00"
+                            value={form.price}
+                            onChange={(e) => set('price', e.target.value)}
+                          />
+                        </div>
+                        {fieldErrors.price && <span className="field-error">{fieldErrors.price}</span>}
+                        <span className="field-hint">Base price used with variant modifiers</span>
                       </div>
-                      <div className="notice-content">
-                        <h4>Variations handle pricing</h4>
-                        <p>For variable products, pricing is managed through variant options in the Variations tab.</p>
+
+                      <div className="form-group">
+                        <label className="form-label">Sale Price</label>
+                        <div className="input-with-prefix">
+                          <span className="input-prefix-fixed">৳</span>
+                          <input
+                            type="number"
+                            className="form-input with-prefix"
+                            placeholder="0.00"
+                            value={form.discountPrice}
+                            onChange={(e) => set('discountPrice', e.target.value)}
+                          />
+                        </div>
+                        <span className="field-hint">Optional global sale price for all variant options</span>
+                      </div>
+
+                      <div className="form-group full-width">
+                        <div className="variants-pricing-notice">
+                          <div className="notice-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <div className="notice-content">
+                            <h4>Variant option pricing</h4>
+                            <p>Each option can increase or decrease this base price using price modifiers in the Variations tab.</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -556,32 +612,21 @@ export default function EditProduct() {
               )}
 
               {/* Variants Tab */}
-              {activeTab === TAB_KEYS.VARIANTS && (
+              {activeTab === TAB_KEYS.VARIANTS && isVariantsTabVisible && (
                 <div className="content-card">
                   <div className="card-header-simple">
                     <h3>Product Variations</h3>
                     <span className="optional-tag">{variants.length} options</span>
                   </div>
 
-                  {productType === 'simple' ? (
-                    <div className="variants-pricing-notice">
-                      <div className="notice-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div className="notice-content">
-                        <h4>Switch to Variable Product</h4>
-                        <p>Variations are only available for variable products. Switch to Variable Product type to enable variations.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <VariantManager
-                      productId={id}
-                      variants={variants}
-                      onUpdate={() => qc.invalidateQueries({ queryKey: ['product-edit', id] })}
-                    />
-                  )}
+                  <VariantManager
+                    productId={id}
+                    variants={variants}
+                    onUpdate={({ variants: nextVariants } = {}) => {
+                      if (nextVariants) setVariants(nextVariants);
+                      qc.invalidateQueries({ queryKey: ['product-edit', id] });
+                    }}
+                  />
                 </div>
               )}
 
@@ -716,7 +761,7 @@ export default function EditProduct() {
           </div>
 
           {/* Sidebar */}
-          <div className="product-sidebar">
+          <div className="product-sidebar admin-edit-product-sidebar" id="admin-edit-product-sidebar">
             <div className="sidebar-card">
               <h3 className="sidebar-title">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -823,7 +868,7 @@ export default function EditProduct() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

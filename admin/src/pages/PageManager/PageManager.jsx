@@ -70,7 +70,7 @@ export default function PageManager() {
   const current = PAGES.find(p=>p.key===activeKey);
 
   return (
-    <div>
+    <div className="admin-page-page-manager-page-manager" id="admin-page-page-manager-page-manager">
       <h2 style={{margin:'0 0 20px',fontSize:20,fontWeight:700}}>Page Manager</h2>
 
       <div style={{display:'flex',gap:8,marginBottom:24,flexWrap:'wrap'}}>

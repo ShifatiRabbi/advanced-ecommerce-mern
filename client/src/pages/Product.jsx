@@ -8,6 +8,32 @@ import ProductTimer                                  from '../components/Product
 import MarqueeBar                                    from '../components/MarqueeBar';
 import ReviewSection                                 from '../components/ReviewSection';
 
+const toNumber = (value, fallback = 0) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const imageUrl = (img) => {
+  if (!img) return null;
+  if (typeof img === 'string') return img;
+  return img.url || null;
+};
+
+const getOptionPricing = (product, opt) => {
+  const baseRegular = toNumber(product.basePrice ?? product.price, 0);
+  const baseSale = product.discountPrice !== null && product.discountPrice !== undefined
+    ? toNumber(product.discountPrice, 0)
+    : null;
+
+  const regular = opt?.regularPrice !== null && opt?.regularPrice !== undefined
+    ? toNumber(opt.regularPrice, 0)
+    : baseRegular + toNumber(opt?.priceModifier, 0);
+  const sale = opt?.salePrice !== null && opt?.salePrice !== undefined
+    ? toNumber(opt.salePrice, 0)
+    : (baseSale !== null ? baseSale + toNumber(opt?.priceModifier, 0) : null);
+  return { regular, sale, final: sale ?? regular };
+};
+
 export default function ProductPage() {
   const { slug }    = useParams();
   const navigate    = useNavigate();
@@ -49,6 +75,10 @@ export default function ProductPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
 
+  useEffect(() => {
+    setActiveImg(0);
+  }, [slug, selVariants]);
+
   // ── Zoom on hover ──────────────────────────────────────────────────────────
   const handleMouseMove = useCallback((e) => {
     const rect = imgRef.current?.getBoundingClientRect();
@@ -78,18 +108,28 @@ export default function ProductPage() {
   );
 
   // ── Price calculations ─────────────────────────────────────────────────────
-  const basePrice    = product.discountPrice ?? product.price;
-  const variantAdj   = Object.values(selVariants).reduce((s, o) => s + (o?.priceModifier ?? 0), 0);
-  const displayPrice = basePrice + variantAdj;
-  const discount     = product.discountPrice
-    ? Math.round(((product.price - product.discountPrice) / product.price) * 100) : 0;
+  const baseRegularPrice = toNumber(product.basePrice ?? product.price, 0);
+  const baseSalePrice = product.discountPrice !== null && product.discountPrice !== undefined
+    ? toNumber(product.discountPrice, 0)
+    : null;
+  const selectedOptionPrices = Object.values(selVariants).map((opt) => getOptionPricing(product, opt));
+  const displayRegularPrice = selectedOptionPrices.length
+    ? selectedOptionPrices.reduce((sum, p) => sum + p.regular, 0)
+    : baseRegularPrice;
+  const hasSelectedSale = selectedOptionPrices.some((p) => p.sale !== null);
+  const selectedSalePrice = hasSelectedSale
+    ? selectedOptionPrices.reduce((sum, p) => sum + (p.sale ?? p.regular), 0)
+    : null;
+  const displayPrice = selectedSalePrice ?? (baseSalePrice ?? displayRegularPrice);
+  const discount     = displayRegularPrice > 0 && displayPrice < displayRegularPrice
+    ? Math.round(((displayRegularPrice - displayPrice) / displayRegularPrice) * 100) : 0;
 
   // Price range across all variants (shown before selection)
   const allPrices = product.variants?.flatMap(v =>
-    (v.options || []).map(o => basePrice + (o.priceModifier ?? 0))
+    (v.options || []).map((o) => getOptionPricing(product, o).final)
   ) ?? [];
-  const minPrice = allPrices.length ? Math.min(...allPrices) : basePrice;
-  const maxPrice = allPrices.length ? Math.max(...allPrices) : basePrice;
+  const minPrice = allPrices.length ? Math.min(...allPrices) : (baseSalePrice ?? baseRegularPrice);
+  const maxPrice = allPrices.length ? Math.max(...allPrices) : (baseSalePrice ?? baseRegularPrice);
   const hasRange = minPrice !== maxPrice;
 
   // Total selected variants count vs total variants required
@@ -103,7 +143,23 @@ export default function ProductPage() {
     if (ok) navigate('/checkout');
   };
 
-  const currentImage = product.images?.[activeImg];
+  const selectedVariantImage =
+    imageUrl(Object.values(selVariants).find((opt) => imageUrl(opt?.images?.[0]))?.images?.[0])
+    || null;
+  const galleryImages = selectedVariantImage
+    ? [{ url: selectedVariantImage }, ...(product.images || [])]
+    : (product.images || []);
+  const currentImage = galleryImages[activeImg];
+  const selectedStocks = Object.values(selVariants)
+    .map((opt) => opt?.stock)
+    .filter((stock) => Number.isFinite(stock));
+  const availableStock = selectedStocks.length
+    ? Math.min(...selectedStocks)
+    : (product.totalStock ?? product.stock ?? 0);
+  const selectedSkuText = Object.entries(selVariants)
+    .map(([name, opt]) => (opt?.sku ? `${name}: ${opt.sku}` : null))
+    .filter(Boolean)
+    .join(' | ');
 
   return (
     <>
@@ -114,10 +170,10 @@ export default function ProductPage() {
 
       <MarqueeBar position="below-header" productId={product._id} categoryId={product.category?._id} />
 
-      <div style={S.page}>
+      <div style={S.page} className="client-product-page client-page-product" id="client-page-product">
 
         {/* Breadcrumb */}
-        <nav style={S.breadcrumb}>
+        <nav style={S.breadcrumb} className="client-product-breadcrumb" id="client-product-breadcrumb">
           <Link to="/" style={S.breadLink}>Home</Link>
           <span style={S.sep}> › </span>
           <Link to="/shop" style={S.breadLink}>Products</Link>
@@ -136,14 +192,16 @@ export default function ProductPage() {
         </Link>
 
         {/* ── Two-column layout ───────────────────────────────────────────── */}
-        <div style={S.grid}>
+        <div style={S.grid} className="client-product-main-grid" id="client-product-main-grid">
 
           {/* ── LEFT: Images ──────────────────────────────────────────────── */}
-          <div>
+          <div className="client-product-gallery-section" id="client-product-gallery-section">
             {/* Main image with zoom */}
             <div
               ref={imgRef}
               style={{ ...S.mainImg, cursor: isZooming ? 'crosshair' : 'default' }}
+              className="client-product-main-image"
+              id="client-product-main-image"
               onMouseMove={handleMouseMove}
               onMouseEnter={() => setIsZooming(true)}
               onMouseLeave={() => setIsZooming(false)}>
@@ -181,14 +239,14 @@ export default function ProductPage() {
               )}
 
               <span style={S.imgCounter}>
-                {activeImg + 1} / {product.images?.length || 1}
+                {activeImg + 1} / {galleryImages.length || 1}
               </span>
             </div>
 
             {/* Thumbnails */}
-            {product.images?.length > 1 && (
-              <div style={S.thumbRow}>
-                {product.images.map((img, i) => (
+            {galleryImages.length > 1 && (
+              <div style={S.thumbRow} className="client-product-thumb-row" id="client-product-thumb-row">
+                {galleryImages.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveImg(i)}
@@ -201,7 +259,7 @@ export default function ProductPage() {
           </div>
 
           {/* ── RIGHT: Info ───────────────────────────────────────────────── */}
-          <div>
+          <div className="client-product-info-section" id="client-product-info-section">
             {product.brand && (
               <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 6px' }}>{product.brand.name}</p>
             )}
@@ -222,7 +280,7 @@ export default function ProductPage() {
             )}
 
             {/* Price */}
-            <div style={S.priceBlock}>
+            <div style={S.priceBlock} className="client-product-price-block" id="client-product-price-block">
               {allVariantsChosen || !product.variants?.length ? (
                 /* Show exact selected price */
                 <>
@@ -247,6 +305,11 @@ export default function ProductPage() {
                 </>
               )}
             </div>
+            {selectedSkuText && (
+              <p style={{ fontSize: 12, color: '#6b7280', margin: '0 0 10px' }}>
+                Selected SKU: {selectedSkuText}
+              </p>
+            )}
 
             {/* Timer */}
             <ProductTimer
@@ -256,19 +319,22 @@ export default function ProductPage() {
 
             {/* ── Variant selector rows ──────────────────────────────────── */}
             {product.variants?.map(variant => (
-              <div key={variant.name} style={{ marginBottom: 18 }}>
+              <div key={variant.name} style={{ marginBottom: 18 }} className="client-variant-group" id={`client-variant-group-${variant.name}`}>
                 <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 8px', color: '#111' }}>
                   Select {variant.name}:
                   {selVariants[variant.name] && (
                     <span style={{ fontWeight: 400, color: '#6b7280', marginLeft: 8 }}>
                       {selVariants[variant.name].label}
+                      {selVariants[variant.name].sku ? ` (SKU: ${selVariants[variant.name].sku})` : ''}
                     </span>
                   )}
                 </p>
                 {variant.options?.map((opt) => {
                   const isSelected = selVariants[variant.name]?.label === opt.label;
                   const isOOS      = opt.stock === 0;
-                  const optPrice   = basePrice + (opt.priceModifier ?? 0);
+                  const { regular: optRegular, sale: optSale, final: optPrice } = getOptionPricing(product, opt);
+                  const optionThumb = imageUrl(opt?.images?.[0]);
+                  const fallbackThumb = imageUrl(product.images?.[0]);
 
                   return (
                     <div
@@ -295,9 +361,9 @@ export default function ProductPage() {
                       </div>
 
                       {/* Variant thumbnail */}
-                      {product.images?.[0] && (
-                        <div style={{ width: 36, height: 36, borderRadius: 4, overflow: 'hidden', flexShrink: 0 }}>
-                          <img src={product.images[0].url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      {(optionThumb || fallbackThumb) && (
+                        <div style={{ width: 36, height: 36, borderRadius: 4, overflow: 'hidden', flexShrink: 0 }} className="client-variant-option-thumb-wrap">
+                          <img src={optionThumb || fallbackThumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="client-variant-option-thumb" />
                         </div>
                       )}
 
@@ -320,9 +386,9 @@ export default function ProductPage() {
 
                       {/* Price for this option */}
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        {product.discountPrice && (
+                        {optSale !== null && (
                           <div style={{ fontSize: 11, color: '#9ca3af', textDecoration: 'line-through' }}>
-                            ৳{(product.price + (opt.priceModifier ?? 0)).toLocaleString()}
+                            ৳{optRegular.toLocaleString()}
                           </div>
                         )}
                         <div style={{ fontWeight: 700, fontSize: 15, color: '#111' }}>
@@ -343,12 +409,12 @@ export default function ProductPage() {
 
             {/* Stock badge */}
             <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 16,
-              color: product.stock > 0 ? '#2e7d32' : '#dc2626' }}>
-              {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
+              color: availableStock > 0 ? '#2e7d32' : '#dc2626' }}>
+              {availableStock > 0 ? `In Stock (${availableStock} available)` : 'Out of Stock'}
             </p>
 
             {/* Qty + Add to Cart + Buy Now */}
-            <div style={S.actionRow}>
+            <div style={S.actionRow} className="client-product-action-row" id="client-product-action-row">
               <div style={S.qtyWrap}>
                 <button style={S.qtyBtn} onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
                 <span style={S.qtyNum}>{qty}</span>
@@ -356,20 +422,20 @@ export default function ProductPage() {
               </div>
               <button
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                style={{ ...S.btnOutline, flex: 1, opacity: product.stock === 0 ? 0.5 : 1 }}>
+                disabled={availableStock === 0}
+                style={{ ...S.btnOutline, flex: 1, opacity: availableStock === 0 ? 0.5 : 1 }}>
                 🛒 Add to Cart
               </button>
               <button
                 onClick={handleBuyNow}
-                disabled={product.stock === 0}
-                style={{ ...S.btnSolid, flex: 1, opacity: product.stock === 0 ? 0.5 : 1 }}>
+                disabled={availableStock === 0}
+                style={{ ...S.btnSolid, flex: 1, opacity: availableStock === 0 ? 0.5 : 1 }}>
                 ⚡ Buy Now
               </button>
             </div>
 
             {/* Trust badges */}
-            <div style={S.trustRow}>
+            <div style={S.trustRow} className="client-product-trust-row" id="client-product-trust-row">
               {[
                 { icon: '🚚', label: 'Fast Delivery', sub: '2-5 days' },
                 { icon: '✅', label: '100% Original', sub: 'Guaranteed' },
@@ -388,13 +454,13 @@ export default function ProductPage() {
         </div>
 
         {/* ── Product Details — full width ─────────────────────────────────── */}
-        <section style={S.section}>
+        <section style={S.section} className="client-product-details-section" id="client-product-details-section">
           <h2 style={S.secTitle}>Product Details</h2>
-          <div style={S.detailGrid}>
+          <div style={S.detailGrid} className="client-product-details-grid" id="client-product-details-grid">
             {[
               { k: 'Brand',    v: product.brand?.name },
               { k: 'Category', v: product.category?.name },
-              { k: 'SKU',      v: product.sku },
+              { k: 'SKU',      v: selectedSkuText || product.sku },
               { k: 'Stock',    v: product.stock },
               { k: 'Tags',     v: product.tags?.join(', ') },
             ].filter(r => r.v).map(r => (
@@ -416,13 +482,13 @@ export default function ProductPage() {
 
         {/* ── Related Products ─────────────────────────────────────────────── */}
         {related.length > 0 && (
-          <section style={S.section}>
+          <section style={S.section} className="client-product-related-section" id="client-product-related-section">
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
               <div style={{ width: 4, height: 22, background: '#2e7d32', borderRadius: 2 }} />
               <span style={{ fontSize: 12, fontWeight: 700, color: '#2e7d32', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Related</span>
             </div>
             <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 20px' }}>Related Products</h2>
-            <div style={S.relatedGrid}>
+            <div style={S.relatedGrid} className="client-product-related-grid" id="client-product-related-grid">
               {related.map(p => <RelatedCard key={p._id} product={p} />)}
             </div>
           </section>
@@ -436,9 +502,20 @@ export default function ProductPage() {
 function RelatedCard({ product }) {
   const addToCart = useAddToCart();
   const navigate  = useNavigate();
-  const price     = product.discountPrice ?? product.price;
-  const discount  = product.discountPrice
-    ? Math.round(((product.price - product.discountPrice) / product.price) * 100) : 0;
+  const variantAdj = (product.variants || []).reduce((sum, variant) => {
+    const options = variant.options || [];
+    const idx = variant.defaultOptionIndex ?? 0;
+    const opt = options[idx] || options[0];
+    return sum + (opt?.priceModifier ?? 0);
+  }, 0);
+  const regularPrice = (product.basePrice ?? product.price ?? 0) + variantAdj;
+  const salePrice = (product.discountPrice !== null && product.discountPrice !== undefined)
+    ? (product.discountPrice + variantAdj)
+    : null;
+  const price = salePrice ?? regularPrice;
+  const discount = salePrice !== null && regularPrice > 0
+    ? Math.round(((regularPrice - salePrice) / regularPrice) * 100)
+    : 0;
 
   return (
     <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
@@ -463,8 +540,8 @@ function RelatedCard({ product }) {
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
           <span style={{ fontSize: 15, fontWeight: 800, color: '#2e7d32' }}>৳{price.toLocaleString()}</span>
-          {product.discountPrice && (
-            <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>৳{product.price.toLocaleString()}</span>
+          {salePrice !== null && (
+            <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>৳{regularPrice.toLocaleString()}</span>
           )}
         </div>
         {/* If no variants, show direct Add to Cart; if variants, go to product page */}

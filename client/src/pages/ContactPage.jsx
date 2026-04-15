@@ -39,7 +39,7 @@ export default function ContactPage() {
   if (pageLoading) return <div style={{ padding: 100, textAlign: 'center' }}>Loading...</div>;
 
   return (
-    <>
+    <div className="client-page-contact-page" id="client-page-contact-page">
       <Helmet><title>{page?.title || 'Contact Us'}</title></Helmet>
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px' }}>
         <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 12 }}>{page?.title || 'Contact Us'}</h1>
@@ -134,7 +134,7 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

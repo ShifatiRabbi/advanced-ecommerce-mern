@@ -4,5 +4,9 @@ import { PageSkeleton }      from './Skeleton';
 export default function SuspenseFallback() {
   const navType = useNavigationType();
   // On POP (back button), show skeleton instead of blank
-  return <PageSkeleton key={navType} />;
+  return (
+    <div className="admin-component-suspense-fallback" id="admin-component-suspense-fallback" style={{ display: 'contents' }}>
+      <PageSkeleton key={navType} />
+    </div>
+  );
 }

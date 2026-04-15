@@ -47,7 +47,7 @@ export default function EmailTemplates() {
   });
 
   return (
-    <div>
+    <div className="admin-page-email-templates-email-templates" id="admin-page-email-templates-email-templates">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Email Templates</h2>
         <button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}

@@ -40,7 +40,7 @@ export default function BrandList() {
   const startEdit = (brand) => { setEditing(brand); setName(brand.name); setLogo(null); setShowForm(true); };
 
   return (
-    <div>
+    <div className="admin-page-brands-brand-list" id="admin-page-brands-brand-list">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
         <h2 style={{ margin: 0 }}>Brands ({brands?.length ?? 0})</h2>
         <button onClick={() => { reset(); setShowForm(s => !s); }}

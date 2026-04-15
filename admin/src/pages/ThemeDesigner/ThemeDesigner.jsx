@@ -92,7 +92,7 @@ export default function ThemeDesigner() {
   const hasChanges = Object.keys(overrides).length > 0;
 
   return (
-    <div>
+    <div className="admin-page-theme-designer-theme-designer" id="admin-page-theme-designer-theme-designer">
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:20}}>
         <div>
           <h2 style={{margin:'0 0 4px',fontSize:20,fontWeight:700}}>Theme Designer</h2>

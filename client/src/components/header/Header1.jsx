@@ -27,7 +27,7 @@ export default function Header1() {
   ];
 
   return (
-    <header style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--header-bg, #111)', color: 'var(--header-text-color, #fff)', padding: '0 40px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <header className="client-component-header1" id="client-component-header1" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--header-bg, #111)', color: 'var(--header-text-color, #fff)', padding: '0 40px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <Link to="/" style={{ color: 'var(--header-text-color,#fff)', textDecoration: 'none', fontWeight: 700, fontSize: 20 }}>
         {logo
           ? <img src={logo} alt={siteName} style={{ height: 44, objectFit: 'contain' }} />
