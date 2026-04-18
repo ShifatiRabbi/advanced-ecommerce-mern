@@ -1,9 +1,19 @@
 import slugify from 'slugify';
 import { Blog } from './blog.model.js';
+import { cloudinary } from '../../config/cloudinary.js';
 
 export const createPost = async (data, authorId) => {
   const slug = slugify(data.title, { lower: true, strict: true });
-  return Blog.create({ ...data, slug, author: authorId, publishedAt: data.isPublished ? new Date() : null });
+  const { coverImage: rawCover, ...rest } = data;
+  const coverImage =
+    rawCover?.url ? { url: rawCover.url, public_id: rawCover.public_id } : undefined;
+  return Blog.create({
+    ...rest,
+    slug,
+    author: authorId,
+    publishedAt: data.isPublished ? new Date() : null,
+    ...(coverImage && { coverImage }),
+  });
 };
 
 export const getPosts = async ({ page = 1, limit = 10, published, category } = {}) => {
@@ -24,7 +34,30 @@ export const getPostBySlug = async (slug) => {
   return post;
 };
 
-export const updatePost = async (id, data) =>
-  Blog.findByIdAndUpdate(id, { ...data, ...(data.isPublished && !data.publishedAt && { publishedAt: new Date() }) }, { new: true });
+export const updatePost = async (id, data) => {
+  const prev = await Blog.findById(id);
+  if (!prev) {
+    const e = new Error('Post not found');
+    e.status = 404;
+    throw e;
+  }
+  const nextCover = data.coverImage?.url
+    ? { url: data.coverImage.url, public_id: data.coverImage.public_id }
+    : undefined;
+  if (
+    nextCover?.public_id &&
+    prev.coverImage?.public_id &&
+    nextCover.public_id !== prev.coverImage.public_id
+  ) {
+    await cloudinary.uploader.destroy(prev.coverImage.public_id).catch(() => {});
+  }
+  const payload = { ...data };
+  if (nextCover) payload.coverImage = nextCover;
+  return Blog.findByIdAndUpdate(
+    id,
+    { ...payload, ...(data.isPublished && !data.publishedAt && { publishedAt: new Date() }) },
+    { new: true }
+  );
+};
 
 export const deletePost = (id) => Blog.findByIdAndDelete(id);

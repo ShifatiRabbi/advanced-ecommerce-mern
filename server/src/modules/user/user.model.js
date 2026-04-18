@@ -12,6 +12,10 @@ const userSchema = new mongoose.Schema(
     refreshToken: { type: String, select: false },
     passwordResetToken:   { type: String, select: false },
     passwordResetExpires: { type: Date,   select: false },
+    savedCart: {
+      items:       { type: [mongoose.Schema.Types.Mixed], default: [] },
+      lastUpdated: { type: Date },
+    },
   },
   { timestamps: true }
 );

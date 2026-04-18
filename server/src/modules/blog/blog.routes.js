@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { protect, adminOnly } from '../../middlewares/auth.middleware.js';
 import { asyncHandler }       from '../../utils/asyncHandler.js';
 import { sendSuccess }        from '../../utils/response.js';
+import { blogUpload }         from '../../config/cloudinary.js';
 import * as svc from './blog.service.js';
 
 const router = Router();
@@ -11,6 +12,16 @@ router.get('/:slug',    asyncHandler(async (req, res) => sendSuccess(res, { data
 
 router.use(protect, adminOnly);
 router.get('/admin/all',asyncHandler(async (req, res) => sendSuccess(res, { data: await svc.getPosts(req.query) })));
+router.post(
+  '/upload-cover',
+  blogUpload.single('cover'),
+  asyncHandler(async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No image file provided' });
+    }
+    sendSuccess(res, { data: { url: req.file.path, public_id: req.file.filename } });
+  })
+);
 router.post('/',         asyncHandler(async (req, res) => sendSuccess(res, { status: 201, data: await svc.createPost(req.body, req.user.id) })));
 router.put('/:id',       asyncHandler(async (req, res) => sendSuccess(res, { data: await svc.updatePost(req.params.id, req.body) })));
 router.delete('/:id',    asyncHandler(async (req, res) => { await svc.deletePost(req.params.id); sendSuccess(res, { message: 'Deleted' }); }));

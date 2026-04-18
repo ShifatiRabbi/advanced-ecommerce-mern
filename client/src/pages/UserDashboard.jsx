@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import api, { setAccessToken } from '../services/api';
 import { useAuthStore }        from '../store/authStore';
+import { useCartStore }        from '../store/cartStore';
 
 export default function UserDashboard() {
   const navigate        = useNavigate();
@@ -32,6 +33,7 @@ export default function UserDashboard() {
     try { await api.post('/auth/logout'); } catch {}
     setAccessToken(null);
     clearUser();
+    useCartStore.getState().clearCart();
     navigate('/');
   };
 

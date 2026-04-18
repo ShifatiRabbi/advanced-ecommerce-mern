@@ -65,6 +65,16 @@ export const getMe = asyncHandler(async (req, res) => {
   sendSuccess(res, { data: req.user });
 });
 
+export const getCart = asyncHandler(async (req, res) => {
+  const cart = await userService.getSavedCart(req.user.id);
+  sendSuccess(res, { data: cart });
+});
+
+export const saveCart = asyncHandler(async (req, res) => {
+  await userService.saveSavedCart(req.user.id, req.body.items);
+  sendSuccess(res, { message: 'Cart saved' });
+});
+
 /**
  * Request password reset (forgot password)
  */

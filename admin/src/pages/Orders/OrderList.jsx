@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { OrderRowSkeleton } from '../../components/Skeleton';
@@ -116,13 +116,13 @@ export default function OrderList() {
   const [fraudReports, setFraudReports] = useState({});
   const [fraudLoading, setFraudLoading] = useState({});
 
-  const checkFraud = async (orderId) => {
+  const checkFraud = async (orderId, { silent } = {}) => {
     setFraudLoading(prev => ({ ...prev, [orderId]: true }));
     try {
       const { data } = await api.get(`/fraud/${orderId}`);
       setFraudReports(prev => ({ ...prev, [orderId]: data.data }));
     } catch (err) {
-      alert('Fraud check failed: ' + (err.response?.data?.message || err.message));
+      if (!silent) alert('Fraud check failed: ' + (err.response?.data?.message || err.message));
     } finally {
       setFraudLoading(prev => ({ ...prev, [orderId]: false }));
     }
@@ -133,6 +133,33 @@ export default function OrderList() {
     queryFn: () => api.get('/orders', { params: { status: tab||undefined, search: search||undefined, page, limit: 20, sort } }).then(r => r.data.data),
     keepPreviousData: true,
   });
+
+  const orderIdsKey = useMemo(
+    () => (data?.orders ?? []).map((o) => o._id).join(','),
+    [data?.orders],
+  );
+
+  useEffect(() => {
+    if (isLoading || !data?.orders?.length) return;
+    let cancelled = false;
+    (async () => {
+      await Promise.all(
+        data.orders.map(async (order) => {
+          try {
+            const { data: fr } = await api.get(`/fraud/${order._id}`);
+            if (!cancelled) {
+              setFraudReports((prev) => ({ ...prev, [order._id]: fr.data }));
+            }
+          } catch {
+            /* optional external fraud API */
+          }
+        }),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoading, orderIdsKey]);
 
   const { data: statsData } = useQuery({
     queryKey: ['order-stats'],

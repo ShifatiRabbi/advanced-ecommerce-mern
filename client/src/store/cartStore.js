@@ -1,5 +1,29 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import api from '../services/api';
+import { useAuthStore } from './authStore';
+
+let skipNextServerPush = false;
+let serverPushTimer = null;
+
+const shouldSyncCartToServer = () => {
+  const user = useAuthStore.getState().user;
+  if (!user) return false;
+  if (user.role === 'admin' || user.role === 'employee') return false;
+  return true;
+};
+
+const scheduleServerCartSave = (items) => {
+  if (!shouldSyncCartToServer()) return;
+  clearTimeout(serverPushTimer);
+  serverPushTimer = setTimeout(async () => {
+    try {
+      await api.put('/auth/cart', { items }, { _silent: true });
+    } catch {
+      /* offline or session expired */
+    }
+  }, 700);
+};
 
 const CART_STORAGE_KEY = 'shopbd-cart-v3';
 const CART_TTL_MS = 3 * 24 * 60 * 60 * 1000;
@@ -154,6 +178,15 @@ export const useCartStore = create(
 
       clearCart: () => set({ items: [], lastUpdated: Date.now() }),
 
+      /** Replace cart (e.g. after server load). Skips one debounced server push. */
+      replaceAll: (items) => {
+        skipNextServerPush = true;
+        set({ items: Array.isArray(items) ? items : [], lastUpdated: Date.now() });
+        queueMicrotask(() => {
+          skipNextServerPush = false;
+        });
+      },
+
       // ── Derived values (computed on read, not stored) ─────────────────
       get itemCount() {
         return get().items.reduce((sum, i) => sum + i.qty, 0);
@@ -172,3 +205,10 @@ export const useCartStore = create(
     }
   )
 );
+
+useCartStore.subscribe((state, prev) => {
+  if (!prev) return;
+  if (skipNextServerPush) return;
+  if (state.items === prev.items) return;
+  scheduleServerCartSave(state.items);
+});

@@ -76,6 +76,29 @@ export const logoutUser = async (userId) => {
   await User.findByIdAndUpdate(userId, { refreshToken: null });
 };
 
+const MAX_CART_ITEMS = 80;
+
+export const getSavedCart = async (userId) => {
+  const u = await User.findById(userId).select('savedCart').lean();
+  return { items: u?.savedCart?.items ?? [], lastUpdated: u?.savedCart?.lastUpdated ?? null };
+};
+
+export const saveSavedCart = async (userId, items) => {
+  if (!Array.isArray(items)) {
+    const err = new Error('Cart items must be an array');
+    err.status = 400;
+    throw err;
+  }
+  if (items.length > MAX_CART_ITEMS) {
+    const err = new Error(`Cart cannot exceed ${MAX_CART_ITEMS} line items`);
+    err.status = 400;
+    throw err;
+  }
+  await User.findByIdAndUpdate(userId, {
+    savedCart: { items, lastUpdated: new Date() },
+  });
+};
+
 const sanitizeUser = (user) => ({
   _id: user._id,
   name: user.name,

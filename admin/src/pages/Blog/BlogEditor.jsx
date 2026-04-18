@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
@@ -17,9 +17,9 @@ export default function BlogEditor() {
 
   const [form, setForm] = useState({
     title: '', content: '', excerpt: '', category: 'General', tags: '',
-    isPublished: false, metaTitle: '', metaDesc: '', coverImageUrl: '',
+    isPublished: false, metaTitle: '', metaDesc: '', coverImageUrl: '', coverImagePublicId: '',
   });
-  const [coverFile, setCoverFile] = useState(null);
+  const contentRef = useRef(null);
   const [preview, setPreview]     = useState(false);
   const [autoSaved, setAutoSaved] = useState(false);
 
@@ -35,6 +35,7 @@ export default function BlogEditor() {
         metaTitle:   post.meta?.title || '',
         metaDesc:    post.meta?.description || '',
         coverImageUrl: post.coverImage?.url || '',
+        coverImagePublicId: post.coverImage?.public_id || '',
       });
     }
   }, [post]);
@@ -49,6 +50,21 @@ export default function BlogEditor() {
     }, 3000);
     return () => clearTimeout(timer);
   }, [form]);
+
+  const coverUploadMutation = useMutation({
+    mutationFn: (file) => {
+      const fd = new FormData();
+      fd.append('cover', file);
+      return api.post('/blog/upload-cover', fd);
+    },
+    onSuccess: (res) => {
+      const d = res.data?.data;
+      if (d?.url) {
+        setForm((f) => ({ ...f, coverImageUrl: d.url, coverImagePublicId: d.public_id || '' }));
+      }
+    },
+    onError: (err) => alert(err.response?.data?.message || 'Image upload failed'),
+  });
 
   const saveMutation = useMutation({
     mutationFn: (data) => isEdit ? api.put(`/blog/${id}`, data) : api.post('/blog', data),
@@ -73,7 +89,7 @@ export default function BlogEditor() {
     if (!form.title.trim()) return alert('Title is required');
     if (!form.content.trim()) return alert('Content is required');
     const tags = form.tags.split(',').map(t => t.trim()).filter(Boolean);
-    saveMutation.mutate({
+    const payload = {
       title:       form.title,
       content:     form.content,
       excerpt:     form.excerpt,
@@ -81,19 +97,149 @@ export default function BlogEditor() {
       tags,
       isPublished: publish !== null ? publish : form.isPublished,
       meta:        { title: form.metaTitle, description: form.metaDesc },
-    });
+    };
+    if (form.coverImageUrl) {
+      payload.coverImage = {
+        url: form.coverImageUrl,
+        ...(form.coverImagePublicId && { public_id: form.coverImagePublicId }),
+      };
+    }
+    saveMutation.mutate(payload);
   };
 
+  const applyWrap = useCallback((openTag, closeTag, emptyPlaceholder) => {
+    const el = contentRef.current;
+    setForm((f) => {
+      const content = f.content;
+      let start = 0;
+      let end = 0;
+      if (el) {
+        start = el.selectionStart ?? 0;
+        end = el.selectionEnd ?? 0;
+      } else {
+        start = end = content.length;
+      }
+      const selected = content.slice(start, end);
+      const middle = selected || emptyPlaceholder || '';
+      const piece = openTag + middle + closeTag;
+      const next = content.slice(0, start) + piece + content.slice(end);
+      queueMicrotask(() => {
+        if (!el) return;
+        el.focus();
+        if (selected) {
+          const innerStart = start + openTag.length;
+          el.setSelectionRange(innerStart, innerStart + selected.length);
+        } else if (emptyPlaceholder) {
+          const innerStart = start + openTag.length;
+          el.setSelectionRange(innerStart, innerStart + emptyPlaceholder.length);
+        } else {
+          const pos = start + piece.length;
+          el.setSelectionRange(pos, pos);
+        }
+      });
+      return { ...f, content: next };
+    });
+  }, []);
+
+  const insertAtCursor = useCallback((snippet) => {
+    const el = contentRef.current;
+    setForm((f) => {
+      const content = f.content;
+      if (!el) {
+        return { ...f, content: content + snippet };
+      }
+      const start = el.selectionStart ?? 0;
+      const end = el.selectionEnd ?? 0;
+      const next = content.slice(0, start) + snippet + content.slice(end);
+      queueMicrotask(() => {
+        el.focus();
+        const pos = start + snippet.length;
+        el.setSelectionRange(pos, pos);
+      });
+      return { ...f, content: next };
+    });
+  }, []);
+
   const INSERT_FORMATS = [
-    { label: 'H2',      fn: () => set('content', form.content + '\n<h2>Heading</h2>\n') },
-    { label: 'H3',      fn: () => set('content', form.content + '\n<h3>Subheading</h3>\n') },
-    { label: 'Bold',    fn: () => set('content', form.content + '<strong>bold text</strong>') },
-    { label: 'Link',    fn: () => set('content', form.content + '<a href="URL">Link text</a>') },
-    { label: 'Image',   fn: () => set('content', form.content + '\n<img src="URL" alt="Description" style="max-width:100%;border-radius:8px;" />\n') },
-    { label: 'List',    fn: () => set('content', form.content + '\n<ul>\n  <li>Item 1</li>\n  <li>Item 2</li>\n</ul>\n') },
-    { label: 'Quote',   fn: () => set('content', form.content + '\n<blockquote style="border-left:4px solid #e5e7eb;padding-left:16px;color:#6b7280;margin:16px 0;">Quote text here</blockquote>\n') },
-    { label: 'Code',    fn: () => set('content', form.content + '\n<pre style="background:#1e1e1e;color:#d4d4d4;padding:16px;border-radius:8px;overflow-x:auto;"><code>code here</code></pre>\n') },
-    { label: 'Divider', fn: () => set('content', form.content + '\n<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />\n') },
+    {
+      label: 'H2',
+      fn: () => {
+        const el = contentRef.current;
+        const hasSel = el && el.selectionStart !== el.selectionEnd;
+        if (hasSel) applyWrap('<h2>', '</h2>', 'Heading');
+        else insertAtCursor('\n<h2>Heading</h2>\n');
+      },
+    },
+    {
+      label: 'H3',
+      fn: () => {
+        const el = contentRef.current;
+        const hasSel = el && el.selectionStart !== el.selectionEnd;
+        if (hasSel) applyWrap('<h3>', '</h3>', 'Subheading');
+        else insertAtCursor('\n<h3>Subheading</h3>\n');
+      },
+    },
+    { label: 'Bold',    fn: () => applyWrap('<strong>', '</strong>', 'bold text') },
+    { label: 'Italic',  fn: () => applyWrap('<em>', '</em>', 'italic text') },
+    { label: 'Link',    fn: () => applyWrap('<a href="https://">', '</a>', 'link text') },
+    {
+      label: 'Image',
+      fn: () => applyWrap(
+        '\n<img src="',
+        '" alt="" style="max-width:100%;border-radius:8px;" />\n',
+        'https://',
+      ),
+    },
+    {
+      label: 'List',
+      fn: () => {
+        const el = contentRef.current;
+        setForm((f) => {
+          const content = f.content;
+          let start = 0;
+          let end = 0;
+          if (el) {
+            start = el.selectionStart ?? 0;
+            end = el.selectionEnd ?? 0;
+          } else start = end = content.length;
+          const selected = content.slice(start, end);
+          let block;
+          if (selected.trim()) {
+            const lines = selected.split('\n').map((l) => l.trim()).filter(Boolean);
+            const lis = (lines.length ? lines : ['Item']).map((l) => `  <li>${l}</li>`).join('\n');
+            block = `<ul>\n${lis}\n</ul>\n`;
+          } else {
+            block = '\n<ul>\n  <li>Item 1</li>\n  <li>Item 2</li>\n</ul>\n';
+          }
+          const next = content.slice(0, start) + block + content.slice(end);
+          queueMicrotask(() => {
+            if (el) {
+              el.focus();
+              const pos = start + block.length;
+              el.setSelectionRange(pos, pos);
+            }
+          });
+          return { ...f, content: next };
+        });
+      },
+    },
+    {
+      label: 'Quote',
+      fn: () => applyWrap(
+        '\n<blockquote style="border-left:4px solid #e5e7eb;padding-left:16px;color:#6b7280;margin:16px 0;">',
+        '</blockquote>\n',
+        'Quote text here',
+      ),
+    },
+    {
+      label: 'Code',
+      fn: () => applyWrap(
+        '\n<pre style="background:#1e1e1e;color:#d4d4d4;padding:16px;border-radius:8px;overflow-x:auto;"><code>',
+        '</code></pre>\n',
+        'code here',
+      ),
+    },
+    { label: 'Divider', fn: () => insertAtCursor('\n<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />\n') },
   ];
 
   return (
@@ -137,6 +283,7 @@ export default function BlogEditor() {
                 ))}
               </div>
               <textarea
+                ref={contentRef}
                 value={form.content}
                 onChange={e => set('content', e.target.value)}
                 placeholder="Write your post content here... You can use HTML tags for formatting."
@@ -168,13 +315,37 @@ export default function BlogEditor() {
 
           <div style={s.card}>
             <h3 style={s.cardTitle}>Cover image</h3>
-            <div style={{ marginBottom: 10 }}>
-              <label style={s.label}>Image URL</label>
-              <input value={form.coverImageUrl} onChange={e => set('coverImageUrl', e.target.value)}
-                placeholder="https://..." style={s.input} />
-            </div>
+            <input
+              type="file"
+              accept="image/*"
+              id="blog-cover-upload"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (file) coverUploadMutation.mutate(file);
+              }}
+            />
+            <label htmlFor="blog-cover-upload">
+              <span style={{ ...s.label, marginBottom: 8 }}>Upload</span>
+              <div
+                style={{
+                  padding: '12px 16px',
+                  border: '2px dashed #d1d5db',
+                  borderRadius: 8,
+                  textAlign: 'center',
+                  cursor: coverUploadMutation.isPending ? 'wait' : 'pointer',
+                  background: '#fafafa',
+                  fontSize: 13,
+                  color: '#374151',
+                  fontWeight: 600,
+                }}
+              >
+                {coverUploadMutation.isPending ? 'Uploading…' : 'Choose image file'}
+              </div>
+            </label>
             {form.coverImageUrl && (
-              <img src={form.coverImageUrl} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 6 }} onError={e => e.target.style.display='none'} />
+              <img src={form.coverImageUrl} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 6, marginTop: 10 }} onError={e => { e.target.style.display = 'none'; }} />
             )}
           </div>
 

@@ -26,3 +26,4 @@ const makeStorage = (folder) =>
 export const productUpload  = multer({ storage: makeStorage('products'),   limits: { fileSize: 5 * 1024 * 1024 } });
 export const categoryUpload = multer({ storage: makeStorage('categories'), limits: { fileSize: 2 * 1024 * 1024 } });
 export const brandUpload    = multer({ storage: makeStorage('brands'),     limits: { fileSize: 2 * 1024 * 1024 } });
+export const blogUpload     = multer({ storage: makeStorage('blog'),      limits: { fileSize: 3 * 1024 * 1024 } });

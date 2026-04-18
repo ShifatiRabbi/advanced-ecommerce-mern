@@ -8,11 +8,6 @@ import { sendSuccess } from '../../utils/response.js';
 import { User } from './user.model.js';
 import * as ctrl from './user.controller.js';
 
-console.log('--- DEBUGGING IMPORTS ---');
-console.log('authLimiter is:', typeof authLimiter);
-console.log('validate is:', typeof validate);
-console.log('ctrl.login is:', typeof ctrl.login);
-console.log('protect is:', typeof protect);
 const router = Router();
 
 router.post('/register', authLimiter, validate(registerSchema), ctrl.register);
@@ -26,6 +21,8 @@ router.put('/me', protect, asyncHandler(async (req,res) => {
   const user = await User.findByIdAndUpdate(req.user.id, { name, phone }, { new: true }).select('-password -refreshToken');
   sendSuccess(res, { data: user });
 }));
+router.get('/cart', protect, ctrl.getCart);
+router.put('/cart', protect, ctrl.saveCart);
 router.post('/forgot-password', authLimiter, ctrl.forgotPassword);
 router.post('/reset-password', ctrl.resetPassword);
 
