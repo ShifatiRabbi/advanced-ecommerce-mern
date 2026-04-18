@@ -40,4 +40,7 @@ export const env = {
   STEADFAST_API_KEY:  process.env.STEADFAST_API_KEY,
   STEADFAST_SECRET_KEY: process.env.STEADFAST_SECRET_KEY,
 
+  FRAUDBD_BASE_URL: process.env.FRAUDBD_BASE_URL,
+  FRAUDBD_API_KEY: process.env.FRAUDBD_API_KEY,
+
 };

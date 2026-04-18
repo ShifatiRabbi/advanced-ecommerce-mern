@@ -45,7 +45,10 @@ export const checkSteadfastFraud = async (phone) => {
         headers: { 'Api-Key': env.STEADFAST_API_KEY, 'Secret-Key': env.STEADFAST_SECRET_KEY },
         params: { phone },
       }
-    ).catch(() => ({ data: null }));
+    ).catch((err) => {
+      console.log('Steadfast error:', err?.response?.data || err.message);
+      return { data: null };
+    });
 
     if (!data) return null;
 
@@ -90,29 +93,105 @@ export const internalFraudCheck = (order) => {
   };
 };
 
+export const checkFraudBD = async (phone) => {
+  try {
+    const { data } = await axios.post(
+      `${env.FRAUDBD_BASE_URL}/api/check`,
+      { phone },
+      {
+        headers: {
+          'API-KEY': env.FRAUDBD_API_KEY,
+          'Content-Type': 'application/json',
+        },
+      }
+    ).catch((err) => {
+      console.log('FraudBD error:', err?.response?.data || err.message);
+      return { data: null };
+    });
+
+    if (!data) return null;
+
+    // Adjust based on actual API response
+    const fraudCount = data?.fraud_count || 0;
+    const reportCount = data?.report_count || 0;
+
+    const riskScore = Math.min(100, fraudCount * 20 + reportCount * 10);
+
+    return {
+      source: 'fraudbd',
+      phone,
+      fraudCount,
+      reportCount,
+      riskScore,
+      riskLevel:
+        riskScore > 70 ? 'HIGH' :
+        riskScore > 40 ? 'MEDIUM' : 'LOW',
+      raw: data,
+    };
+  } catch {
+    return null;
+  }
+};
+
 // Combined fraud report
 export const getFraudReport = async (orderId) => {
   const order = await Order.findById(orderId).lean();
   if (!order) throw Object.assign(new Error('Order not found'), { status: 404 });
 
   const phone = order.shippingAddress?.phone;
-  const [pathaoResult, steadfastResult] = await Promise.all([
+
+  const [
+    pathaoResult,
+    steadfastResult,
+    fraudbdResult
+  ] = await Promise.all([
     checkPathaoFraud(phone, order.orderNumber),
     checkSteadfastFraud(phone),
+    checkFraudBD(phone), // ✅ NEW
   ]);
+
   const internalResult = internalFraudCheck(order);
 
-  const results = [internalResult, pathaoResult, steadfastResult].filter(Boolean);
-  const maxRisk = results.some(r => r.riskLevel === 'HIGH')   ? 'HIGH'
-                : results.some(r => r.riskLevel === 'MEDIUM') ? 'MEDIUM' : 'LOW';
+  const results = [
+    internalResult,
+    pathaoResult,
+    steadfastResult,
+    fraudbdResult, // ✅ include here
+  ].filter(Boolean);
 
-  const report = { orderId, phone, overallRisk: maxRisk, checks: results, checkedAt: new Date() };
+  // Smarter risk aggregation (weighted)
+  let riskScore = 0;
+
+  results.forEach(r => {
+    if (r.riskLevel === 'HIGH') riskScore += 50;
+    else if (r.riskLevel === 'MEDIUM') riskScore += 25;
+    else riskScore += 10;
+  });
+
+  const overallRisk =
+    riskScore >= 100 ? 'HIGH' :
+    riskScore >= 50  ? 'MEDIUM' : 'LOW';
+
+  const report = {
+    orderId,
+    phone,
+    overallRisk,
+    score: riskScore,
+    checks: results,
+    checkedAt: new Date(),
+  };
 
   // Auto-mark as fake if HIGH risk
-  if (maxRisk === 'HIGH' && !order.isFake) {
+  if (overallRisk === 'HIGH' && !order.isFake) {
     await Order.findByIdAndUpdate(orderId, {
       isFake: true,
-      fakeReason: results.flatMap(r => r.reasons || [r.riskLevel]).join('; '),
+      fakeReason: results
+        .map(r =>
+          r.reasons
+            ? r.reasons.join(', ')
+            : `${r.source}:${r.riskLevel}`
+        )
+        .join('; '),
       status: 'fake',
     });
   }
