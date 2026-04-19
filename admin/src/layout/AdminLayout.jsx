@@ -128,6 +128,7 @@ const MENU = [
     children: [
       { label: 'General Settings', path: '/general' },
       { label: 'Other Settings', path: '/settings' },
+      { label: 'API setup', path: '/api-setup', requireAdmin: true },
     ],
   },
 ];
@@ -203,9 +204,11 @@ export default function AdminLayout() {
         {/* NAVIGATION */}
         <nav style={s.nav} className="admin-layout-nav" id="admin-layout-nav">
           {MENU.map((item) => {
-            const hasChildren = Boolean(item.children?.length);
+            const visibleChildren =
+              item.children?.filter((c) => !c.requireAdmin || user?.role === 'admin') ?? [];
+            const hasChildren = visibleChildren.length > 0;
             const isExpanded = expanded.has(item.label);
-            const childActive = hasChildren && isChildActive(item.children);
+            const childActive = hasChildren && isChildActive(visibleChildren);
             const leafActive = !hasChildren && item.path && location.pathname === item.path;
             const isActive = leafActive || childActive;
 
@@ -301,10 +304,10 @@ export default function AdminLayout() {
                   <div
                     style={{
                       ...s.submenu,
-                      maxHeight: isExpanded ? `${item.children.length * 52 + 8}px` : '0',
+                      maxHeight: isExpanded ? `${visibleChildren.length * 52 + 8}px` : '0',
                     }}
                   >
-                    {item.children.map((child) => (
+                    {visibleChildren.map((child) => (
                       <NavLink
                         key={child.path}
                         to={child.path}

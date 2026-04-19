@@ -28,6 +28,7 @@ import timerRoutes     from '../modules/timer/timer.routes.js';
 import emailTemplateRoutes from '../modules/email/emailTemplate.routes.js';
 import fraudRoutes     from '../modules/fraud/fraud.routes.js';
 import contactRoutes   from '../modules/contact/contact.routes.js';
+import apiEnvRoutes    from '../modules/apiEnv/apiEnv.routes.js';
 import os              from 'os';
 
 const router = Router();
@@ -61,6 +62,7 @@ router.use('/timers',     timerRoutes);
 router.use('/email-templates', emailTemplateRoutes);
 router.use('/fraud',      fraudRoutes);
 router.use('/contact',    contactRoutes);
+router.use('/api-env',    apiEnvRoutes);
 
 router.get('/health', (req, res) => res.json({
   success: true, status: 'ok',

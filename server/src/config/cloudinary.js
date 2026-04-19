@@ -5,11 +5,15 @@ import multerStorageCloudinary from 'multer-storage-cloudinary';
 import multer from 'multer';
 import { env } from './env.js';
 
-cloudinary.config({
-  cloud_name: env.CLOUDINARY_CLOUD_NAME,
-  api_key:    env.CLOUDINARY_API_KEY,
-  api_secret: env.CLOUDINARY_API_SECRET,
-});
+export const reconfigureCloudinaryFromEnv = () => {
+  cloudinary.config({
+    cloud_name: env.CLOUDINARY_CLOUD_NAME,
+    api_key: env.CLOUDINARY_API_KEY,
+    api_secret: env.CLOUDINARY_API_SECRET,
+  });
+};
+
+reconfigureCloudinaryFromEnv();
 
 export { cloudinary };
 

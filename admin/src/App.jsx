@@ -36,6 +36,7 @@ const TimerManager  = lazy(() => import('./pages/TimerManager/TimerManager'));
 const EmailTemplates = lazy(() => import('./pages/EmailTemplates/EmailTemplates'));
 const GeneralSettings = lazy(() => import('./pages/Settings/GeneralSettings'));
 const ContactMessages = lazy(() => import('./pages/ContactMessages/ContactMessages'));
+const ApiSetup        = lazy(() => import('./pages/ApiSetup/ApiSetup'));
 
 const Loader = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: 14, color: '#6b7280' }}>
@@ -85,6 +86,7 @@ export default function App() {
             <Route path="email-templates"  element={<EmailTemplates />} />
             <Route path="general"          element={<GeneralSettings />} />
             <Route path="messages"         element={<ContactMessages />} />
+            <Route path="api-setup"        element={<AuthGuard requiredRole="admin"><ApiSetup /></AuthGuard>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
