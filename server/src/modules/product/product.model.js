@@ -60,6 +60,11 @@ const productSchema = new mongoose.Schema(
       description: String,
       keywords:    [String],
     },
+    /** WooCommerce / Shopify CSV round-trip & dedupe on import */
+    integration: {
+      woocommerceProductId: { type: String, trim: true, sparse: true },
+      shopifyHandle:        { type: String, trim: true, lowercase: true, sparse: true },
+    },
   },
   { timestamps: true }
 );

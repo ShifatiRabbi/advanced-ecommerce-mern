@@ -1,16 +1,25 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { protect, adminOnly } from '../../middlewares/auth.middleware.js';
 import { productUpload }     from '../../config/cloudinary.js';
 import { validate }          from '../../middlewares/validate.middleware.js';
 import { createProductSchema } from './product.validation.js';
 import * as ctrl from './product.controller.js';
+import * as ieCtrl from './productImportExport.controller.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { sendSuccess } from '../../utils/response.js';
 import * as svc from './product.service.js';
 
 const router = Router();
 
+const importUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 },
+});
+
 router.get('/',                                ctrl.getAll);
+router.get('/export',                          protect, adminOnly, ieCtrl.exportCsv);
+router.post('/import',                         protect, adminOnly, importUpload.single('file'), ieCtrl.importCsv);
 router.get('/featured',                        ctrl.getFeatured);
 router.get('/slug/:slug',                      ctrl.getBySlug);
 router.get('/slug/:slug/related',              ctrl.getRelated);

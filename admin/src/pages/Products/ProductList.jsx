@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
+import ProductImportExportPanel from './ProductImportExportPanel';
 
 const getDefaultVariantAdj = (product) => {
   if (!product?.variants?.length) return 0;
@@ -54,6 +55,8 @@ export default function ProductList() {
           <button onClick={() => navigate('/products/add')} style={s.addBtn}>+ Add Product</button>
         </div>
       </div>
+
+      <ProductImportExportPanel />
 
       {isLoading ? <p style={{ padding: 20 }}>Loading...</p> : (
         <div style={s.tableWrap}>
